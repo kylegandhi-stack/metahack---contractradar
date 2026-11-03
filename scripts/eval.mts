@@ -1,7 +1,7 @@
 // Scores the pipeline against labeled records in data/eval/*.json. Spends real model tokens.
 // npm run eval                 Replay: fixed saved records, so it measures ranking and is repeatable. No SAM.gov calls.
 // npm run eval -- --live       Live USAspending search too, so it also measures retrieval. No SAM.gov calls.
-// npm run eval -- --with-sam   Live SAM.gov as well. Spends up to 7 calls per run from a small daily quota.
+// npm run eval -- --with-sam   Live SAM.gov as well. Spends up to 2 calls per run from a small daily quota, or 7 with SAM_DESCRIPTIONS=on.
 // Options: --runs=N (default 1), --file=aquavector
 import { readdirSync, readFileSync } from "node:fs";
 import { runResearch } from "../lib/agents/orchestrator";
