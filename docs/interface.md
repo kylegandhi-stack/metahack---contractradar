@@ -94,4 +94,4 @@ Success: `200`
 
 `profile` is `Partial<CompanyProfile>`: a field is present only if the speaker said it, within `CompanyProfileSchema` bounds. It never contains invented names, certifications or agencies. The UI fills only the present fields and never runs research automatically.
 
-Errors use `ResearchError`: 400 `BAD_REQUEST` (not a supported WAV, too short or too long), 413 `BAD_REQUEST` (too large), 422 `BAD_REQUEST` (no speech recognized), 429 `RATE_LIMITED` (per-IP voice bucket `voice:<ip>`, separate from research runs; the daily cap is shared), 502 `UPSTREAM_ERROR`, 504 `TIMEOUT`, 500 `INTERNAL`. Logs hold only durations, field names and token counts: never audio, transcript or the key.
+Errors use `ResearchError`: 400 `BAD_REQUEST` (not a supported WAV, too short or too long), 413 `BAD_REQUEST` (too large), 422 `BAD_REQUEST` (no speech recognized), 429 `RATE_LIMITED` (per-IP voice bucket `voice:<ip>`, separate from research runs, with its own daily count, `RATE_LIMIT_VOICE_DAILY`), 502 `UPSTREAM_ERROR`, 504 `TIMEOUT`, 500 `INTERNAL`. Logs hold only durations, field names and token counts: never audio, transcript or the key.

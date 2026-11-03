@@ -1,5 +1,5 @@
 import { MetaError, RunBudget } from "@/lib/meta";
-import { checkRateLimit, clientIp } from "@/lib/rate-limit";
+import { checkVoiceRateLimit, clientIp } from "@/lib/rate-limit";
 import type { ResearchError, ResearchErrorCode } from "@/lib/types";
 import { checkWakeLimit, extractVoiceProfile, hasCommand, inspectWav, MAX_VOICE_BYTES, splitWakePhrase, transcribe, VoiceInputError } from "@/lib/voice";
 
@@ -35,8 +35,8 @@ export async function POST(request: Request) {
   const mode = new URL(request.url).searchParams.get("mode") === "wake" ? "wake" : "command";
   const ip = clientIp(request.headers);
   // Wake checks run on every phrase while listening, so they have their own generous window. Commands use a
-  // separate bucket from research runs, so trying the mic doesn't use up searches. The daily cap is shared.
-  const limit = mode === "wake" ? checkWakeLimit(ip) : checkRateLimit(`voice:${ip}`);
+  // separate bucket and daily count from research runs, so trying the mic doesn't use up searches.
+  const limit = mode === "wake" ? checkWakeLimit(ip) : checkVoiceRateLimit(ip);
   if (!limit.allowed) {
     return errorResponse(429, "RATE_LIMITED", "Too many voice requests. Try again in a few minutes.", {
       "Retry-After": String(limit.retryAfterSeconds),
