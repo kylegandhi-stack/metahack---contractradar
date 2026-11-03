@@ -33,6 +33,26 @@ export type SourceRecord = {
   setAside?: string | null;
   naics?: string | null;
   excerpts: { text: string; field: string }[]; // verbatim text from the source field named in `field`
+  solicitationNumber?: string | null; // SAM notices only
+  relatedNotices?: RelatedNotice[]; // other SAM postings of the same buy, collapsed into this record
+  recipient?: string | null; // USAspending awards only: who won
+};
+
+export type RelatedNotice = {
+  id: string; // SAM noticeId
+  kind: SourceKind;
+  postedAt?: string | null;
+  url: string; // official source URL
+};
+
+// A past USAspending award from the same buyer. Facts from the record, never inferred.
+export type PriorAward = {
+  id: string; // USAspending generated_internal_id
+  title: string;
+  recipient: string | null;
+  amount: number | null; // historical obligation, NOT available budget
+  date: string | null;
+  url: string; // official source URL
 };
 
 export type AuditFinding = {
@@ -65,6 +85,7 @@ export type RankedResult = {
   nextSteps: string[];
   findings: AuditFinding[]; // Devil's Advocate output, after deterministic gates
   reviewStatus: ReviewStatus;
+  priorAwards?: PriorAward[]; // open and early-stage notices only: buyer history
 };
 
 export type AgentEvent = {
