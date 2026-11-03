@@ -44,6 +44,7 @@ export class UsaSpendingError extends Error {
 export type AwardSearch = {
   keywords: string[];
   naicsCodes?: string[];
+  pscCodes?: string[];
   limit?: number;
   startDate?: string;
   endDate?: string;
@@ -165,6 +166,7 @@ export async function searchAwards(search: AwardSearch): Promise<SourceRecord[]>
     ],
   };
   if (search.naicsCodes?.length) filters.naics_codes = search.naicsCodes;
+  if (search.pscCodes?.length) filters.psc_codes = search.pscCodes;
 
   const payload = await readJson(SEARCH_URL, {
     method: "POST",

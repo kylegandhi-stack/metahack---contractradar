@@ -1,12 +1,15 @@
 // SAM.gov Get Opportunities adapter. https://open.gsa.gov/api/get-opportunities-public-api/
 // Server-side only. The key goes in the query string, so it must never appear in errors or records.
-// The `description` field is a link that needs the key, not text, so it is deliberately not stored.
-import type { SourceKind, SourceRecord } from "../types";
+// The search `description` field is a link that needs the key, so text comes from describeNotices.
+import type { RelatedNotice, SourceKind, SourceRecord } from "../types";
 
 const SEARCH_URL = "https://api.sam.gov/opportunities/v2/search";
 const TIMEOUT_MS = 15_000;
 const DAY_MS = 86_400_000;
 const MAX_LIMIT = 25;
+const DESCRIPTION_URL = "https://api.sam.gov/prod/opportunities/v1/noticedesc";
+const DESCRIPTION_MAX_CHARS = 8_000;
+const DESCRIBE_CAP_MS = 8_000;
 
 export class SamError extends Error {
   constructor(
@@ -31,9 +34,10 @@ export type RawNotice = {
   typeOfSetAsideDescription?: string | null;
   active?: string | null;
   uiLink?: string | null;
+  classificationCode?: string | null;
 };
 
-export type NoticeSearch = { title?: string; naicsCode?: string; daysBack?: number; limit?: number };
+export type NoticeSearch = { title?: string; naicsCode?: string; pscCode?: string; daysBack?: number; limit?: number };
 
 const KIND_BY_TYPE: Record<string, SourceKind> = {
   solicitation: "open_notice",
@@ -106,7 +110,51 @@ export function normalizeNotice(raw: RawNotice, retrievedAt: string): SourceReco
     setAside,
     naics: present(raw.naicsCode) ? raw.naicsCode : null,
     excerpts,
+    solicitationNumber: present(raw.solicitationNumber) ? raw.solicitationNumber : null,
   };
+}
+
+const normalizeKey = (text: string) => text.replace(/\s+/g, " ").trim().toUpperCase();
+
+function noticeGroupKey(record: SourceRecord): string {
+  if (present(record.solicitationNumber)) return `number:${normalizeKey(record.solicitationNumber)}`;
+  return `title:${normalizeKey(record.title)}|office:${normalizeKey(record.agency ?? "")}`;
+}
+
+// Solicitation over presolicitation, then the latest posting.
+function moreDecisionRelevant(a: SourceRecord, b: SourceRecord): number {
+  const rank = (record: SourceRecord) => (record.kind === "open_notice" ? 0 : 1);
+  return rank(a) - rank(b) || (b.postedAt ?? "").localeCompare(a.postedAt ?? "");
+}
+
+// Collapses postings of the same buy into one record, listing the rest as related notices. Records
+// with different solicitation numbers never merge, even with the same title: a wrong merge could hide
+// a real opportunity, which is worse than a duplicate card. Safe to run again on its own output.
+export function collapseNotices(records: SourceRecord[]): SourceRecord[] {
+  const groups = new Map<string, SourceRecord[]>();
+  for (const record of records) {
+    if (record.source !== "sam") continue;
+    const key = noticeGroupKey(record);
+    groups.set(key, [...(groups.get(key) ?? []), record]);
+  }
+  const emitted = new Set<string>();
+  return records.flatMap((record) => {
+    if (record.source !== "sam") return [record];
+    const key = noticeGroupKey(record);
+    if (emitted.has(key)) return [];
+    emitted.add(key);
+    const members = groups.get(key) ?? [record];
+    if (members.length === 1) return [record];
+    const [primary, ...others] = [...members].sort(moreDecisionRelevant);
+    const related = new Map<string, RelatedNotice>();
+    for (const member of [primary, ...others]) {
+      for (const notice of member.relatedNotices ?? []) related.set(notice.id, notice);
+    }
+    for (const { id, kind, postedAt, url } of others) related.set(id, { id, kind, postedAt, url });
+    related.delete(primary.id);
+    const relatedNotices = [...related.values()].sort((a, b) => (b.postedAt ?? "").localeCompare(a.postedAt ?? ""));
+    return [{ ...primary, relatedNotices }];
+  });
 }
 
 function samDate(date: Date): string {
@@ -129,6 +177,7 @@ export async function searchNotices(search: NoticeSearch): Promise<SourceRecord[
   });
   if (present(search.title)) params.set("title", search.title.trim());
   if (present(search.naicsCode)) params.set("ncode", search.naicsCode.trim());
+  if (present(search.pscCode)) params.set("ccode", search.pscCode.trim());
 
   let response: Response;
   try {
@@ -147,7 +196,86 @@ export async function searchNotices(search: NoticeSearch): Promise<SourceRecord[
   }
   if (!Array.isArray(payload.opportunitiesData)) return [];
   const retrievedAt = new Date().toISOString();
-  return payload.opportunitiesData
-    .map((raw) => normalizeNotice(raw as RawNotice, retrievedAt))
+  // SAM.gov could ignore a filter and return everything, so a PSC search keeps only exact matches.
+  const wantedPsc = search.pscCode?.trim().toUpperCase();
+  return (payload.opportunitiesData as RawNotice[])
+    .filter((raw) => !wantedPsc || raw.classificationCode?.trim().toUpperCase() === wantedPsc)
+    .map((raw) => normalizeNotice(raw, retrievedAt))
     .filter((record): record is SourceRecord => record !== null);
+}
+
+const ENTITIES: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " " };
+
+// The source text with markup removed, so its wording can still be matched as verbatim evidence.
+function htmlToText(html: string): string {
+  return html
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&(?:#(\d+)|([a-z]+));/gi, (match, code: string | undefined, name: string | undefined) => {
+      if (code) return String.fromCodePoint(Number(code));
+      return ENTITIES[(name ?? "").toLowerCase()] ?? match;
+    })
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export async function fetchNoticeDescription(noticeId: string, signal: AbortSignal): Promise<string | null> {
+  const apiKey = process.env.SAM_API_KEY;
+  if (!present(apiKey)) throw new SamError("SAM.gov key is not configured", null);
+  const params = new URLSearchParams({ noticeid: noticeId, api_key: apiKey });
+  let response: Response;
+  try {
+    response = await fetch(`${DESCRIPTION_URL}?${params}`, { signal });
+  } catch (error) {
+    const reason = error instanceof Error ? error.name : "network error";
+    throw new SamError(`SAM.gov description request failed: ${reason}`, null);
+  }
+  if (response.status === 404) return null;
+  if (!response.ok) throw new SamError(`SAM.gov returned HTTP ${response.status}`, response.status);
+  let payload: { description?: unknown };
+  try {
+    payload = (await response.json()) as typeof payload;
+  } catch {
+    throw new SamError("SAM.gov returned invalid JSON", response.status);
+  }
+  return present(payload.description) ? htmlToText(payload.description) || null : null;
+}
+
+// Notice text does not change often and SAM.gov's daily quota is small, so repeat runs reuse it.
+const descriptionMemo = new Map<string, string | null>();
+export function clearDescriptionMemo() {
+  descriptionMemo.clear();
+}
+
+export type NoticeDescriptions = {
+  texts: Map<string, string>;
+  unavailable: string[];
+  shortened: string[];
+};
+
+// One at a time under one short deadline: the first 429 stops further calls, so a spent quota is not
+// hit again, and a slow source cannot push the run past its time target. Never throws.
+export async function describeNotices(records: SourceRecord[]): Promise<NoticeDescriptions> {
+  const result: NoticeDescriptions = { texts: new Map(), unavailable: [], shortened: [] };
+  const signal = AbortSignal.timeout(DESCRIBE_CAP_MS);
+  let stopped = false;
+  for (const record of records) {
+    let text: string | null | undefined = descriptionMemo.get(record.id);
+    if (text === undefined && !stopped) {
+      try {
+        text = await fetchNoticeDescription(record.id, signal);
+        descriptionMemo.set(record.id, text);
+      } catch (error) {
+        if (error instanceof SamError && (error.status === 429 || signal.aborted)) stopped = true;
+      }
+    }
+    if (!text) {
+      result.unavailable.push(record.id);
+    } else if (text.length > DESCRIPTION_MAX_CHARS) {
+      result.texts.set(record.id, text.slice(0, DESCRIPTION_MAX_CHARS));
+      result.shortened.push(record.id);
+    } else {
+      result.texts.set(record.id, text);
+    }
+  }
+  return result;
 }

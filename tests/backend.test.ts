@@ -11,7 +11,14 @@ import type { ResearchPlan } from "../lib/agents/planner";
 import type { ScoutResult } from "../lib/agents/scout";
 import { clearScoutMemo, MAX_TOOL_TURNS, runScout } from "../lib/agents/scout";
 import { loadVerifiedRecords } from "../lib/data/cache";
-import { classifyNotice, normalizeNotice, searchNotices } from "../lib/data/sam";
+import {
+  classifyNotice,
+  clearDescriptionMemo,
+  collapseNotices,
+  describeNotices,
+  normalizeNotice,
+  searchNotices,
+} from "../lib/data/sam";
 import { cleanKeywords, dedupeRecords, normalizeAward, searchAwards } from "../lib/data/usaspending";
 import { chatJson, MetaError, parseJsonOutput, RunBudget } from "../lib/meta";
 import { applyGates, capCriticWarnings, isVerbatim, statusFromFindings, verifyCriticFinding } from "../lib/review";
@@ -109,6 +116,7 @@ function fakeDeps(records: SourceRecord[], overrides: Partial<PipelineDeps> = {}
     critique: async (_profile, _records, _assessments, shortlist) =>
       shortlist.map((pick) => ({ sourceId: pick.sourceId, verdict: "Checked", noneFound: true, findings: [] })),
     enrich: async (record) => record,
+    describe: async () => ({ texts: new Map(), unavailable: [], shortened: [] }),
     samConfigured: () => true,
     now: () => NOW,
     ...overrides,
@@ -637,6 +645,174 @@ test("the warning cap never changes the review status", () => {
   }
 });
 
+const samNotice = (id: string, overrides: Partial<SourceRecord> = {}): SourceRecord => ({
+  id,
+  source: "sam",
+  kind: "open_notice",
+  title: "[TEST] Hydrophone assembly",
+  agency: "[TEST] NAVSUP",
+  url: `https://sam.gov/workspace/contract/opp/${id}/view`,
+  retrievedAt: "2026-11-03T00:00:00.000Z",
+  postedAt: "2026-11-02",
+  solicitationNumber: "SOL-1",
+  excerpts: [{ field: "title", text: "[TEST] Hydrophone assembly" }],
+  ...overrides,
+});
+
+test("collapse: presolicitation and solicitation of one buy become one card", () => {
+  const pre = samNotice("PRE", { kind: "early_stage_notice", postedAt: "2026-10-15" });
+  const sol = samNotice("SOL");
+  const [card, ...rest] = collapseNotices([pre, sol]);
+  assert.equal(rest.length, 0);
+  assert.equal(card.id, "SOL");
+  assert.deepEqual(card.relatedNotices, [{ id: "PRE", kind: "early_stage_notice", postedAt: "2026-10-15", url: pre.url }]);
+});
+
+test("collapse: the latest solicitation wins and the number match ignores case and spacing", () => {
+  const older = samNotice("OLD", { postedAt: "2026-10-01", solicitationNumber: "sol-1 " });
+  const newer = samNotice("NEW", { postedAt: "2026-10-20" });
+  const [card] = collapseNotices([older, newer]);
+  assert.equal(card.id, "NEW");
+  assert.deepEqual(card.relatedNotices?.map((related) => related.id), ["OLD"]);
+});
+
+test("collapse: an expired solicitation still wins, so its HOLD is not hidden by a presolicitation", () => {
+  const expired = samNotice("SOL", { deadlineAt: "2026-01-15T17:00:00-05:00", postedAt: "2026-01-01" });
+  const pre = samNotice("PRE", { kind: "early_stage_notice", deadlineAt: "2027-01-15", postedAt: "2026-12-01" });
+  assert.equal(collapseNotices([pre, expired])[0].id, "SOL");
+});
+
+test("collapse: the same title under different numbers stays separate", () => {
+  const records = [samNotice("A", { solicitationNumber: "SOL-A" }), samNotice("B", { solicitationNumber: "SOL-B" })];
+  assert.deepEqual(collapseNotices(records), records);
+});
+
+test("collapse: without a number, only the same title and office merge", () => {
+  const none = { solicitationNumber: null };
+  const a = samNotice("A", none);
+  const sameBuy = samNotice("B", { ...none, title: " [test]  hydrophone ASSEMBLY", postedAt: "2026-10-01" });
+  const otherOffice = samNotice("C", { ...none, agency: "[TEST] DLA" });
+  const numbered = samNotice("D");
+  const out = collapseNotices([a, sameBuy, otherOffice, numbered]);
+  assert.deepEqual(out.map((record) => record.id), ["A", "C", "D"]);
+  assert.deepEqual(out[0].relatedNotices?.map((related) => related.id), ["B"]);
+});
+
+test("collapse: running again keeps related notices and leaves awards alone", () => {
+  const award: SourceRecord = {
+    ...samNotice("AWARD", { source: "usaspending", kind: "historical_award", solicitationNumber: null }),
+    url: "https://www.usaspending.gov/award/AWARD",
+  };
+  const first = collapseNotices([samNotice("PRE", { kind: "early_stage_notice", postedAt: "2026-10-15" }), samNotice("SOL"), award]);
+  const again = collapseNotices([...first, samNotice("LATER", { postedAt: "2026-11-05" })]);
+  assert.equal(again.length, 2);
+  const card = again.find((record) => record.source === "sam");
+  assert.equal(card?.id, "LATER");
+  assert.deepEqual(card?.relatedNotices?.map((related) => related.id).sort(), ["PRE", "SOL"]);
+  assert.ok(again.includes(award));
+});
+
+test("descriptions: markup is removed, the key stays out of errors, and repeat runs reuse the text", async () => {
+  clearDescriptionMemo();
+  process.env.SAM_API_KEY = "secret-test-key";
+  const urls: string[] = [];
+  globalThis.fetch = (async (url: string) => {
+    urls.push(String(url));
+    return Response.json({ description: "<p>Source&nbsp;Control &amp; <b>First Article</b></p>" });
+  }) as typeof fetch;
+  const record = notice();
+  const first = await describeNotices([record]);
+  assert.equal(first.texts.get(record.id), "Source Control & First Article");
+  assert.match(urls[0], /noticedesc\?noticeid=TEST-NOTICE-1/);
+  await describeNotices([record]);
+  assert.equal(urls.length, 1);
+
+  clearDescriptionMemo();
+  globalThis.fetch = async () => new Response("{}", { status: 500 });
+  const failed = await describeNotices([record]);
+  assert.deepEqual(failed.unavailable, [record.id]);
+});
+
+test("descriptions: the first 429 stops further SAM calls", async () => {
+  clearDescriptionMemo();
+  process.env.SAM_API_KEY = "secret-test-key";
+  let calls = 0;
+  globalThis.fetch = async () => {
+    calls += 1;
+    return new Response("{}", { status: 429 });
+  };
+  const records = [notice({ id: "A" }), notice({ id: "B" }), notice({ id: "C" })];
+  const result = await describeNotices(records);
+  assert.equal(calls, 1);
+  assert.deepEqual(result.unavailable, ["A", "B", "C"]);
+});
+
+test("descriptions: long text is shortened and reported, a missing notice is unavailable", async () => {
+  clearDescriptionMemo();
+  process.env.SAM_API_KEY = "secret-test-key";
+  globalThis.fetch = async () => Response.json({ description: "x".repeat(9_000) });
+  const long = await describeNotices([notice({ id: "LONG" })]);
+  assert.equal(long.texts.get("LONG")?.length, 8_000);
+  assert.deepEqual(long.shortened, ["LONG"]);
+  globalThis.fetch = async () => new Response("{}", { status: 404 });
+  assert.deepEqual((await describeNotices([notice({ id: "GONE" })])).unavailable, ["GONE"]);
+});
+
+test("descriptions: only shortlisted SAM notices are fetched, and the critic sees the text", async () => {
+  const records = [notice({ id: "PICKED" }), notice({ id: "NOT-PICKED" }), award()];
+  let asked: string[] = [];
+  let seen: SourceRecord | undefined;
+  const response = await runResearch(PROFILE, {
+    deps: fakeDeps(records, {
+      strategize: async () => [
+        { sourceId: "PICKED", rationale: "Fits", nextSteps: ["Verify"] },
+        { sourceId: award().id, rationale: "Buyer", nextSteps: ["Research"] },
+      ],
+      describe: async (targets) => {
+        asked = targets.map((record) => record.id);
+        return { texts: new Map([["PICKED", "Only approved sources"]]), unavailable: [], shortened: [] };
+      },
+      critique: async (_profile, list, _assessments, shortlist) => {
+        seen = list.find((record) => record.id === "PICKED");
+        return shortlist.map((pick) => ({ sourceId: pick.sourceId, verdict: "Checked", noneFound: true, findings: [] }));
+      },
+    }),
+  });
+  assert.deepEqual(asked, ["PICKED"]);
+  assert.ok(seen?.excerpts.some((excerpt) => excerpt.field === "description" && excerpt.text === "Only approved sources"));
+  const picked = response.results.find((result) => result.record.id === "PICKED");
+  assert.equal(picked?.record.description, "Only approved sources");
+  assert.ok(!picked?.findings.some((finding) => finding.issue.includes("description")));
+});
+
+test("descriptions: a failed fetch adds a NOTE, keeps the status and leaves the description null", async () => {
+  const response = await runResearch(PROFILE, {
+    deps: fakeDeps([notice()], {
+      describe: async (targets) => ({ texts: new Map(), unavailable: targets.map((record) => record.id), shortened: [] }),
+    }),
+  });
+  const result = response.results[0];
+  assert.equal(result.record.description, null);
+  const note = result.findings.find((finding) => finding.issue === "SAM.gov description could not be retrieved");
+  assert.equal(note?.severity, "NOTE");
+  assert.equal(result.reviewStatus, "APPROVED");
+});
+
+test("descriptions: nothing is fetched after a SAM.gov search failure", async () => {
+  let called = false;
+  const response = await runResearch(PROFILE, {
+    deps: fakeDeps([notice()], {
+      scout: async () => scoutWith([notice()], { samFailure: "SAM.gov returned HTTP 429" }),
+      describe: async () => {
+        called = true;
+        return { texts: new Map(), unavailable: [], shortened: [] };
+      },
+    }),
+  });
+  assert.equal(called, false);
+  assert.ok(response.results[0].findings.some((finding) => finding.issue === "SAM.gov description could not be retrieved"));
+});
+
 test("schemas keep the optional accuracy fields and still accept records without them", () => {
   const notice = {
     id: "TEST-NOTICE",
@@ -760,4 +936,100 @@ test("the scout says so when the model made no tool call, and offers no SAM tool
   const result = await runScout(PLAN, new RunBudget());
   assert.equal(result.modelDirected, false);
   assert.equal(result.turns, 0);
+});
+
+const startFakeModel = useFakeModel; // Not a React hook, so this name keeps the hooks lint rule out of it.
+
+type AwardFilters = { keywords: string[]; naics_codes?: string[]; psc_codes?: string[] };
+
+// One scout round with a fake model, recording the USAspending filters it sends.
+async function scoutWithCodes(
+  categories: ResearchPlan["categories"],
+  awardsFor: (filters: AwardFilters) => unknown[] | Response,
+) {
+  clearScoutMemo();
+  delete process.env.SAM_API_KEY;
+  let round = 0;
+  startFakeModel(() => {
+    round += 1;
+    if (round > 1) return completion({ content: "done" });
+    return completion({
+      content: null,
+      tool_calls: [
+        { id: "call-1", type: "function", function: { name: "search_awards", arguments: JSON.stringify({ keywords: ["hydrophone"] }) } },
+      ],
+    });
+  });
+  const seen: AwardFilters[] = [];
+  const model = globalThis.fetch;
+  globalThis.fetch = async (url, init) => {
+    if (!String(url).includes("usaspending")) return model(url, init);
+    const filters = (JSON.parse(String(init?.body)) as { filters: AwardFilters }).filters;
+    seen.push(filters);
+    const answer = awardsFor(filters);
+    return answer instanceof Response ? answer : Response.json({ results: answer });
+  };
+  const result = await runScout({ ...PLAN, categories }, new RunBudget());
+  return { result, seen };
+}
+const rawAward = (id: string) => ({ generated_internal_id: id, Description: `[TEST] ${id}` });
+const NAICS = { scheme: "NAICS" as const, code: "334511", label: "test" };
+const PSC = { scheme: "PSC" as const, code: "5845", label: "test" };
+
+test("codes: each code gets its own search, plus one small keyword backup", async () => {
+  const { result, seen } = await scoutWithCodes([NAICS, PSC], (filters) => {
+    if (filters.naics_codes) return [rawAward("BY-NAICS")];
+    if (filters.psc_codes) return [rawAward("BY-PSC")];
+    return [rawAward("BY-KEYWORD")];
+  });
+  assert.ok(!seen.some((filters) => filters.naics_codes && filters.psc_codes), "both codes in one search returns almost nothing");
+  assert.deepEqual(seen.map((filters) => filters.naics_codes ?? filters.psc_codes ?? "none"), [["334511"], ["5845"], "none"]);
+  assert.deepEqual(result.records.map((record) => record.id), ["BY-NAICS", "BY-PSC", "BY-KEYWORD"]);
+  assert.ok(result.toolCalls.some((call) => call.includes("keyword backup")));
+});
+
+test("codes: if they find nothing, the same keywords run without them", async () => {
+  const { result } = await scoutWithCodes([NAICS], (filters) =>
+    filters.naics_codes ? [] : [rawAward("FALLBACK")],
+  );
+  assert.deepEqual(result.records.map((record) => record.id), ["FALLBACK"]);
+});
+
+test("codes: one failed code search still keeps the other's results", async () => {
+  const { result } = await scoutWithCodes([NAICS, PSC], (filters) =>
+    filters.naics_codes ? new Response("{}", { status: 500 }) : [rawAward("KEPT")],
+  );
+  assert.ok(result.records.some((record) => record.id === "KEPT"));
+  assert.equal(result.usaspendingSucceeded, true);
+});
+
+test("codes: malformed planner codes are ignored and no codes means no backup search", async () => {
+  const { seen, result } = await scoutWithCodes(
+    [{ scheme: "NAICS", code: "not a code", label: "test" }, { scheme: "PSC", code: "TOO-LONG", label: "test" }],
+    () => [rawAward("PLAIN")],
+  );
+  assert.equal(seen.length, 1);
+  assert.equal(seen[0].naics_codes, undefined);
+  assert.equal(seen[0].psc_codes, undefined);
+  assert.ok(!result.toolCalls.some((call) => call.includes("keyword backup")));
+});
+
+test("codes: a SAM PSC search sends ccode and keeps only exact matches", async () => {
+  process.env.SAM_API_KEY = "secret-test-key";
+  let requested = "";
+  const raw = (noticeId: string, classificationCode: string) => ({
+    noticeId,
+    title: `[TEST] ${noticeId}`,
+    type: "Solicitation",
+    active: "Yes",
+    uiLink: `https://sam.gov/workspace/contract/opp/${noticeId}/view`,
+    classificationCode,
+  });
+  globalThis.fetch = (async (url: string) => {
+    requested = String(url);
+    return Response.json({ opportunitiesData: [raw("MATCH", "5845"), raw("OTHER", "9999")] });
+  }) as typeof fetch;
+  const records = await searchNotices({ pscCode: "5845" });
+  assert.match(requested, /ccode=5845/);
+  assert.deepEqual(records.map((record) => record.id), ["MATCH"]);
 });
