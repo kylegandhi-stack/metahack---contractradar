@@ -50,7 +50,11 @@ If live sources fail but saved real records are usable, the route returns 200 wi
   - `record.recipient`: who won a USAspending award.
   - `result.priorAwards`: past USAspending awards from the same buyer, for open and early-stage notices. Each comes from a source record and is never inferred. `amount` is a historical obligation, never "available budget".
 - Missing facts are `null`. The UI shows "Unknown" or "Not provided".
-- `fitScore` is 0-100 relevance, not a win probability. `fitBreakdown` components are `null` when unknown.
+- `fitScore` is relevance points, not a win probability. `fitBreakdown` components are `null` when unknown.
+  - `fitMax` is optional and gives the points this record could earn, and `fitScore` is out of it. A historical award can't earn eligibility or timing, so it's out of 70, or 63 if the profile names no target agencies. A notice is out of 100, or 93. **Show the score as `fitScore / fitMax` when present, and never rescale it to 100.** Treat a missing `fitMax` as 100.
+  - `fitBreakdown.category` (0-20) is computed by code from the product term, target agency and recency. `execution` is computed from award size when the record has an amount and the profile states a company size, and otherwise comes from the model. `technical`, `eligibility` and notice `timing` come from the model, with code capping `technical` when it has no verbatim excerpt or the record names no search term.
+  - `fitSignals` is optional and lists the deterministic inputs, each with `points`, `max` and a `detail` to show. Award-size details are estimates.
+  - Equal scores are ordered by technical fit, category, newest date, then id, so the order is stable.
 - `reviewStatus` is set by deterministic code after the Devil's Advocate runs:
   - any verified `BLOCKER` gives `HOLD` (UI: "Hold / Do not pursue as presented")
   - else any `WARNING` gives `REVIEW_REQUIRED`

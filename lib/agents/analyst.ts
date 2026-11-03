@@ -5,8 +5,11 @@ import type { CompanyProfile, SourceRecord } from "../types";
 
 const AssessmentSchema = z.object({
   sourceId: z.string(),
-  technical: z.number().describe("0-40: how well the actual scope matches stated capabilities"),
-  category: z.number().describe("0-20: NAICS/PSC/buyer alignment"),
+  technical: z.number().describe("0-40, using the rubric"),
+  technicalExcerpt: z
+    .string()
+    .nullable()
+    .describe("Exact text copied from the record that supports the technical score, or null if none does"),
   eligibility: z.number().nullable().describe("0-20, null when unknown"),
   execution: z.number().nullable().describe("0-10: can a company this size perform it, null when unknown"),
   timing: z.number().nullable().describe("0-10, null when unknown or historical"),
@@ -20,7 +23,13 @@ const AnalystSchema = z.object({ assessments: z.array(AssessmentSchema) });
 
 const SYSTEM = `You are ContractRadar's Qualification Analyst. Assess each federal record against the company profile.
 Rules:
-- Score what the record actually says. A shared word in an unrelated scope gets a low technical score (below 12).
+- Score what the record actually says, using this technical rubric:
+  34-40: the record buys the exact product the company says it makes.
+  20-33: an adjacent part, a related product, or the same product in a different form.
+  13-19: the same field, but services, repair, support, software or research rather than making the product, unless the company says it does that work.
+  0-12: a keyword match only, in an unrelated scope.
+- Use the whole range. Records of different kinds should not get the same score.
+- technicalExcerpt must be text copied exactly from the record that supports the technical score. Use null if nothing does.
 - Use null for any component you cannot judge. Never guess requirements, clearances, or company experience.
 - evidence must be text copied exactly from the record's fields, with the field name.
 - whyMatched must only state what the evidence supports. uncertainties lists what you could not confirm.
@@ -86,6 +95,8 @@ export function keepVerified(assessments: Assessment[], records: SourceRecord[])
     const evidence = assessment.evidence.filter((entry) => isVerbatim(entry.text, record));
     valid.push({
       ...assessment,
+      // A citation that isn't really in the record counts as none, which caps the technical score.
+      technicalExcerpt: isVerbatim(assessment.technicalExcerpt, record) ? assessment.technicalExcerpt : null,
       evidence,
       // Reasoning with nothing verifiable behind it cannot be confident.
       confidence: evidence.length === 0 ? "low" : assessment.confidence,

@@ -68,16 +68,26 @@ export type AuditFinding = {
 // Each component is null when the input needed to score it is unknown.
 export type FitBreakdown = {
   technical: number | null; // 0-40
-  category: number | null; // 0-20
+  category: number | null; // 0-20. Computed by code: product term, target agency, recency
   eligibility: number | null; // 0-20
   execution: number | null; // 0-10
   timing: number | null; // 0-10
+};
+
+// One deterministic input to the fit score, for showing why a record scored as it did.
+export type FitSignal = {
+  signal: "product_term" | "target_agency" | "recency" | "award_size";
+  points: number;
+  max: number;
+  detail: string;
 };
 
 export type RankedResult = {
   record: SourceRecord;
   fitScore: number; // 0-100 relevance score, NOT a win probability. UI label: "Historical relevance" when kind = historical_award
   fitBreakdown?: FitBreakdown;
+  fitMax?: number; // points this record could earn. fitScore is out of this, never rescaled to 100
+  fitSignals?: FitSignal[];
   confidence: Confidence;
   eligibility: Eligibility;
   whyMatched: string[];

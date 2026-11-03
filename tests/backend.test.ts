@@ -27,7 +27,17 @@ import { computeMetrics, EvalFileSchema, parseCsv, scoreSheet } from "../lib/eva
 import { chatJson, MetaError, parseJsonOutput, RunBudget } from "../lib/meta";
 import { applyGates, capCriticWarnings, isVerbatim, statusFromFindings, verifyCriticFinding } from "../lib/review";
 import { ResearchResponseSchema, SourceRecordSchema } from "../lib/schemas";
-import { computeFit, finalConfidence } from "../lib/scoring";
+import {
+  agencySignal,
+  awardSizeSignal,
+  compareByFit,
+  companySize,
+  computeFit,
+  finalConfidence,
+  productSignal,
+  recencySignal,
+  scoreRecord,
+} from "../lib/scoring";
 import type { AuditFinding, CompanyProfile, RankedResult, SourceRecord } from "../lib/types";
 
 const NOW = Date.parse("2026-11-03T12:00:00Z");
@@ -84,7 +94,7 @@ function assessment(sourceId: string, overrides: Partial<Assessment> = {}): Asse
   return {
     sourceId,
     technical: 30,
-    category: 15,
+    technicalExcerpt: "[TEST] Hydrophone",
     eligibility: 10,
     execution: 5,
     timing: 5,
@@ -623,6 +633,97 @@ test("scoring clamps, keeps unknowns null, and historical never scores timing or
   assert.equal(finalConfidence("high", "HOLD"), "low");
   assert.equal(finalConfidence("high", "REVIEW_REQUIRED"), "medium");
   assert.equal(finalConfidence("low", "APPROVED"), "low");
+});
+
+const scoring = (overrides: Partial<SourceRecord> = {}) =>
+  award({ title: "[TEST] Hydrophone delivery order", description: "[TEST] Hydrophone delivery order", agency: "Department of Defense / Department of the Navy", postedAt: "2026-01-01", awardAmount: 2_000_000, ...overrides });
+const NAVY_PROFILE: CompanyProfile = { ...PROFILE, capabilities: "12-person maker of hydrophones and sensors.", targetAgencies: ["Department of the Navy"] };
+const SCORE = { technical: 36, technicalExcerpt: "[TEST] Hydrophone", execution: 2 };
+
+test("fit signals: an exact term in the title beats a description match, one word, or nothing", () => {
+  const points = (overrides: Partial<SourceRecord>, terms = ["hydrophone", "sonar", "acoustic sensor"]) =>
+    productSignal(scoring({ title: "[TEST] Order", description: null, ...overrides }), terms).points;
+  assert.equal(points({ title: "[TEST] DT-574 HYDROPHONES" }), 8);
+  assert.equal(points({ title: "[TEST] Acoustic sensor" }), 6);
+  assert.equal(points({ description: "[TEST] For a hydrophone" }), 4);
+  assert.equal(points({ title: "[TEST] Acoustic panel" }), 2);
+  assert.equal(points({ title: "[TEST] Microhydrophone mount" }), 0);
+});
+
+test("fit signals: target agency, including SAM.gov paths, and no targets means no points available", () => {
+  assert.equal(agencySignal(scoring(), NAVY_PROFILE)?.points, 7);
+  assert.equal(agencySignal(scoring({ agency: "DEPT OF DEFENSE.DEPT OF THE NAVY.NAVSUP" }), NAVY_PROFILE)?.points, 7);
+  assert.equal(agencySignal(scoring({ agency: "Department of Labor" }), NAVY_PROFILE)?.points, 0);
+  assert.equal(agencySignal(scoring(), PROFILE), null);
+});
+
+test("fit signals: newer records score higher, and a missing date scores nothing", () => {
+  const points = (postedAt: string | null) => recencySignal(scoring({ postedAt, excerpts: [] }), NOW).points;
+  assert.deepEqual([points("2026-01-01"), points("2023-06-01"), points("2021-06-01"), points("2015-01-01"), points(null)], [5, 3, 1, 0, 0]);
+});
+
+test("fit signals: award size is judged against company size, and needs both numbers", () => {
+  const points = (awardAmount: number | null) => awardSizeSignal(scoring({ awardAmount }), NAVY_PROFILE)?.points;
+  assert.deepEqual([points(3_000_000), points(9_000_000), points(30_000_000), points(30_000_001)], [10, 7, 4, 1]);
+  assert.equal(points(null), undefined);
+  assert.equal(awardSizeSignal(scoring(), PROFILE), null);
+  assert.equal(companySize({ ...PROFILE, capabilities: "A 1,200 employee maker of parts." }), 1200);
+});
+
+test("fit score: a past award is out of its available points and is never rescaled", () => {
+  const result = scoreRecord({ record: scoring(), profile: NAVY_PROFILE, terms: ["hydrophone"], assessment: SCORE, now: NOW });
+  assert.equal(result.fitMax, 70);
+  assert.deepEqual(result.fitBreakdown, { technical: 36, category: 20, eligibility: null, execution: 10, timing: null });
+  assert.equal(result.fitScore, 66);
+  const noTargets = scoreRecord({ record: scoring(), profile: PROFILE, terms: ["hydrophone"], assessment: SCORE, now: NOW });
+  assert.equal(noTargets.fitMax, 63);
+  const open = scoreRecord({ record: notice(), profile: NAVY_PROFILE, terms: ["hydrophone"], assessment: { ...SCORE, eligibility: 10, timing: 5 }, now: NOW });
+  assert.equal(open.fitMax, 100);
+  assert.equal(open.fitBreakdown.execution, 2);
+  assert.equal(open.fitBreakdown.timing, 5);
+});
+
+test("fit score: code caps a technical score with no citation or no named product", () => {
+  const score = (assessment: Parameters<typeof scoreRecord>[0]["assessment"], title = "[TEST] Hydrophone delivery order") =>
+    scoreRecord({ record: scoring({ title, description: null }), profile: NAVY_PROFILE, terms: ["hydrophone"], assessment, now: NOW }).fitBreakdown.technical;
+  assert.equal(score(SCORE), 36);
+  assert.equal(score({ technical: 36, technicalExcerpt: null }), 19);
+  assert.equal(score({ technical: 40, technicalExcerpt: "[TEST] Velocity logger" }, "[TEST] Velocity logger"), 33);
+  assert.equal(score({ technical: null }), null);
+});
+
+test("analyst: a citation that isn't in the record is dropped, which caps the score", () => {
+  const record = scoring();
+  const [kept] = keepVerified([assessment(record.id, { technicalExcerpt: "Not in the record at all" })], [record]);
+  assert.equal(kept.technicalExcerpt, null);
+  const [real] = keepVerified([assessment(record.id, { technicalExcerpt: "Hydrophone delivery" })], [record]);
+  assert.equal(real.technicalExcerpt, "Hydrophone delivery");
+});
+
+test("ranking: equal scores always order the same way, whatever order they arrive in", () => {
+  const item = (id: string, fitScore: number, technical: number, category: number, postedAt: string) => ({
+    fitScore,
+    fitBreakdown: { technical, category, eligibility: null, execution: null, timing: null },
+    record: { id, postedAt },
+  });
+  const expected = [
+    item("HIGH", 60, 30, 10, "2020-01-01"),
+    item("TECH", 50, 38, 10, "2020-01-01"),
+    item("CAT", 50, 30, 18, "2020-01-01"),
+    item("NEW", 50, 30, 10, "2026-01-01"),
+    item("A", 50, 30, 10, "2020-01-01"),
+    item("B", 50, 30, 10, "2020-01-01"),
+  ];
+  const ids = (list: typeof expected) => [...list].sort(compareByFit).map((entry) => entry.record.id);
+  assert.deepEqual(ids([...expected].reverse()), expected.map((entry) => entry.record.id));
+  assert.deepEqual(ids(expected), ids([...expected].reverse()));
+});
+
+test("results carry fitMax and fitSignals through the pipeline and schema", async () => {
+  const response = await runResearch(NAVY_PROFILE, { deps: fakeDeps([scoring()]) });
+  const [result] = response.results;
+  assert.equal(result.fitMax, 70);
+  assert.ok(result.fitSignals?.some((signal) => signal.signal === "award_size"));
 });
 
 test("the Devil's Advocate prompt matches the runbook apart from its intended changes", () => {

@@ -28,6 +28,11 @@ export type EvalMetrics = {
   expiredNotices: number;
   expiredOnHold: number;
   expiredHoldRate: number | null;
+  // Whether the score separates results: top 10 only.
+  topScore: number | null;
+  bottomScore: number | null;
+  distinctScores: number;
+  tiedResults: number;
 };
 
 export function computeMetrics(file: EvalFile, results: RankedResult[], now: number): EvalMetrics {
@@ -49,6 +54,7 @@ export function computeMetrics(file: EvalFile, results: RankedResult[], now: num
     return !Number.isNaN(deadline) && deadline <= now;
   });
   const expiredOnHold = expired.filter((result) => result.reviewStatus === "HOLD").length;
+  const scores = results.slice(0, 10).map((result) => result.fitScore);
   return {
     precisionAt5: top5Labeled > 0 ? top5Relevant / top5Labeled : null,
     top5Labeled,
@@ -60,6 +66,10 @@ export function computeMetrics(file: EvalFile, results: RankedResult[], now: num
     expiredNotices: expired.length,
     expiredOnHold,
     expiredHoldRate: expired.length > 0 ? expiredOnHold / expired.length : null,
+    topScore: scores.length > 0 ? Math.max(...scores) : null,
+    bottomScore: scores.length > 0 ? Math.min(...scores) : null,
+    distinctScores: new Set(scores).size,
+    tiedResults: scores.filter((score) => scores.indexOf(score) !== scores.lastIndexOf(score)).length,
   };
 }
 
