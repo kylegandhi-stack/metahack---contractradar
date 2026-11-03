@@ -7,7 +7,7 @@ const sans = localFont({ src: "./fonts/Geist-Variable.woff2", variable: "--font-
 const mono = localFont({ src: "./fonts/GeistMono-Variable.woff2", variable: "--font-geist-mono", weight: "100 900", display: "swap" });
 
 export const metadata: Metadata = {
-  title: "ContractRadar",
+  title: "Rauros Systems — Procurement Intelligence",
   description: "Agentic federal contracting intelligence for small defense-industry suppliers.",
 };
 

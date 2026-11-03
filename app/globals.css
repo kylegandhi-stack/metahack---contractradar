@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* ContractRadar — defense-tech HUD. Near-black, white type, mono labels, hairlines, square corners.
+/* Rauros Systems — defense-tech HUD. Near-black, white type, mono labels, hairlines, square corners.
    Color is reserved for signal: red = blocker/hold, amber = warning, green = clear. */
 :root {
   --background: #050506;

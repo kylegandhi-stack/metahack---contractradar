@@ -48,7 +48,7 @@ function TopBar({ sampleMode, dataMode }: { sampleMode: boolean; dataMode?: "liv
       <div className="mx-auto flex h-12 max-w-[1400px] items-stretch justify-between px-4 sm:px-6">
         <div className="flex items-center gap-2.5">
           <RadarMark />
-          <span className="font-mono text-[13px] font-medium uppercase tracking-[0.22em]">ContractRadar</span>
+          <span className="font-mono text-[13px] uppercase tracking-[0.22em]"><span className="font-semibold">Rauros</span> <span className="text-muted">Systems</span></span>
         </div>
         <div className="flex items-stretch">
           <span className={item}><span className="label">Sys</span><span className="size-1.5 bg-clear blink" aria-hidden /><span className="font-mono text-[11px] uppercase tracking-[0.12em]">Online</span></span>
