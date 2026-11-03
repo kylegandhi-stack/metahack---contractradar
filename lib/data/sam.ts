@@ -100,6 +100,7 @@ export function normalizeNotice(raw: RawNotice, retrievedAt: string): SourceReco
   addExcerpt("typeOfSetAsideDescription", raw.typeOfSetAsideDescription);
   addExcerpt("typeOfSetAside", raw.typeOfSetAside);
   addExcerpt("naicsCode", raw.naicsCode);
+  addExcerpt("classificationCode", raw.classificationCode);
   addExcerpt("fullParentPathName", raw.fullParentPathName);
 
   return {

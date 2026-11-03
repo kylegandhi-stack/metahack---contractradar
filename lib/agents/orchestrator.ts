@@ -19,12 +19,14 @@ import type {
   AgentStep,
   AuditFinding,
   CompanyProfile,
+  PriorAward,
   RankedResult,
   ResearchResponse,
   SourceRecord,
 } from "../types";
 import { loadSamSnapshot, type ProfileSnapshot } from "../data/snapshot";
 import { verifyRecords } from "../data/verify";
+import { findBuyerHistory } from "../data/buyer-history";
 import { runAnalyst, type Assessment } from "./analyst";
 import { runDevilsAdvocate, type CriticVerdict } from "./devils-advocate";
 import { runPlanner, type ResearchPlan } from "./planner";
@@ -50,6 +52,7 @@ export type PipelineDeps = {
   describe: typeof describeNotices;
   loadSnapshot: typeof loadSamSnapshot;
   verify: typeof verifyRecords;
+  history: typeof findBuyerHistory;
   loadCache: () => CachedRecords | null;
   samConfigured: () => boolean;
   now: () => number;
@@ -66,6 +69,7 @@ const defaultDeps: PipelineDeps = {
   describe: describeNotices,
   loadSnapshot: loadSamSnapshot,
   verify: verifyRecords,
+  history: findBuyerHistory,
   loadCache: loadVerifiedRecords,
   samConfigured: isSamConfigured,
   now: Date.now,
@@ -128,9 +132,10 @@ export function buildResult(args: {
   pick: Pick | undefined;
   extraFindings: AuditFinding[];
   critic?: AuditFinding[];
+  priorAwards?: PriorAward[];
   now: number;
 }): RankedResult {
-  const { record, profile, assessment, pick, extraFindings, critic = [], now } = args;
+  const { record, profile, assessment, pick, extraFindings, critic = [], priorAwards, now } = args;
   const { fitBreakdown, fitScore } = computeFit(assessment ?? {}, record.kind);
   const gate = applyGates(record, profile, fitBreakdown.technical, now);
   const uncertainties: AuditFinding[] = (assessment?.uncertainties ?? []).slice(0, 3).map((issue) => ({
@@ -159,6 +164,7 @@ export function buildResult(args: {
     nextSteps: cleanNextSteps(record, pick?.nextSteps ?? ["Open the source record and verify scope."]),
     findings,
     reviewStatus,
+    ...(priorAwards?.length ? { priorAwards } : {}),
   };
 }
 
@@ -373,9 +379,11 @@ export async function runResearch(
 
   // The critic should judge the real scope, so shortlisted SAM notices get their text first.
   const shortlisted = shortlist.slice(0, SHORTLIST_SIZE);
-  const [described, identity] = await Promise.all([
+  const shortlistedRecords = assessed.filter((record) => shortlisted.some((pick) => pick.sourceId === record.id));
+  const [described, identity, buyerHistory] = await Promise.all([
     addNoticeDescriptions(assessed, shortlisted, deps, scout.samFailure, deps.loadSnapshot(profile.name)),
-    deps.verify(assessed.filter((record) => shortlisted.some((pick) => pick.sourceId === record.id))),
+    deps.verify(shortlistedRecords),
+    deps.history(shortlistedRecords),
   ]);
   const verdicts = await stage(
     "devils_advocate",
@@ -427,6 +435,7 @@ export async function runResearch(
         pick,
         extraFindings: reviewed ? [] : findings,
         critic: reviewed ? findings : [],
+        priorAwards: buyerHistory.get(pick.sourceId),
         now,
       });
     })
