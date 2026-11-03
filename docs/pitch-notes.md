@@ -2,7 +2,7 @@
 
 For Builder 2, who records the video.
 
-**Length:** the submission needs a **3-minute** video, per Santiago. The runbook still plans 90 seconds in several places, and this file replaces that plan. The official rules aren't in this repo, so please confirm the limit on the submission page before recording.
+**Length:** the demo video can be **at most 3 minutes**, confirmed by Santiago from the submission page. This script runs **about 2:45**, so there's a buffer. Count any title card or end screen toward the limit. The runbook's 90-second plan is out of date, and this file replaces it.
 
 ## Before you record
 
@@ -25,19 +25,19 @@ The preferred record has also been one of the highest fit scores, 74-84 across r
 
 ## The 3-minute script
 
-About 325 spoken words, which fits at a calm pace.
+About 290 spoken words, with room for clicks. Time a full read before recording. If a take runs long, cut the source-link click first, not the HOLD segment.
 
 | Time | On screen and what to click | What to say |
 |---|---|---|
-| **0:00-0:20** | Home page, headline visible | "A small defense supplier can lose a week writing a proposal for a contract it was never going to win. Rauros Systems is an AI business-development team that finds federal opportunities, and then argues against them before you spend that week." |
-| **0:20-0:40** | Click **Load demo: AquaVector Systems**. Pause on the form | "AquaVector is a fictional 12-person maker of hydrophones and underwater sensors. It's a demo company, but everything you'll see next is a real federal record." |
-| **0:40-1:05** | Click **Run research**. Show **Agents running**. Cut, and put "wait shortened" on screen | "Five agents run on Meta's Muse Spark 1.3. A Planner picks search terms and codes. A Scout chooses real searches on USAspending and SAM.gov. An Analyst scores each record, a Strategist picks the top five, and a Devil's Advocate tries to break those picks. A run takes about a minute, so we've shortened the wait." |
-| **1:05-1:40** | Show the ranked results. Scroll through the top 5, pointing at the **Open notice** and **Historical award** labels and each status | "These are ranked real records, each linked to its source. Open notices are kept apart from past awards, because a past award isn't something you can bid on. The score is relevance, not a chance of winning. **[Name the top result, what it is and when it's due.]** Every result gets a status, and code sets it, not the model." |
-| **1:40-2:20** | Find the HOLD result with the **Expired** badge. Click it. Hold on **Expired — response deadline passed** | "Here's the one that matters. **[Read the title.]** It looks like a great fit for AquaVector, and SAM.gov still lists it as active. But the response deadline was **[read the date]**. The app puts it on hold, explains why, and says it may still help identify the buyer for a re-solicitation. Without this check, that's a week spent on a bid that can't be accepted." |
-| **2:20-2:40** | Scroll to **Red team findings**, then **Evidence · verbatim from source**. Click the source link in **Source record** to show the real page | "The critic's findings sit next to the source's own words. If the model claims a contradiction it can't back with text from the record, code downgrades it. You can always check the official record yourself." |
-| **2:40-3:00** | Back to the results, then the **Red team** panel | "It finds opportunities, and it also tells you what not to pursue, and why. It makes recommendations, not eligibility or legal decisions, and a person still checks every requirement. That's Rauros Systems: built during this hackathon, with Muse Spark 1.3 running all five agents." |
+| **0:00-0:18** | Home page, headline visible | "A small defense supplier can lose a week on a proposal it was never going to win. Rauros Systems is an AI business-development team that finds federal opportunities, then argues against them before you spend that week." |
+| **0:18-0:35** | Click **Load demo: AquaVector Systems**. Pause on the form | "AquaVector is a fictional 12-person maker of hydrophones and underwater sensors. It's a demo company, but everything you'll see next is a real federal record." |
+| **0:35-1:00** | Click **Run research**. Show **Agents running**. Cut, and put "wait shortened" on screen | "Five agents run on Meta's Muse Spark 1.3. A Planner picks search terms. A Scout chooses real searches on USAspending and SAM.gov. An Analyst scores each record, a Strategist picks the top five, and a Devil's Advocate tries to break those picks. We've shortened the wait." |
+| **1:00-1:32** | Show the ranked results. Scroll through the top 5, pointing at the **Open notice** and **Historical award** labels and each status | "These are real records, each linked to its source. Open notices are labeled apart from past awards, which you can't bid on. The score is relevance, not a chance of winning. **[Name the top result and when it's due.]** Every status is set by code, not the model." |
+| **1:32-2:07** | Find the HOLD result with the **Expired** badge. Click it. Hold on **Expired — response deadline passed** | "Here's the one that matters. **[Read the title.]** It looks like a great fit, and SAM.gov still lists it as active. But the response deadline was **[read the date]**. The app puts it on hold, explains why, and notes it may still help identify the buyer. Without this check, that's a week spent on a bid that can't be accepted." |
+| **2:07-2:27** | Scroll to **Red team findings**, then **Evidence · verbatim from source**. Click the source link in **Source record** to show the real page | "The critic's findings sit beside the source's own words. If the model claims a contradiction it can't back with text from the record, code downgrades it. And you can always open the official record." |
+| **2:27-2:45** | Back to the results, then the **Red team** panel | "It tells you what to pursue, what not to, and why. It makes recommendations, not legal or eligibility decisions. That's Rauros Systems, built during this hackathon, with Muse Spark 1.3 running all five agents." |
 
-**Optional if **Buyer history** has entries on the result you open:** "These are past similar awards from this buyer." Don't call anyone the incumbent.
+**Optional, only if the take is running short and **Buyer history** has entries on the result you open:** "These are past similar awards from this buyer." Don't call anyone the incumbent.
 
 ### Don't say
 - "Guaranteed", "you will win", or any chance of winning. The fit score isn't one.
