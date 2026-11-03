@@ -5,6 +5,7 @@ import type { CompanyProfile, RankedResult, ResearchResponse, SourceKind } from 
 import sample from "@/data/sample-research-response.json";
 import { AgentActivity } from "./AgentActivity";
 import { FindingsPanel } from "./FindingsPanel";
+import { HeroBackdrop, HeroCredit } from "./HeroBackdrop";
 import { OpportunityCard } from "./OpportunityCard";
 import { OpportunityDetail } from "./OpportunityDetail";
 import { ProfileForm } from "./ProfileForm";
@@ -43,7 +44,7 @@ function RadarMark() {
 function TopBar({ sampleMode, dataMode }: { sampleMode: boolean; dataMode?: "live" | "cached" }) {
   const item = "hidden items-center gap-2 border-l border-line px-4 md:flex";
   return (
-    <div className="sticky top-0 z-30 border-b border-line bg-background/85 backdrop-blur">
+    <div className="sticky top-0 z-30 border-b border-line bg-background/70 backdrop-blur-md">
       <div className="mx-auto flex h-12 max-w-[1400px] items-stretch justify-between px-4 sm:px-6">
         <div className="flex items-center gap-2.5">
           <RadarMark />
@@ -132,9 +133,10 @@ export function Dashboard({ sampleMode }: { sampleMode: boolean }) {
   return (
     <>
       <TopBar sampleMode={sampleMode} dataMode={data?.dataMode} />
-      <main className="mx-auto w-full max-w-[1400px] flex-1 px-4 sm:px-6">
-        {/* Hero */}
-        <section className="grid gap-10 border-b border-line py-12 sm:py-16 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:gap-14">
+      {/* Hero: full-bleed imagery behind a max-width content grid */}
+      <div className="relative isolate border-b border-line">
+        <HeroBackdrop />
+        <section className="mx-auto grid max-w-[1400px] gap-10 px-4 pb-8 pt-12 sm:px-6 sm:pt-16 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:gap-14">
           <div className="flex flex-col justify-between gap-8">
             <div>
               <p className="label"><span className="text-signal">{"//"}</span> Federal procurement intelligence</p>
@@ -158,7 +160,11 @@ export function Dashboard({ sampleMode }: { sampleMode: boolean }) {
             </ol>
           </div>
           <ProfileForm onSubmit={run} loading={state.phase === "loading"} />
+          <div className="lg:col-span-2"><HeroCredit /></div>
         </section>
+      </div>
+
+      <main className="mx-auto w-full max-w-[1400px] flex-1 px-4 sm:px-6">
 
         {state.phase === "loading" && (
           <section role="status" className="hud relative mt-8 overflow-hidden p-6">

@@ -142,3 +142,25 @@ body::before {
     animation: none;
   }
 }
+
+/* Hero imagery: grayscale, high-contrast, slow crossfade + drift (18 s cycle, 2 frames) */
+.hero-frame {
+  filter: grayscale(1) contrast(1.25) brightness(0.75);
+  opacity: 0;
+  transform: scale(1.06);
+  animation: hero-cycle 18s ease-in-out infinite;
+}
+@keyframes hero-cycle {
+  0% { opacity: 0; transform: scale(1.06); }
+  8% { opacity: 1; }
+  50% { opacity: 1; }
+  58% { opacity: 0; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1); }
+}
+.hero-scanlines {
+  background: repeating-linear-gradient(to bottom, rgb(0 0 0 / 0.28) 0px, rgb(0 0 0 / 0.28) 1px, transparent 1px, transparent 3px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-frame { animation: none; transform: none; opacity: 0; }
+  .hero-frame:first-child { opacity: 1; }
+}
