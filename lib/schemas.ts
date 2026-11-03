@@ -84,6 +84,17 @@ export const RankedResultSchema = z.object({
       timing: component(10),
     })
     .optional(),
+  fitMax: z.number().min(0).max(100).optional(),
+  fitSignals: z
+    .array(
+      z.object({
+        signal: z.enum(["product_term", "target_agency", "recency", "award_size"]),
+        points: z.number().min(0),
+        max: z.number().min(0),
+        detail: z.string(),
+      }),
+    )
+    .optional(),
   confidence: z.enum(["low", "medium", "high"]),
   eligibility: z.enum(["meets_known_requirements", "needs_verification", "known_blocker"]),
   whyMatched: z.array(z.string()),

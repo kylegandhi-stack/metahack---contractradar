@@ -51,11 +51,12 @@ for (const name of files) {
     console.log(`  precision@5: ${percent(m.precisionAt5)} (${m.top5Relevant} relevant of ${m.top5Labeled} labeled; ${m.top5Unlabeled} unlabeled in top 5, not counted)`);
     console.log(`  recall@10: ${percent(m.recallAt10)} (${m.relevantFoundIn10} of ${m.relevantTotal} known relevant in top 10)`);
     console.log(`  expired notices on HOLD: ${percent(m.expiredHoldRate)} (${m.expiredOnHold} of ${m.expiredNotices})`);
+    console.log(`  score spread, top 10: ${m.topScore} to ${m.bottomScore}, ${m.distinctScores} distinct, ${m.tiedResults} tied`);
     const buyers = new Set(response.results.map((result) => (result.record.agency ?? "unknown").split(" / ")[0]));
     console.log(`  buyers in results: ${[...buyers].join("; ")}`);
     for (const result of response.results.slice(0, 5)) {
       const entry = file.labels?.find((label) => label.id === result.record.id);
-      console.log(`    ${(entry?.label ?? "unlabeled").padEnd(12)} ${result.fitScore} ${result.record.title.slice(0, 60)}`);
+      console.log(`    ${(entry?.label ?? "unlabeled").padEnd(12)} ${result.fitScore}/${result.fitMax ?? 100} ${result.record.title.slice(0, 60)}`);
     }
     // Ids to hand to a person for labeling. Labels never come from this script.
     const known = new Set([...(file.labels ?? []).map((label) => label.id), ...(file.relevantIds ?? []), ...(file.notRelevantIds ?? [])]);

@@ -77,7 +77,7 @@ const shortlist = seeded.map((entry) => ({
 const assessments = records.map((entry) => ({
   sourceId: entry.id,
   technical: 38,
-  category: 18,
+  technicalExcerpt: null,
   eligibility: 18,
   execution: 9,
   timing: 9,

@@ -13,7 +13,7 @@ import {
   verifyCriticFinding,
 } from "../review";
 import { ResearchResponseSchema } from "../schemas";
-import { computeFit, finalConfidence } from "../scoring";
+import { compareByFit, finalConfidence, scoreRecord } from "../scoring";
 import type {
   AgentEvent,
   AgentStep,
@@ -36,6 +36,7 @@ import { reviseShortlist, runStrategist, SHORTLIST_SIZE, type Pick } from "./str
 export const RUN_CAP_MS = 105_000;
 const MAX_ANALYSES = 12;
 const MAX_RESULTS = 10;
+const STRATEGIST_POOL = 8;
 const REVISION_CUTOFF_MS = 50_000;
 const BID_LANGUAGE = /\b(apply|bid|submit|respond|response|proposal|quote)\b/i;
 const HISTORICAL_DEFAULT_STEP =
@@ -164,10 +165,17 @@ export function buildResult(args: {
   extraFindings: AuditFinding[];
   critic?: AuditFinding[];
   priorAwards?: PriorAward[];
+  terms: string[];
   now: number;
 }): RankedResult {
-  const { record, profile, assessment, pick, extraFindings, critic = [], priorAwards, now } = args;
-  const { fitBreakdown, fitScore } = computeFit(assessment ?? {}, record.kind);
+  const { record, profile, assessment, pick, extraFindings, critic = [], priorAwards, terms, now } = args;
+  const { fitBreakdown, fitScore, fitMax, fitSignals } = scoreRecord({
+    record,
+    profile,
+    terms,
+    assessment: assessment ?? {},
+    now,
+  });
   const gate = applyGates(record, profile, fitBreakdown.technical, now);
   const uncertainties: AuditFinding[] = (assessment?.uncertainties ?? []).slice(0, 3).map((issue) => ({
     severity: "NOTE",
@@ -188,6 +196,8 @@ export function buildResult(args: {
     record,
     fitScore,
     fitBreakdown,
+    fitMax,
+    fitSignals,
     confidence: finalConfidence(assessment?.confidence ?? "low", reviewStatus),
     eligibility: gate.eligibility,
     whyMatched: [...(pick ? [pick.rationale] : []), ...(assessment?.whyMatched ?? [])],
@@ -420,10 +430,21 @@ async function executeRun(
     assessments.some((assessment) => assessment.sourceId === record.id),
   );
 
+  // The Strategist chooses from the best-scoring records, in score order, so scores decide who can
+  // be shortlisted. It adds judgment within that pool.
+  const assessmentFor = new Map(assessments.map((assessment) => [assessment.sourceId, assessment]));
+  const pool = assessed
+    .map((record) => ({
+      record,
+      ...scoreRecord({ record, profile, terms: plan.searchTerms, assessment: assessmentFor.get(record.id) ?? {}, now: deps.now() }),
+    }))
+    .sort(compareByFit)
+    .slice(0, STRATEGIST_POOL)
+    .map((entry) => entry.record);
   let shortlist = await stage(
     "strategist",
     "Choosing the shortlist and next steps",
-    () => deps.strategize(profile, assessed, assessments, budget),
+    () => deps.strategize(profile, pool, assessments, budget),
     (value) => `Shortlisted ${value.length} records.`,
   );
 
@@ -486,6 +507,7 @@ async function executeRun(
         extraFindings: reviewed ? [] : findings,
         critic: reviewed ? findings : [],
         priorAwards: buyerHistory.get(pick.sourceId),
+        terms: plan.searchTerms,
         now,
       });
     })
@@ -494,7 +516,7 @@ async function executeRun(
   // HOLD results stay visible below the rest.
   picked.sort(
     (a, b) =>
-      Number(a.reviewStatus === "HOLD") - Number(b.reviewStatus === "HOLD") || b.fitScore - a.fitScore,
+      Number(a.reviewStatus === "HOLD") - Number(b.reviewStatus === "HOLD") || compareByFit(a, b),
   );
 
   const pickedIds = new Set(picked.map((result) => result.record.id));
@@ -516,10 +538,11 @@ async function executeRun(
             correctiveAction: "Needs verification against the source record.",
           },
         ],
+        terms: plan.searchTerms,
         now,
       }),
     )
-    .sort((a, b) => b.fitScore - a.fitScore);
+    .sort(compareByFit);
 
   const results = [...picked, ...others].slice(0, MAX_RESULTS);
   return base(results);
