@@ -72,6 +72,7 @@ export type ScoutResult = {
   usaspendingFailure: string | null;
   usaspendingSucceeded: boolean;
   samFailure: string | null;
+  samThrottled: boolean; // SAM.gov answered 429, so its quota is spent
   modelDirected: boolean;
 };
 
@@ -82,6 +83,7 @@ export async function runScout(plan: ResearchPlan, budget: RunBudget): Promise<S
   let usaspendingFailure: string | null = null;
   let usaspendingSucceeded = false;
   let samFailure: string | null = null;
+  let samThrottled = false;
   let samCalls = 0;
   const codesFor = (scheme: "NAICS" | "PSC", valid: RegExp) =>
     plan.categories.filter((c) => c.scheme === scheme && valid.test(c.code.trim())).map((c) => c.code.trim());
@@ -160,6 +162,7 @@ export async function runScout(plan: ResearchPlan, budget: RunBudget): Promise<S
       } catch (error) {
         if (!(error instanceof SamError)) throw error;
         samFailure = error.message;
+        samThrottled ||= error.status === 429;
         return { error: error.message };
       }
     }
@@ -238,6 +241,7 @@ export async function runScout(plan: ResearchPlan, budget: RunBudget): Promise<S
     usaspendingFailure,
     usaspendingSucceeded,
     samFailure,
+    samThrottled,
     modelDirected,
   };
 }

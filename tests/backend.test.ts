@@ -11,6 +11,7 @@ import type { ResearchPlan } from "../lib/agents/planner";
 import type { ScoutResult } from "../lib/agents/scout";
 import { clearScoutMemo, MAX_TOOL_TURNS, runScout } from "../lib/agents/scout";
 import { loadVerifiedRecords } from "../lib/data/cache";
+import { loadSamSnapshot } from "../lib/data/snapshot";
 import {
   classifyNotice,
   clearDescriptionMemo,
@@ -100,6 +101,7 @@ function scoutWith(records: SourceRecord[], overrides: Partial<ScoutResult> = {}
     usaspendingFailure: null,
     usaspendingSucceeded: true,
     samFailure: null,
+    samThrottled: false,
     modelDirected: true,
     ...overrides,
   };
@@ -117,6 +119,7 @@ function fakeDeps(records: SourceRecord[], overrides: Partial<PipelineDeps> = {}
       shortlist.map((pick) => ({ sourceId: pick.sourceId, verdict: "Checked", noneFound: true, findings: [] })),
     enrich: async (record) => record,
     describe: async () => ({ texts: new Map(), unavailable: [], shortened: [] }),
+    loadSnapshot: () => null,
     samConfigured: () => true,
     now: () => NOW,
     ...overrides,
@@ -988,4 +991,100 @@ test("codes: a SAM PSC search sends ccode and keeps only exact matches", async (
   const records = await searchNotices({ pscCode: "5845" });
   assert.match(requested, /ccode=5845/);
   assert.deepEqual(records.map((record) => record.id), ["MATCH"]);
+});
+
+const SAVED = {
+  retrievedAt: "2026-11-03T23:00:00.000Z",
+  records: [notice({ id: "SAVED-NOTICE", retrievedAt: "2026-11-03T23:00:00.000Z" })],
+  descriptions: { "SAVED-NOTICE": "Saved scope text" },
+  shortened: [],
+};
+
+test("snapshot: a 429 uses saved notices, labeled, with live awards and saved text", async () => {
+  const response = await runResearch(PROFILE, {
+    deps: fakeDeps([award()], {
+      scout: async () => scoutWith([award()], { samFailure: "SAM.gov returned HTTP 429", samThrottled: true }),
+      loadSnapshot: () => SAVED,
+    }),
+  });
+  assert.equal(response.dataMode, "cached");
+  assert.deepEqual(response.cachedSources, ["sam"]);
+  assert.ok(response.warnings.some((warning) => warning.includes("saved SAM.gov notices") && warning.includes(SAVED.retrievedAt)));
+  const saved = response.results.find((result) => result.record.id === "SAVED-NOTICE");
+  assert.equal(saved?.record.retrievedAt, SAVED.retrievedAt);
+  assert.equal(saved?.record.description, "Saved scope text");
+  assert.ok(response.results.some((result) => result.record.id === award().id));
+});
+
+test("snapshot: a missing key uses it too, and live awards are still confirmed at the source", async () => {
+  let enriched = 0;
+  const response = await runResearch(PROFILE, {
+    deps: fakeDeps([award()], {
+      samConfigured: () => false,
+      loadSnapshot: () => SAVED,
+      enrich: async (record) => {
+        enriched += 1;
+        return record;
+      },
+    }),
+  });
+  assert.deepEqual(response.cachedSources, ["sam"]);
+  assert.equal(enriched, 1);
+  assert.ok(!response.warnings.some((warning) => warning.includes("historical awards only")));
+});
+
+test("snapshot: a stale saved notice past its deadline is still HOLD", async () => {
+  const stale = { ...SAVED, records: [notice({ id: "STALE", deadlineAt: "2026-01-15T17:00:00-05:00" })], descriptions: {} };
+  const response = await runResearch(PROFILE, {
+    deps: fakeDeps([], { samConfigured: () => false, loadSnapshot: () => stale }),
+  });
+  assert.equal(response.results[0].reviewStatus, "HOLD");
+});
+
+test("snapshot: other SAM errors, a working SAM and other profiles do not use it", async () => {
+  const other = await runResearch(PROFILE, {
+    deps: fakeDeps([award()], {
+      scout: async () => scoutWith([award()], { samFailure: "SAM.gov returned HTTP 500" }),
+      loadSnapshot: () => SAVED,
+    }),
+  });
+  assert.equal(other.dataMode, "live");
+  assert.equal(other.cachedSources, undefined);
+  assert.ok(other.warnings.some((warning) => warning.includes("HTTP 500")));
+
+  const working = await runResearch(PROFILE, {
+    deps: fakeDeps([notice()], { loadSnapshot: () => SAVED }),
+  });
+  assert.equal(working.dataMode, "live");
+  assert.ok(!working.results.some((result) => result.record.id === "SAVED-NOTICE"));
+
+  assert.equal(loadSamSnapshot("[TEST] A profile with no capture"), null);
+  const unknown = await runResearch(PROFILE, {
+    deps: fakeDeps([award()], {
+      samConfigured: () => false,
+      loadSnapshot: loadSamSnapshot,
+    }),
+  });
+  assert.equal(unknown.dataMode, "live");
+  assert.ok(unknown.warnings.some((warning) => warning.includes("historical awards only")));
+});
+
+test("snapshot: a live notice wins over its saved copy, and a failed description fetch uses saved text", async () => {
+  const live = notice({ id: "SAVED-NOTICE", title: "[TEST] Live title" });
+  const response = await runResearch(PROFILE, {
+    deps: fakeDeps([live], {
+      scout: async () => scoutWith([live], { samFailure: "SAM.gov returned HTTP 429", samThrottled: true }),
+      loadSnapshot: () => SAVED,
+    }),
+  });
+  assert.equal(response.results[0].record.title, "[TEST] Live title");
+
+  const partial = await runResearch(PROFILE, {
+    deps: fakeDeps([notice({ id: "SAVED-NOTICE" })], {
+      describe: async (targets) => ({ texts: new Map(), unavailable: targets.map((record) => record.id), shortened: [] }),
+      loadSnapshot: () => SAVED,
+    }),
+  });
+  assert.equal(partial.dataMode, "live");
+  assert.equal(partial.results[0].record.description, "Saved scope text");
 });
