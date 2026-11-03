@@ -1,20 +1,23 @@
 "use client";
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { Loader2, Mic, Square } from "lucide-react";
+import { Mic } from "lucide-react";
 import type { VoiceProfile } from "@/lib/voice";
 import { cn } from "./format";
-import { CAPTURE_WORKLET, concatFrames, encodeWav, resampleTo } from "./wav";
+import { VoiceEngine } from "./voice-engine";
+import { VoiceOrb, type OrbState } from "./VoiceOrb";
+import { encodeWav, resampleTo } from "./wav";
 
-const MAX_SECONDS = 20;
-const MIN_SECONDS = 0.6;
 const REQUEST_TIMEOUT_MS = 60_000;
+const MIN_PHRASE_SECONDS = 0.5;
 
-type Phase = "idle" | "starting" | "listening" | "processing" | "error";
-
-const noopSubscribe = () => () => {};
-// Module-level clock: event-handler timing only, kept out of the component body for the purity lint.
-const now = () => performance.now();
+// Support can only be known in the browser. Subscribing fires one callback right after hydration, so React
+// re-reads the snapshot and shows the controls. A no-op subscribe left the server's `false` in place on the
+// prerendered page.
+const subscribeOnce = (onChange: () => void) => {
+  const id = window.setTimeout(onChange, 0);
+  return () => window.clearTimeout(id);
+};
 function detectSupport() {
   return (
     typeof window !== "undefined" &&
@@ -25,12 +28,37 @@ function detectSupport() {
   );
 }
 
-async function readError(res: Response): Promise<string> {
+type VoiceResponse =
+  | { wake: false }
+  | { wake: true; needsCommand: true }
+  | { wake?: true; transcript: string; profile: VoiceProfile };
+
+async function sendPhrase(samples: Float32Array, rate: number, mode: "wake" | "command"): Promise<VoiceResponse> {
+  const wav = encodeWav(await resampleTo(samples, rate));
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), REQUEST_TIMEOUT_MS);
   try {
-    const body = await res.json();
-    if (body?.error?.message) return body.error.message;
-  } catch { /* not JSON */ }
-  return `Voice input failed (HTTP ${res.status}).`;
+    const res = await fetch(`/api/voice-profile?mode=${mode}`, {
+      method: "POST",
+      headers: { "Content-Type": "audio/wav" },
+      body: wav as BlobPart,
+      signal: ctrl.signal,
+    });
+    if (!res.ok) {
+      let message = `Voice input failed (HTTP ${res.status}).`;
+      try {
+        const body = await res.json();
+        if (body?.error?.message) message = body.error.message;
+      } catch { /* not JSON */ }
+      throw new Error(message);
+    }
+    return (await res.json()) as VoiceResponse;
+  } catch (e) {
+    if (e instanceof DOMException && e.name === "AbortError") throw new Error("Voice input took too long. Please try again.");
+    throw e;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 type Props = {
@@ -39,157 +67,201 @@ type Props = {
 };
 
 /**
- * "Hey Rauros": click to talk, click again (or wait 20 s) to stop. Audio is captured in the browser, resampled
- * to 16 kHz mono WAV, and sent to /api/voice-profile, where Muse Voice Transcribe and Muse Spark do the work.
+ * "Hey Rauros" voice input.
+ * - The mic button opens the orb and listens for one description (it ends on a pause, or tap the orb).
+ * - "Listen for Hey Rauros" keeps the mic open. A local voice detector finds phrases; each one goes to Muse Voice
+ *   Transcribe, and only phrases starting with "Hey Rauros" reach Muse Spark. Audio is never sent while it's quiet.
  */
 export function VoiceInput({ disabled, onResult }: Props) {
-  const supported = useSyncExternalStore(noopSubscribe, detectSupport, () => false);
-  const [phase, setPhase] = useState<Phase>("idle");
-  const [elapsed, setElapsed] = useState(0);
+  const supported = useSyncExternalStore(subscribeOnce, detectSupport, () => false);
+  const [wakeOn, setWakeOn] = useState(false);
+  const [orb, setOrb] = useState<OrbState | null>(null);
+  const [orbText, setOrbText] = useState<string | null>(null);
   const [level, setLevel] = useState(0);
+  const [heardSomething, setHeardSomething] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const rec = useRef<{
-    stream: MediaStream;
-    ctx: AudioContext;
-    node: AudioWorkletNode;
-    analyser: AnalyserNode;
-    frames: Float32Array[];
-    started: number;
-    raf: number;
-    stopTimer: number;
-  } | null>(null);
+  const engine = useRef<VoiceEngine | null>(null);
+  const wakeRef = useRef(false);
+  const closeTimer = useRef<number | null>(null);
+  const onResultRef = useRef(onResult);
+  useEffect(() => {
+    onResultRef.current = onResult;
+  }, [onResult]);
 
-  const teardown = async () => {
-    const r = rec.current;
-    rec.current = null;
-    if (!r) return null;
-    cancelAnimationFrame(r.raf);
-    clearTimeout(r.stopTimer);
-    r.node.port.onmessage = null;
-    r.node.disconnect();
-    r.stream.getTracks().forEach((t) => t.stop());
-    const sampleRate = r.ctx.sampleRate;
-    await r.ctx.close().catch(() => {});
-    return { frames: r.frames, sampleRate, seconds: (now() - r.started) / 1000 };
+  const clearClose = () => {
+    if (closeTimer.current) window.clearTimeout(closeTimer.current);
+    closeTimer.current = null;
   };
 
-  // Release the mic if the component unmounts mid-recording.
-  useEffect(() => () => void teardown(), []);
+  /** After the orb closes: back to wake listening if it's on, otherwise release the mic. */
+  const settle = () => {
+    clearClose();
+    setOrb(null);
+    setOrbText(null);
+    if (wakeRef.current) engine.current?.setMode("wake");
+    else void engine.current?.stop();
+  };
 
-  const start = async () => {
-    setError(null);
-    setPhase("starting");
-    let stream: MediaStream | null = null;
-    try {
-      stream = await navigator.mediaDevices.getUserMedia({
-        audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-      });
-      const ctx = new AudioContext();
-      const url = URL.createObjectURL(new Blob([CAPTURE_WORKLET], { type: "application/javascript" }));
-      await ctx.audioWorklet.addModule(url);
-      URL.revokeObjectURL(url);
-      const source = ctx.createMediaStreamSource(stream);
-      const node = new AudioWorkletNode(ctx, "rauros-capture");
-      const analyser = ctx.createAnalyser();
-      analyser.fftSize = 512;
-      const frames: Float32Array[] = [];
-      node.port.onmessage = (e: MessageEvent<Float32Array>) => frames.push(e.data);
-      source.connect(node);
-      source.connect(analyser);
-      // The worklet must be pulled by the graph; route it to a muted gain so nothing is played back.
-      const mute = ctx.createGain();
-      mute.gain.value = 0;
-      node.connect(mute).connect(ctx.destination);
+  const closeLater = (ms: number) => {
+    clearClose();
+    closeTimer.current = window.setTimeout(settle, ms);
+  };
 
-      const started = now();
-      const buf = new Float32Array(analyser.fftSize);
-      const tick = () => {
-        if (!rec.current) return;
-        analyser.getFloatTimeDomainData(buf);
-        let sum = 0;
-        for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
-        setLevel(Math.min(1, Math.sqrt(sum / buf.length) * 6));
-        setElapsed((now() - started) / 1000);
-        rec.current.raf = requestAnimationFrame(tick);
-      };
-      rec.current = {
-        stream, ctx, node, analyser, frames, started,
-        raf: requestAnimationFrame(tick),
-        stopTimer: window.setTimeout(() => void stop(), MAX_SECONDS * 1000),
-      };
-      setPhase("listening");
-    } catch (e) {
-      stream?.getTracks().forEach((t) => t.stop());
-      const denied = e instanceof DOMException && (e.name === "NotAllowedError" || e.name === "SecurityError");
-      setError(denied ? "Microphone access was blocked. Allow it in the browser's site settings, or type the profile." : "Couldn't start the microphone.");
-      setPhase("error");
+  const fail = (message: string, inOrb: boolean) => {
+    if (inOrb) {
+      setOrb("error");
+      setOrbText(message);
+      closeLater(4500);
+    } else {
+      setError(message);
+      if (wakeRef.current) engine.current?.setMode("wake");
     }
   };
 
-  const stop = async () => {
-    const captured = await teardown();
-    setLevel(0);
-    if (!captured) return;
-    if (captured.seconds < MIN_SECONDS) {
-      setError("That was too short. Click, speak, then click again.");
-      setPhase("error");
+  const handlePhrase = async (samples: Float32Array, rate: number, mode: "wake" | "command") => {
+    setHeardSomething(false);
+    if (samples.length / rate < MIN_PHRASE_SECONDS) {
+      if (mode === "command") engine.current?.setMode("command");
+      else engine.current?.setMode("wake");
       return;
     }
-    setPhase("processing");
+    if (mode === "command") {
+      setOrb("processing");
+      setOrbText(null);
+    }
     try {
-      const samples = await resampleTo(concatFrames(captured.frames), captured.sampleRate);
-      const wav = encodeWav(samples);
-      const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), REQUEST_TIMEOUT_MS);
-      let res: Response;
-      try {
-        res = await fetch("/api/voice-profile", { method: "POST", headers: { "Content-Type": "audio/wav" }, body: wav as BlobPart, signal: ctrl.signal });
-      } finally {
-        clearTimeout(timer);
+      const res = await sendPhrase(samples, rate, mode);
+      if ("wake" in res && res.wake === false) {
+        engine.current?.setMode("wake"); // not for us: keep listening quietly
+        return;
       }
-      if (!res.ok) throw new Error(await readError(res));
-      const body = (await res.json()) as { transcript: string; profile: VoiceProfile };
-      onResult(body.profile ?? {}, body.transcript ?? "");
-      setPhase("idle");
+      if ("needsCommand" in res) {
+        clearClose();
+        setError(null);
+        setOrb("listening");
+        setOrbText(null);
+        engine.current?.setMode("command");
+        return;
+      }
+      onResultRef.current(res.profile ?? {}, res.transcript ?? "");
+      setError(null);
+      setOrb("done");
+      setOrbText(res.transcript ? `“${res.transcript}”` : null);
+      closeLater(2800);
     } catch (e) {
-      setError(e instanceof DOMException && e.name === "AbortError" ? "Voice input took too long. Please try again." : e instanceof Error ? e.message : "Voice input failed.");
-      setPhase("error");
+      fail(e instanceof Error ? e.message : "Voice input failed.", mode === "command");
     }
   };
+
+  const getEngine = () => {
+    engine.current ??= new VoiceEngine({
+      onPhrase: (s, r, m) => void handlePhrase(s, r, m),
+      onSpeechStart: (m) => (m === "command" ? setOrb("hearing") : setHeardSomething(true)),
+      onIdle: () => settle(),
+      onLevel: setLevel,
+    });
+    return engine.current;
+  };
+
+  const micError = (e: unknown) =>
+    e instanceof DOMException && (e.name === "NotAllowedError" || e.name === "SecurityError")
+      ? "Microphone access was blocked. Allow it in the browser's site settings, or type the profile."
+      : "Couldn't start the microphone.";
+
+  /** Mic button, or a detected "Hey Rauros" with nothing after it: open the orb and take one description. */
+  const activate = async () => {
+    setError(null);
+    clearClose();
+    setOrb("listening");
+    setOrbText(null);
+    try {
+      await getEngine().start("command");
+    } catch (e) {
+      setOrb(null);
+      setError(micError(e));
+    }
+  };
+
+  const toggleWake = async () => {
+    setError(null);
+    if (wakeRef.current) {
+      wakeRef.current = false;
+      setWakeOn(false);
+      setHeardSomething(false);
+      if (!orb) await engine.current?.stop();
+      return;
+    }
+    try {
+      await getEngine().start(orb ? "command" : "wake");
+      wakeRef.current = true;
+      setWakeOn(true);
+    } catch (e) {
+      setError(micError(e));
+    }
+  };
+
+  // Stop listening when the tab is hidden, and release the mic on unmount.
+  useEffect(() => {
+    const onHide = () => {
+      if (document.hidden && wakeRef.current) {
+        wakeRef.current = false;
+        setWakeOn(false);
+        setHeardSomething(false);
+        void engine.current?.stop();
+      }
+    };
+    document.addEventListener("visibilitychange", onHide);
+    return () => {
+      document.removeEventListener("visibilitychange", onHide);
+      void engine.current?.stop();
+    };
+  }, []);
 
   if (!supported) return null;
 
-  const listening = phase === "listening";
-  const busy = phase === "starting" || phase === "processing";
   return (
-    <div className="flex flex-col items-end gap-1.5">
-      <button
-        type="button"
-        onClick={() => (listening ? void stop() : void start())}
-        disabled={disabled || busy}
-        aria-pressed={listening}
-        aria-label={listening ? "Stop recording" : "Hey Rauros: describe your company by voice"}
-        className={cn(
-          "group inline-flex items-center gap-2 border px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.12em] transition disabled:cursor-not-allowed disabled:opacity-60",
-          listening ? "border-hold/70 bg-hold/10 text-hold" : "border-signal/50 text-signal hover:bg-signal hover:text-background",
-        )}
-      >
-        {busy ? <Loader2 className="size-3.5 animate-spin" aria-hidden /> : listening ? <Square className="size-3 fill-current" aria-hidden /> : <Mic className="size-3.5" aria-hidden />}
-        {phase === "starting" ? "Opening mic" : phase === "processing" ? "Transcribing" : listening ? `Stop · ${Math.floor(elapsed)}s / ${MAX_SECONDS}s` : "Hey Rauros"}
-        {listening && (
-          <span className="ml-1 inline-flex h-3 items-end gap-[2px]" aria-hidden>
-            {[0.2, 0.45, 0.7, 0.45, 0.2].map((w, i) => (
-              <span key={i} className="w-[2px] bg-current" style={{ height: `${Math.max(2, Math.min(12, level * 12 * (1 - Math.abs(0.45 - w))))}px` }} />
-            ))}
-          </span>
-        )}
-      </button>
-      <p role="status" aria-live="polite" className={cn("max-w-xs text-right text-[11px]", phase === "error" ? "text-hold" : "text-dim")}>
-        {phase === "listening" && "Listening. Say your company name, what you make, and who you sell to."}
-        {phase === "processing" && "Muse Voice is transcribing; Muse Spark is filling the form."}
-        {phase === "error" && error}
-      </p>
-    </div>
+    <>
+      <div className="flex flex-col items-end gap-1.5">
+        <div className="flex items-stretch">
+          <button
+            type="button"
+            onClick={() => void activate()}
+            disabled={disabled || orb === "processing"}
+            aria-label="Hey Rauros: describe your company by voice"
+            className="inline-flex items-center gap-2 border border-signal/50 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.12em] text-signal transition hover:bg-signal hover:text-background disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <Mic className="size-3.5" aria-hidden /> Hey Rauros
+          </button>
+          <button
+            type="button"
+            onClick={() => void toggleWake()}
+            disabled={disabled}
+            aria-pressed={wakeOn}
+            title={wakeOn ? "Stop listening for “Hey Rauros”" : "Listen for “Hey Rauros” (keeps the mic on)"}
+            className={cn(
+              "inline-flex items-center gap-2 border border-l-0 px-2.5 py-1.5 font-mono text-[10.5px] uppercase tracking-[0.12em] transition disabled:opacity-60",
+              wakeOn ? "border-signal/50 bg-signal/10 text-signal" : "border-line-strong text-muted hover:text-foreground",
+            )}
+          >
+            <span aria-hidden className={cn("size-1.5 rounded-full", wakeOn ? (heardSomething ? "bg-signal" : "bg-signal blink") : "bg-dim")} />
+            {wakeOn ? "Listening" : "Wake word"}
+          </button>
+        </div>
+        <p role="status" aria-live="polite" className={cn("max-w-xs text-right text-[11px]", error ? "text-hold" : "text-dim")}>
+          {error ?? (wakeOn ? (heardSomething ? "Heard something…" : "Say “Hey Rauros” anytime.") : "")}
+        </p>
+      </div>
+
+      {orb && (
+        <VoiceOrb
+          state={orb}
+          level={level}
+          text={orbText}
+          onPress={() => (orb === "listening" || orb === "hearing" ? engine.current?.finishNow() : settle())}
+          onClose={settle}
+        />
+      )}
+    </>
   );
 }

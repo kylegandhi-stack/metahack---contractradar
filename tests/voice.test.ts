@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { encodeWav, resampleLinear } from "../components/wav";
 import { MetaError } from "../lib/meta";
-import { inspectWav, normalizeVoiceProfile, transcribe, transcribeSettings, VOICE_MODEL, VoiceInputError } from "../lib/voice";
+import { checkWakeLimit, hasCommand, inspectWav, normalizeVoiceProfile, splitWakePhrase, transcribe, transcribeSettings, VOICE_MODEL, VoiceInputError } from "../lib/voice";
 
 const tone = (seconds: number, rate = 16_000) => Float32Array.from({ length: Math.round(seconds * rate) }, (_, i) => 0.3 * Math.sin(i / 10));
 
@@ -100,4 +100,50 @@ test("voice route rejects bad audio before any model call, and reports a missing
   } finally {
     if (saved !== undefined) process.env.MODEL_API_KEY = saved;
   }
+});
+
+test("wake phrase: catches 'Hey Rauros' and common mis-hearings, returns the words after it", () => {
+  const cases: [string, string][] = [
+    ["Hey Rauros, we're AquaVector Systems, we make hydrophones.", "we're AquaVector Systems, we make hydrophones."],
+    ["hey rarus we make radar antennas", "we make radar antennas"],
+    ["Hi, Roros. Twelve people, sonar transducers.", "Twelve people, sonar transducers."],
+    ["Okay Raurus", ""],
+    ["Hey rare us we build drone batteries", "we build drone batteries"],
+    ["Um, hey Rauros, AquaVector Systems", "AquaVector Systems"],
+    ["Rauros, we machine radar housings", "we machine radar housings"],
+  ];
+  for (const [t, rest] of cases) {
+    const r = splitWakePhrase(t);
+    assert.equal(r.woke, true, t);
+    assert.equal(r.rest, rest, t);
+  }
+});
+
+test("wake phrase: ignores ordinary speech, including near-miss words without 'hey'", () => {
+  for (const t of [
+    "",
+    "What time is the demo?",
+    "Those are our sensors over there.",
+    "Rarus is a strange word", // fuzzy name without hey/hi/ok doesn't count
+    "We talked about Rauros earlier in the meeting and then moved on", // name too late in the sentence
+    "Hey team, let's start",
+    "Hey Ross, can you check this",
+  ]) {
+    assert.equal(splitWakePhrase(t).woke, false, t);
+  }
+});
+
+test("hasCommand needs a few real words after the wake phrase", () => {
+  assert.equal(hasCommand(""), false);
+  assert.equal(hasCommand("uh, um"), false);
+  assert.equal(hasCommand("we make hydrophones"), true);
+});
+
+test("wake checks have their own per-IP window", () => {
+  const ip = `wake-test-${Math.random()}`;
+  const t0 = 1_000_000;
+  for (let i = 0; i < 60; i++) assert.equal(checkWakeLimit(ip, t0 + i).allowed, true);
+  const blocked = checkWakeLimit(ip, t0 + 100);
+  assert.equal(blocked.allowed, false);
+  assert.equal(checkWakeLimit(ip, t0 + 11 * 60_000).allowed, true, "window slides");
 });
