@@ -94,8 +94,13 @@ export const fitMaxOf = (r: RankedResult) => (r.fitMax && r.fitMax > 0 ? r.fitMa
 /** Results below the shortlist carry this deterministic gate finding: the critic never saw them. */
 export const isUnreviewed = (r: RankedResult) => r.findings.some((f) => f.issue.startsWith("Outside the shortlist"));
 
-/** A past award at its maximum must read as a strong historical match, never "perfect" or an open opportunity. */
+/**
+ * A past award at 90% or more of its available points. An exact maximum needs a perfect score on every signal,
+ * which no real record has reached. Must read as a strong historical match, never "perfect" or an open opportunity.
+ */
+export const isStrongHistorical = (r: RankedResult) => isHistorical(r) && Math.round(r.fitScore) * 10 >= fitMaxOf(r) * 9;
+
 export function fitLabel(r: RankedResult): string {
   if (!isHistorical(r)) return "Fit score";
-  return Math.round(r.fitScore) >= fitMaxOf(r) ? "Strong historical match" : "Hist. relevance";
+  return isStrongHistorical(r) ? "Strong historical match" : "Hist. relevance";
 }
