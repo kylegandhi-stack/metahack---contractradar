@@ -6,7 +6,7 @@ import { afterEach, test } from "node:test";
 import { z } from "zod";
 import { keepVerified, type Assessment } from "../lib/agents/analyst";
 import { DEVILS_ADVOCATE_PROMPT } from "../lib/agents/devils-advocate";
-import { NoUsableDataError, runResearch, type PipelineDeps } from "../lib/agents/orchestrator";
+import { NoUsableDataError, runResearch, selectForAnalysis, type PipelineDeps } from "../lib/agents/orchestrator";
 import type { ResearchPlan } from "../lib/agents/planner";
 import type { ScoutResult } from "../lib/agents/scout";
 import { clearScoutMemo, MAX_TOOL_TURNS, runScout } from "../lib/agents/scout";
@@ -1040,8 +1040,15 @@ test("codes: each code gets its own search, plus one small keyword backup", asyn
   });
   assert.ok(!seen.some((filters) => filters.naics_codes && filters.psc_codes), "both codes in one search returns almost nothing");
   assert.deepEqual(seen.map((filters) => filters.naics_codes ?? filters.psc_codes ?? "none"), [["334511"], ["5845"], "none"]);
-  assert.deepEqual(result.records.map((record) => record.id), ["BY-NAICS", "BY-PSC", "BY-KEYWORD"]);
+  assert.deepEqual(result.records.map((record) => record.id), ["BY-KEYWORD", "BY-NAICS", "BY-PSC"]);
   assert.ok(result.toolCalls.some((call) => call.includes("keyword backup")));
+});
+
+test("codes: the keyword backup still gets in when the candidate list is full", async () => {
+  const full = Array.from({ length: 30 }, (_, index) => rawAward(`FULL-${index}`));
+  const { result } = await scoutWithCodes([NAICS], (filters) => (filters.naics_codes ? full : [rawAward("BACKUP")]));
+  assert.equal(result.records.length, 30);
+  assert.equal(result.records[0].id, "BACKUP");
 });
 
 test("codes: if they find nothing, the same keywords run without them", async () => {
@@ -1088,6 +1095,48 @@ test("codes: a SAM PSC search sends ccode and keeps only exact matches", async (
   const records = await searchNotices({ pscCode: "5845" });
   assert.match(requested, /ccode=5845/);
   assert.deepEqual(records.map((record) => record.id), ["MATCH"]);
+});
+
+const titled = (id: string, title: string) => award({ id, title, description: null });
+
+test("selection: records with no visible search term are left out when enough others match", () => {
+  const matching = ["A", "B", "C", "D", "E"].map((id) => titled(id, `[TEST] Radar antenna ${id}`));
+  const picked = selectForAnalysis([titled("PISTON", "[TEST] Piston, cylinder"), ...matching], ["radar antenna"]);
+  assert.deepEqual(picked.map((record) => record.id), ["A", "B", "C", "D", "E"]);
+});
+
+test("selection: with too few matches it fills up, so a thin field still gets results", () => {
+  const picked = selectForAnalysis(
+    [titled("X", "[TEST] Piston"), titled("Y", "[TEST] Radar antenna"), titled("Z", "[TEST] Cylinder")],
+    ["radar antenna"],
+  );
+  assert.equal(picked[0].id, "Y");
+  assert.equal(picked.length, 3);
+});
+
+test("selection: the Planner's first terms count more, and one word of a phrase counts a little", () => {
+  const records = [
+    titled("GENERIC", "[TEST] Precision machining"),
+    titled("WORD", "[TEST] Antenna element"),
+    titled("SPECIFIC", "[TEST] Radar antenna"),
+  ];
+  const picked = selectForAnalysis(records, ["radar antenna", "precision machining"]);
+  assert.deepEqual(picked.map((record) => record.id), ["SPECIFIC", "GENERIC", "WORD"]);
+});
+
+test("selection: at most 2 of the same item, ignoring DLA number prefixes", () => {
+  const repeats = ["8509698046!", "8509667182!", "8511310726!", ""].map((prefix, index) =>
+    titled(`REPEAT-${index}`, `${prefix}[TEST] SHC battery pack`),
+  );
+  const others = ["A", "B", "C"].map((id) => titled(id, `[TEST] Battery pack ${id}`));
+  const picked = selectForAnalysis([...repeats, ...others], ["battery pack"]);
+  assert.equal(picked.filter((record) => record.id.startsWith("REPEAT")).length, 2);
+  assert.equal(picked.length, 5);
+});
+
+test("selection: notices still rank ahead of awards with the same match", () => {
+  const picked = selectForAnalysis([titled("AWARD", "[TEST] Radar antenna"), notice({ id: "NOTICE", title: "[TEST] Radar antenna one" })], ["radar antenna"]);
+  assert.equal(picked[0].id, "NOTICE");
 });
 
 const SAVED = {
