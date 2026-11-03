@@ -33,8 +33,8 @@ Every model call uses `muse-spark-1.3` through the OpenAI SDK, with base URL `ht
 |---|---|---|---|---|
 | Research Planner | Extracts capabilities, search terms and 1-3 candidate codes from the profile | 1 | minimal | 3,000 |
 | Opportunity Scout | Chooses and calls real search tools, using tool calling | up to 3 rounds | minimal | 3,000 |
-| Qualification Analyst | Scores technical, category, eligibility, execution and timing fit, citing evidence | 3 (batches of 4 records, in parallel) | low | 6,000 |
-| Pursuit Strategist | Picks the shortlist and next steps; can revise once | 1-2 | minimal | 5,000 |
+| Qualification Analyst | Scores technical fit against a rubric, plus eligibility, execution and timing, citing evidence | 3 (batches of 4 records, in parallel) | low | 6,000 |
+| Pursuit Strategist | Picks the shortlist from the top 8 by score, with next steps; can revise once | 1-2 | minimal | 5,000 |
 | Devil's Advocate | Reviews each shortlisted record independently, returning a verdict and findings | up to 5, in parallel | low | 4,000 |
 
 The Planner, Analyst, Strategist and Devil's Advocate return JSON checked against a schema. Invalid output gets exactly one retry, then fails instead of passing unvalidated data on. Measured runs use about 35,000-45,000 tokens in total, which is about $0.11 for one 44,000-token run at third-party listed rates that aren't confirmed against Meta's rate sheet.
@@ -48,8 +48,8 @@ Record text is passed to the model as data, and each prompt says not to treat it
 - **Gates:** passed deadlines, set-aside conflicts, record identity and low technical match.
 - **Evidence check:** a model BLOCKER only stands if it cites the right record and text that is really in that record. Otherwise it becomes a WARNING.
 - **Warning limit:** the critic's warnings beyond 2 per result become notes, so nothing is hidden. Warnings from code are never demoted, so three on one result can still exceed the limit.
-- **Fit score:** computed from the Analyst's components, with a confidence ceiling set by status (`lib/scoring.ts`). It's relevance, not a chance of winning.
-- **Ranking:** by fit score, with `HOLD` results below the rest.
+- **Fit score:** code computes `category` from the product term, target agency and recency, and `execution` from award size when the record has an amount and the profile states a company size. The Analyst supplies `technical` against a rubric and must cite an excerpt: code caps the score if the citation isn't in the record or the record names no search term. Weak technical matches can't be lifted by the other signals. A past award is scored out of the 70 points it can earn, never rescaled. It's relevance, not a chance of winning. The award-size bands are an estimate.
+- **Ranking:** the Strategist chooses from the top 8 by score. Shortlisted results come first by score, with `HOLD` results below them, then unreviewed results. Ties break by technical fit, category, newest date, then id.
 
 ## Limits on each run
 

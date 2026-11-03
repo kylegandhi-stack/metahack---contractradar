@@ -18,8 +18,8 @@ Each agent runs on **Meta's Muse Spark 1.3** (`muse-spark-1.3`), called through 
 |---|---|---|
 | 1 | **Research Planner** | Turns the profile into capabilities, search terms and candidate NAICS and PSC codes, as schema-checked JSON |
 | 2 | **Opportunity Scout** | Uses tool calling to choose and run real searches of USAspending and SAM.gov, for up to 3 rounds |
-| 3 | **Qualification Analyst** | Scores up to 12 records for technical, category, eligibility, execution and timing fit, citing evidence, in parallel batches |
-| 4 | **Pursuit Strategist** | Picks the top 5 with next steps, and can revise once if a verified blocker appears |
+| 3 | **Qualification Analyst** | Scores up to 12 records for technical fit against a rubric, plus eligibility, execution and timing, citing evidence, in parallel batches |
+| 4 | **Pursuit Strategist** | Picks the top 5 from the 8 best-scoring records, with next steps, and can revise once if a verified blocker appears |
 | 5 | **Devil's Advocate** | Reviews each shortlisted record in a separate, independent call and tries to find what's wrong with the recommendation |
 
 **The model writes findings, but code decides the status.** A persuasive answer can't approve a record that fails a check:
@@ -28,6 +28,7 @@ Each agent runs on **Meta's Muse Spark 1.3** (`muse-spark-1.3`), called through 
 - A model's blocker only stands if it cites text that's really in the source record. Otherwise it's downgraded and asks for verification.
 - A record that doesn't match its source by id, title and agency is a `BLOCKER`.
 - Invalid model output gets one retry, then fails instead of passing on.
+- Code computes part of the score from the record: product term, target agency, recency and award size. A past award is scored out of the 70 points it can earn, never rescaled to 100.
 
 More detail is in [docs/architecture.md](docs/architecture.md).
 
