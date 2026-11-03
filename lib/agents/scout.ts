@@ -1,6 +1,6 @@
 import type OpenAI from "openai";
 import { z } from "zod";
-import { isSamConfigured, searchNotices, SamError } from "../data/sam";
+import { collapseNotices, isSamConfigured, searchNotices, SamError } from "../data/sam";
 import { dedupeRecords, searchAwards, UsaSpendingError } from "../data/usaspending";
 import { createCompletion, type RunBudget } from "../meta";
 import type { SourceRecord } from "../types";
@@ -85,7 +85,7 @@ export async function runScout(plan: ResearchPlan, budget: RunBudget): Promise<S
   let samCalls = 0;
 
   const add = (records: SourceRecord[]) => {
-    collected = dedupeRecords([...collected, ...records]).slice(0, MAX_CANDIDATES);
+    collected = collapseNotices(dedupeRecords([...collected, ...records])).slice(0, MAX_CANDIDATES);
   };
   const summarize = (records: SourceRecord[]) => ({
     found: records.length,

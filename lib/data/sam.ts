@@ -1,7 +1,7 @@
 // SAM.gov Get Opportunities adapter. https://open.gsa.gov/api/get-opportunities-public-api/
 // Server-side only. The key goes in the query string, so it must never appear in errors or records.
 // The `description` field is a link that needs the key, not text, so it is deliberately not stored.
-import type { SourceKind, SourceRecord } from "../types";
+import type { RelatedNotice, SourceKind, SourceRecord } from "../types";
 
 const SEARCH_URL = "https://api.sam.gov/opportunities/v2/search";
 const TIMEOUT_MS = 15_000;
@@ -106,7 +106,51 @@ export function normalizeNotice(raw: RawNotice, retrievedAt: string): SourceReco
     setAside,
     naics: present(raw.naicsCode) ? raw.naicsCode : null,
     excerpts,
+    solicitationNumber: present(raw.solicitationNumber) ? raw.solicitationNumber : null,
   };
+}
+
+const normalizeKey = (text: string) => text.replace(/\s+/g, " ").trim().toUpperCase();
+
+function noticeGroupKey(record: SourceRecord): string {
+  if (present(record.solicitationNumber)) return `number:${normalizeKey(record.solicitationNumber)}`;
+  return `title:${normalizeKey(record.title)}|office:${normalizeKey(record.agency ?? "")}`;
+}
+
+// Solicitation over presolicitation, then the latest posting.
+function moreDecisionRelevant(a: SourceRecord, b: SourceRecord): number {
+  const rank = (record: SourceRecord) => (record.kind === "open_notice" ? 0 : 1);
+  return rank(a) - rank(b) || (b.postedAt ?? "").localeCompare(a.postedAt ?? "");
+}
+
+// Collapses postings of the same buy into one record, listing the rest as related notices. Records
+// with different solicitation numbers never merge, even with the same title: a wrong merge could hide
+// a real opportunity, which is worse than a duplicate card. Safe to run again on its own output.
+export function collapseNotices(records: SourceRecord[]): SourceRecord[] {
+  const groups = new Map<string, SourceRecord[]>();
+  for (const record of records) {
+    if (record.source !== "sam") continue;
+    const key = noticeGroupKey(record);
+    groups.set(key, [...(groups.get(key) ?? []), record]);
+  }
+  const emitted = new Set<string>();
+  return records.flatMap((record) => {
+    if (record.source !== "sam") return [record];
+    const key = noticeGroupKey(record);
+    if (emitted.has(key)) return [];
+    emitted.add(key);
+    const members = groups.get(key) ?? [record];
+    if (members.length === 1) return [record];
+    const [primary, ...others] = [...members].sort(moreDecisionRelevant);
+    const related = new Map<string, RelatedNotice>();
+    for (const member of [primary, ...others]) {
+      for (const notice of member.relatedNotices ?? []) related.set(notice.id, notice);
+    }
+    for (const { id, kind, postedAt, url } of others) related.set(id, { id, kind, postedAt, url });
+    related.delete(primary.id);
+    const relatedNotices = [...related.values()].sort((a, b) => (b.postedAt ?? "").localeCompare(a.postedAt ?? ""));
+    return [{ ...primary, relatedNotices }];
+  });
 }
 
 function samDate(date: Date): string {
