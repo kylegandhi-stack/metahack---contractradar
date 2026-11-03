@@ -55,6 +55,17 @@ const seeded = [
     record: record("TEST-CLAIM", "[TEST] Hydrophone calibration services", {}),
     rationale: "The Navy has $40M available for this and AquaVector has a 90% chance of winning.",
   },
+  {
+    expected: "historical award presented as open",
+    record: record("TEST-HISTORICAL", "[TEST] Hydrophone delivery order", {
+      source: "usaspending",
+      kind: "historical_award",
+      url: "https://www.usaspending.gov/award/TEST-HISTORICAL",
+      deadlineAt: null,
+      awardAmount: 250_000,
+    }),
+    rationale: "Open opportunity: AquaVector should submit a bid on this hydrophone order now.",
+  },
 ];
 
 const records = seeded.map((entry) => entry.record);

@@ -13,6 +13,8 @@ export type RawCriticFinding = {
   proposed_correction: string;
 };
 
+const NEEDS_VERIFICATION = "Needs verification. ";
+
 const collapse = (text: string) => text.replace(/\s+/g, " ").trim().toLowerCase();
 
 export function isVerbatim(excerpt: string | null | undefined, record: SourceRecord): boolean {
@@ -49,7 +51,7 @@ export function verifyCriticFinding(raw: RawCriticFinding, record: SourceRecord)
     whyItMatters: raw.why_it_matters,
     evidenceSourceId: sameSource ? record.id : null,
     evidenceExcerpt: verbatim ? raw.exact_supporting_excerpt : null,
-    correctiveAction: downgraded ? `Needs verification. ${raw.proposed_correction}` : raw.proposed_correction,
+    correctiveAction: downgraded ? `${NEEDS_VERIFICATION}${raw.proposed_correction}` : raw.proposed_correction,
   };
 }
 
@@ -241,6 +243,33 @@ export function dedupeFindings(findings: AuditFinding[]): AuditFinding[] {
     seen.add(key);
     return true;
   });
+}
+
+export const MAX_WARNINGS_PER_RESULT = 2;
+
+// Keeps a result to the warning limit by demoting the critic's excess WARNINGs to NOTEs. Nothing is
+// deleted, BLOCKERs are untouched, and warnings from code are never demoted because they are checked
+// facts, so three gate warnings can still exceed the limit. A warning always survives if one existed,
+// so this can't change reviewStatus.
+export function capCriticWarnings(
+  findings: AuditFinding[],
+  critic: ReadonlySet<AuditFinding>,
+  max = MAX_WARNINGS_PER_RESULT,
+): AuditFinding[] {
+  const isCriticWarning = (finding: AuditFinding) => finding.severity === "WARNING" && critic.has(finding);
+  const fixed = findings.filter((finding) => finding.severity === "WARNING" && !critic.has(finding)).length;
+  // Claimed contradictions we could not verify come first, then warnings with verified excerpts.
+  const priority = (finding: AuditFinding) =>
+    finding.correctiveAction?.startsWith(NEEDS_VERIFICATION) ? 0 : finding.evidenceExcerpt ? 1 : 2;
+  const kept = new Set(
+    findings
+      .filter(isCriticWarning)
+      .sort((a, b) => priority(a) - priority(b))
+      .slice(0, Math.max(0, max - fixed)),
+  );
+  return findings.map((finding) =>
+    isCriticWarning(finding) && !kept.has(finding) ? { ...finding, severity: "NOTE" as const } : finding,
+  );
 }
 
 const RANK = { BLOCKER: 0, WARNING: 1, NOTE: 2 } as const;

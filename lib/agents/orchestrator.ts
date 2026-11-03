@@ -6,6 +6,7 @@ import { enrichWithAwardDetail, UsaSpendingError } from "../data/usaspending";
 import { MetaError, RunBudget } from "../meta";
 import {
   applyGates,
+  capCriticWarnings,
   dedupeFindings,
   sortFindings,
   statusFromFindings,
@@ -118,9 +119,10 @@ export function buildResult(args: {
   assessment: Assessment | undefined;
   pick: Pick | undefined;
   extraFindings: AuditFinding[];
+  critic?: AuditFinding[];
   now: number;
 }): RankedResult {
-  const { record, profile, assessment, pick, extraFindings, now } = args;
+  const { record, profile, assessment, pick, extraFindings, critic = [], now } = args;
   const { fitBreakdown, fitScore } = computeFit(assessment ?? {}, record.kind);
   const gate = applyGates(record, profile, fitBreakdown.technical, now);
   const uncertainties: AuditFinding[] = (assessment?.uncertainties ?? []).slice(0, 3).map((issue) => ({
@@ -132,7 +134,10 @@ export function buildResult(args: {
     correctiveAction: "Check the source record.",
   }));
   const findings = sortFindings(
-    dedupeFindings([...gate.findings, ...extraFindings, ...uncertainties]),
+    capCriticWarnings(
+      dedupeFindings([...gate.findings, ...extraFindings, ...critic, ...uncertainties]),
+      new Set(critic),
+    ),
   );
   const reviewStatus = statusFromFindings(findings);
   return {
@@ -311,12 +316,16 @@ export async function runResearch(
     .map((pick) => {
       const record = recordById.get(pick.sourceId);
       if (!record) return null;
+      // A "no verdict" warning comes from code, so only real critic output is subject to the cap.
+      const reviewed = verdicts.some((verdict) => verdict.sourceId === pick.sourceId);
+      const findings = findingsById[pick.sourceId] ?? [];
       return buildResult({
         record,
         profile,
         assessment: assessmentById.get(pick.sourceId),
         pick,
-        extraFindings: findingsById[pick.sourceId] ?? [],
+        extraFindings: reviewed ? [] : findings,
+        critic: reviewed ? findings : [],
         now,
       });
     })
