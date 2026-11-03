@@ -7,7 +7,7 @@ import { z } from "zod";
 import { keepVerified, type Assessment } from "../lib/agents/analyst";
 import { DEVILS_ADVOCATE_PROMPT } from "../lib/agents/devils-advocate";
 import { NoUsableDataError, runResearch, selectForAnalysis, type PipelineDeps } from "../lib/agents/orchestrator";
-import type { ResearchPlan } from "../lib/agents/planner";
+import { withProductPhrases, type ResearchPlan } from "../lib/agents/planner";
 import type { ScoutResult } from "../lib/agents/scout";
 import { clearScoutMemo, MAX_TOOL_TURNS, runScout } from "../lib/agents/scout";
 import { loadVerifiedRecords } from "../lib/data/cache";
@@ -87,6 +87,7 @@ function award(overrides: Partial<SourceRecord> = {}): SourceRecord {
 
 const PLAN: ResearchPlan = {
   capabilities: ["hydrophones"],
+  productPhrases: ["hydrophones"],
   searchTerms: ["hydrophone"],
   categories: [],
   rationale: "test",
@@ -1287,6 +1288,23 @@ test("codes: each code gets its own search, plus one small keyword backup", asyn
   assert.ok(result.toolCalls.some((call) => call.includes("keyword backup")));
 });
 
+test("codes: the keyword backup uses the first short term, not a long phrase", async () => {
+  clearScoutMemo();
+  delete process.env.SAM_API_KEY;
+  startFakeModel(() => completion({ content: "done" }));
+  const seen: string[][] = [];
+  const model = globalThis.fetch;
+  globalThis.fetch = async (url, init) => {
+    if (!String(url).includes("usaspending")) return model(url, init);
+    seen.push((JSON.parse(String(init?.body)) as { filters: AwardFilters }).filters.keywords);
+    return Response.json({ results: [] });
+  };
+  const longFirst = { ...PLAN, categories: [NAICS], searchTerms: ["lithium-ion and lithium-polymer battery packs", "battery pack"] };
+  const result = await runScout(longFirst, new RunBudget());
+  assert.ok(result.toolCalls.includes("search_awards(battery pack, keyword backup)"));
+  assert.deepEqual(seen.at(-1), ["battery pack"]);
+});
+
 test("codes: the keyword backup still gets in when the candidate list is full", async () => {
   const full = Array.from({ length: 30 }, (_, index) => rawAward(`FULL-${index}`));
   const { result } = await scoutWithCodes([NAICS], (filters) => (filters.naics_codes ? full : [rawAward("BACKUP")]));
@@ -1384,6 +1402,35 @@ test("selection: a plural search term still finds the singular, and the reverse"
   assert.equal(selectForAnalysis([titled("X", "[TEST] Piston"), ...batteries], ["lithium batteries"]).length, 5);
   const plural = ["A", "B", "C", "D", "E"].map((id) => titled(id, `[TEST] Lithium batteries ${id}`));
   assert.equal(selectForAnalysis([titled("X", "[TEST] Piston"), ...plural], ["lithium battery"]).length, 5);
+});
+
+const CAPABILITIES = "12-person U.S. maker of hydrophones, underwater acoustic sensors, and ruggedized components for AUVs.";
+
+test("planner: the company's phrases stay word for word, ahead of the model's variations", () => {
+  assert.deepEqual(
+    withProductPhrases(["hydrophone", "Hydrophones", "sonar"], ["hydrophones", "underwater acoustic sensors"], CAPABILITIES),
+    ["hydrophones", "underwater acoustic sensors", "hydrophone", "sonar"],
+  );
+});
+
+test("planner: a phrase that isn't really in the profile is dropped, and invented wording never counts", () => {
+  assert.deepEqual(withProductPhrases(["sonar"], ["hydrophones", "quantum radar"], CAPABILITIES), ["hydrophones", "sonar"]);
+});
+
+test("planner: with no real phrase from the model, code takes them from the profile text", () => {
+  assert.deepEqual(withProductPhrases(["sonar"], [], CAPABILITIES), [
+    "hydrophones",
+    "underwater acoustic sensors",
+    "ruggedized components for AUVs",
+    "sonar",
+  ]);
+  assert.deepEqual(withProductPhrases(["sonar"], ["invented"], "Maker of drone batteries."), ["drone batteries", "sonar"]);
+});
+
+test("planner: phrases and total terms are capped", () => {
+  const terms = withProductPhrases(["t1a", "t2a", "t3a", "t4a", "t5a", "t6a"], ["hydrophones", "underwater", "acoustic", "sensors", "ruggedized"], CAPABILITIES);
+  assert.deepEqual(terms.slice(0, 4), ["hydrophones", "underwater", "acoustic", "sensors"]);
+  assert.equal(terms.length, 8);
 });
 
 test("selection: notices still rank ahead of awards with the same match", () => {

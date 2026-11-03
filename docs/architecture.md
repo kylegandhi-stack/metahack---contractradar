@@ -31,7 +31,7 @@ Every model call uses `muse-spark-1.3` through the OpenAI SDK, with base URL `ht
 
 | Agent | What the model does | Calls per run | Reasoning effort | Max output tokens |
 |---|---|---|---|---|
-| Research Planner | Extracts capabilities, search terms and 1-3 candidate codes from the profile | 1 | minimal | 3,000 |
+| Research Planner | Keeps the company's product phrases word for word, and adds search variations and 1-3 candidate codes | 1 | minimal | 3,000 |
 | Opportunity Scout | Chooses and calls real search tools, using tool calling | up to 3 rounds | minimal | 3,000 |
 | Qualification Analyst | Scores technical fit against a rubric, plus eligibility, execution and timing, citing evidence | 3 (batches of 4 records, in parallel) | low | 6,000 |
 | Pursuit Strategist | Picks the shortlist from the top 8 by score, with next steps; can revise once | 1-2 | minimal | 5,000 |

@@ -16,7 +16,7 @@ Each agent runs on **Meta's Muse Spark 1.3** (`muse-spark-1.3`), called through 
 
 | # | Agent | How Muse Spark 1.3 runs it |
 |---|---|---|
-| 1 | **Research Planner** | Turns the profile into capabilities, search terms and candidate NAICS and PSC codes, as schema-checked JSON |
+| 1 | **Research Planner** | Keeps the company's own product phrases word for word, and adds search variations and candidate NAICS and PSC codes, as schema-checked JSON |
 | 2 | **Opportunity Scout** | Uses tool calling to choose and run real searches of USAspending and SAM.gov, for up to 3 rounds |
 | 3 | **Qualification Analyst** | Scores up to 12 records for technical fit against a rubric, plus eligibility, execution and timing, citing evidence, in parallel batches |
 | 4 | **Pursuit Strategist** | Picks the top 5 from the 8 best-scoring records, with next steps, and can revise once if a verified blocker appears |
