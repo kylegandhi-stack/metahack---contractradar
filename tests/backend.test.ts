@@ -24,6 +24,8 @@ import {
 } from "../lib/data/sam";
 import { cleanKeywords, dedupeRecords, normalizeAward, searchAwards } from "../lib/data/usaspending";
 import { computeMetrics, EvalFileSchema, parseCsv, scoreSheet } from "../lib/eval";
+import { POST } from "../app/api/research/route";
+import { checkRateLimit, clientIp, resetRateLimits } from "../lib/rate-limit";
 import { chatJson, MetaError, parseJsonOutput, RunBudget } from "../lib/meta";
 import { applyGates, capCriticWarnings, isVerbatim, statusFromFindings, verifyCriticFinding } from "../lib/review";
 import { ResearchResponseSchema, SourceRecordSchema } from "../lib/schemas";
@@ -1053,6 +1055,85 @@ test("schemas keep the optional accuracy fields and still accept records without
   assert.deepEqual(SourceRecordSchema.parse({ ...notice, ...fields }), { ...notice, ...fields });
   assert.ok(!SourceRecordSchema.safeParse({ ...notice, relatedNotices: [{ ...fields.relatedNotices[0], url: "http://sam.gov/x" }] }).success);
 });
+
+const LIMIT_SETTINGS = ["RATE_LIMIT_PER_IP", "RATE_LIMIT_WINDOW_MINUTES", "RATE_LIMIT_DAILY"];
+function withLimits(values: Record<string, string>, work: () => void | Promise<void>) {
+  const saved = LIMIT_SETTINGS.map((name) => process.env[name]);
+  LIMIT_SETTINGS.forEach((name) => delete process.env[name]);
+  Object.assign(process.env, values);
+  resetRateLimits();
+  return Promise.resolve()
+    .then(work)
+    .finally(() => {
+      LIMIT_SETTINGS.forEach((name, index) => {
+        if (saved[index] === undefined) delete process.env[name];
+        else process.env[name] = saved[index];
+      });
+      resetRateLimits();
+    });
+}
+
+test("rate limit: 5 runs per IP per 10 minutes by default, other addresses unaffected, then it recovers", () =>
+  withLimits({}, () => {
+    for (let run = 0; run < 5; run += 1) assert.equal(checkRateLimit("1.1.1.1", NOW).allowed, true);
+    const blocked = checkRateLimit("1.1.1.1", NOW + 60_000);
+    assert.deepEqual(blocked, { allowed: false, scope: "ip", retryAfterSeconds: 540 });
+    assert.equal(checkRateLimit("2.2.2.2", NOW).allowed, true);
+    assert.equal(checkRateLimit("1.1.1.1", NOW + 600_000).allowed, true);
+  }));
+
+test("rate limit: the daily cap covers all addresses, blocked callers don't use it, and it resets", () =>
+  withLimits({ RATE_LIMIT_DAILY: "2", RATE_LIMIT_PER_IP: "1" }, () => {
+    assert.equal(checkRateLimit("1.1.1.1", NOW).allowed, true);
+    assert.equal(checkRateLimit("1.1.1.1", NOW).allowed, false);
+    assert.equal(checkRateLimit("2.2.2.2", NOW).allowed, true);
+    const capped = checkRateLimit("3.3.3.3", NOW);
+    assert.equal(!capped.allowed && capped.scope, "daily");
+    assert.equal(checkRateLimit("3.3.3.3", NOW + 86_400_000).allowed, true);
+  }));
+
+test("rate limit: settings come from the environment, 0 is off, and invalid values keep the default", async () => {
+  await withLimits({ RATE_LIMIT_PER_IP: "0", RATE_LIMIT_DAILY: "0" }, () => {
+    for (let run = 0; run < 100; run += 1) assert.equal(checkRateLimit("1.1.1.1", NOW).allowed, true);
+  });
+  await withLimits({ RATE_LIMIT_PER_IP: "abc" }, () => {
+    for (let run = 0; run < 5; run += 1) checkRateLimit("1.1.1.1", NOW);
+    assert.equal(checkRateLimit("1.1.1.1", NOW).allowed, false);
+  });
+  await withLimits({ RATE_LIMIT_PER_IP: "1", RATE_LIMIT_WINDOW_MINUTES: "1" }, () => {
+    checkRateLimit("1.1.1.1", NOW);
+    assert.equal(checkRateLimit("1.1.1.1", NOW + 59_000).allowed, false);
+    assert.equal(checkRateLimit("1.1.1.1", NOW + 60_000).allowed, true);
+  });
+});
+
+test("rate limit: the client address comes from the proxy headers", () => {
+  assert.equal(clientIp(new Headers({ "x-real-ip": "1.1.1.1", "x-forwarded-for": "2.2.2.2" })), "1.1.1.1");
+  assert.equal(clientIp(new Headers({ "x-forwarded-for": "2.2.2.2, 3.3.3.3" })), "2.2.2.2");
+  assert.equal(clientIp(new Headers()), "unknown");
+});
+
+test("rate limit: the route returns a clean 429 before any model call, and bad requests cost nothing", () =>
+  withLimits({ RATE_LIMIT_PER_IP: "1" }, async () => {
+    const post = (body: unknown) =>
+      POST(new Request("http://test/api/research", {
+        method: "POST",
+        headers: { "x-real-ip": "9.9.9.9" },
+        body: typeof body === "string" ? body : JSON.stringify(body),
+      }));
+    globalThis.fetch = async () => {
+      throw new Error("must not make any network call");
+    };
+    assert.equal((await post("{not json")).status, 400);
+    assert.equal((await post({ profile: { name: "x" } })).status, 400);
+    assert.equal(checkRateLimit("9.9.9.9", Date.now()).allowed, true);
+    const response = await post({ profile: PROFILE });
+    assert.equal(response.status, 429);
+    assert.ok(Number(response.headers.get("retry-after")) > 0);
+    const body = (await response.json()) as { error: { code: string; message: string } };
+    assert.equal(body.error.code, "RATE_LIMITED");
+    assert.match(body.error.message, /Too many runs/);
+  }));
 
 test("the saved cache is valid, verbatim-shaped and only real-source historical records", () => {
   const cache = loadVerifiedRecords();
