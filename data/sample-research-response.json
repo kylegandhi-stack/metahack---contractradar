@@ -1,0 +1,115 @@
+{
+  "_note": "SAMPLE FIXTURE for frontend development only. Every record is synthetic and titled [SAMPLE]. Not real procurement data. Do not show in the demo as real.",
+  "profile": {
+    "name": "AquaVector Systems",
+    "capabilities": "12-person U.S. maker of hydrophones, underwater acoustic sensors, environmental monitoring instruments, and ruggedized components for autonomous underwater vehicles.",
+    "smallBusiness": true,
+    "certifications": [],
+    "targetAgencies": ["Department of the Navy"]
+  },
+  "dataMode": "cached",
+  "recordsUsed": 3,
+  "runAt": "2026-11-03T05:00:00Z",
+  "warnings": ["SAMPLE FIXTURE - synthetic records for UI development, not real procurement data."],
+  "agentEvents": [
+    { "step": "planner", "status": "started", "timestamp": "2026-11-03T04:59:40Z", "detail": "Planning search for AquaVector Systems" },
+    { "step": "planner", "status": "completed", "timestamp": "2026-11-03T04:59:43Z", "detail": "4 search terms: hydrophone, underwater acoustic sensor, sonobuoy, AUV components; provisional NAICS 334511" },
+    { "step": "scout", "status": "started", "timestamp": "2026-11-03T04:59:43Z", "detail": "Calling search_awards" },
+    { "step": "scout", "status": "completed", "timestamp": "2026-11-03T04:59:50Z", "detail": "2 tool turns, 18 candidates, 3 kept after dedupe (sample)" },
+    { "step": "analyst", "status": "started", "timestamp": "2026-11-03T04:59:50Z", "detail": "Assessing 3 records" },
+    { "step": "analyst", "status": "completed", "timestamp": "2026-11-03T04:59:55Z", "detail": "3 assessments with source citations" },
+    { "step": "strategist", "status": "started", "timestamp": "2026-11-03T04:59:55Z", "detail": "Ranking shortlist" },
+    { "step": "strategist", "status": "completed", "timestamp": "2026-11-03T04:59:57Z", "detail": "Top 3 ranked with next steps" },
+    { "step": "devils_advocate", "status": "started", "timestamp": "2026-11-03T04:59:57Z", "detail": "Independent review of top 3" },
+    { "step": "devils_advocate", "status": "completed", "timestamp": "2026-11-03T05:00:00Z", "detail": "1 BLOCKER, 1 WARNING, 1 NOTE; 1 result moved to HOLD" }
+  ],
+  "results": [
+    {
+      "record": {
+        "id": "SAMPLE-HIST-001",
+        "source": "usaspending",
+        "kind": "historical_award",
+        "title": "[SAMPLE] Hydrophone array maintenance and repair",
+        "agency": "Department of Defense / Department of the Navy",
+        "description": "[SAMPLE] Repair and calibration of towed hydrophone arrays.",
+        "url": "https://www.usaspending.gov/",
+        "retrievedAt": "2026-11-03T04:30:00Z",
+        "postedAt": "2024-03-15",
+        "deadlineAt": null,
+        "awardAmount": 1250000,
+        "setAside": null,
+        "naics": "334511",
+        "excerpts": [{ "text": "[SAMPLE] REPAIR AND CALIBRATION OF TOWED HYDROPHONE ARRAYS", "field": "Description" }]
+      },
+      "fitScore": 78,
+      "fitBreakdown": { "technical": 34, "category": 17, "eligibility": null, "execution": 8, "timing": null },
+      "confidence": "medium",
+      "eligibility": "needs_verification",
+      "whyMatched": ["Scope is hydrophone repair and calibration, a core AquaVector capability"],
+      "blockers": [],
+      "nextSteps": ["Identify the contracting office as a buyer to contact", "Watch SAM.gov for a recompete"],
+      "findings": [
+        { "severity": "NOTE", "issue": "Historical award, not an open opportunity", "whyItMatters": "This shows a past buyer, not something to bid on now.", "evidenceSourceId": "SAMPLE-HIST-001", "evidenceExcerpt": null, "correctiveAction": "Use for buyer discovery only." }
+      ],
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "record": {
+        "id": "SAMPLE-OPEN-002",
+        "source": "sam",
+        "kind": "open_notice",
+        "title": "[SAMPLE] Ruggedized acoustic sensor housings for UUVs",
+        "agency": "Department of the Navy",
+        "description": "[SAMPLE] Solicitation for pressure-rated sensor housings.",
+        "url": "https://sam.gov/",
+        "retrievedAt": "2026-11-03T04:30:00Z",
+        "postedAt": "2026-10-20",
+        "deadlineAt": "2026-11-12T21:00:00Z",
+        "awardAmount": null,
+        "setAside": "Total Small Business Set-Aside (FAR 19.5)",
+        "naics": "334511",
+        "excerpts": [{ "text": "[SAMPLE] Offerors must hold ISO 9001 certification.", "field": "Description" }]
+      },
+      "fitScore": 71,
+      "fitBreakdown": { "technical": 30, "category": 16, "eligibility": 10, "execution": 7, "timing": 8 },
+      "confidence": "medium",
+      "eligibility": "needs_verification",
+      "whyMatched": ["Ruggedized UUV components match the profile"],
+      "blockers": [],
+      "nextSteps": ["Confirm ISO 9001 status", "Read the full solicitation before the deadline"],
+      "findings": [
+        { "severity": "WARNING", "issue": "Required ISO 9001 certification not stated in company profile", "whyItMatters": "If AquaVector lacks it, the bid is non-responsive.", "evidenceSourceId": "SAMPLE-OPEN-002", "evidenceExcerpt": "[SAMPLE] Offerors must hold ISO 9001 certification.", "correctiveAction": "Verify certification before pursuing." }
+      ],
+      "reviewStatus": "REVIEW_REQUIRED"
+    },
+    {
+      "record": {
+        "id": "SAMPLE-HOLD-003",
+        "source": "sam",
+        "kind": "open_notice",
+        "title": "[SAMPLE] Environmental monitoring buoys",
+        "agency": "Department of Commerce",
+        "description": "[SAMPLE] Solicitation for ocean monitoring buoys.",
+        "url": "https://sam.gov/",
+        "retrievedAt": "2026-11-03T04:30:00Z",
+        "postedAt": "2026-08-01",
+        "deadlineAt": "2026-09-01T21:00:00Z",
+        "awardAmount": null,
+        "setAside": null,
+        "naics": "334519",
+        "excerpts": [{ "text": "[SAMPLE] Responses due September 1, 2026.", "field": "responseDeadLine" }]
+      },
+      "fitScore": 64,
+      "fitBreakdown": { "technical": 28, "category": 14, "eligibility": 12, "execution": 6, "timing": 0 },
+      "confidence": "low",
+      "eligibility": "known_blocker",
+      "whyMatched": ["Environmental monitoring instruments match the profile"],
+      "blockers": ["Response deadline has passed"],
+      "nextSteps": ["Do not pursue as presented; watch for a follow-on notice"],
+      "findings": [
+        { "severity": "BLOCKER", "issue": "Response deadline already passed", "whyItMatters": "The strategist ranked an expired solicitation as an open opportunity.", "evidenceSourceId": "SAMPLE-HOLD-003", "evidenceExcerpt": "[SAMPLE] Responses due September 1, 2026.", "correctiveAction": "Mark HOLD; do not present as open." }
+      ],
+      "reviewStatus": "HOLD"
+    }
+  ]
+}

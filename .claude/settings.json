@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" && echo '### Team protocol (docs/team-protocol.md) ###' && cat docs/team-protocol.md 2>/dev/null; bash scripts/inbox.sh --peek 2>/dev/null; exit 0"
+          }
+        ]
+      }
+    ]
+  }
+}
