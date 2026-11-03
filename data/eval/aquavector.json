@@ -1,0 +1,133 @@
+{
+  "profile": "AquaVector Systems (fictional)",
+  "status": "CONFIRMED by Kyle (2026-11-02). Real USAspending ids from data/verified-records.json.",
+  "labels": [
+    {
+      "id": "CONT_AWD_N6660424FF910_9700_N6660419DF900_9700",
+      "title": "DT-574 HYDROPHONE, 25 FT. BLOCK BUY",
+      "label": "relevant",
+      "reason": "DT-574 hydrophones are a core AquaVector product"
+    },
+    {
+      "id": "CONT_AWD_W912EK26CA021_9700_-NONE-_-NONE-",
+      "title": "THE U.S. ARMY CORPS OF ENGINEERS, ROCK ISLAND DISTRICT HAS A REQUIREMENT FOR MILITARY GRADE TRANSDUCERS FOR UNDERWATER A",
+      "label": "relevant",
+      "reason": "Military-grade underwater acoustic transducers (NAICS 334310) match the acoustic sensor line"
+    },
+    {
+      "id": "CONT_AWD_N6426719F3006_9700_N0017814D7932_9700",
+      "title": "ACOUSTIC SENSORS ENGINEERING SUPPORT SERVICES",
+      "label": "not_relevant",
+      "reason": "Engineering support services, not manufactured sensors"
+    },
+    {
+      "id": "CONT_AWD_W58RGZ19F0500_9700_W58RGZ18D0001_9700",
+      "title": "BUILD&INTEGRATE AUTONOMOUS UNDERWATER VEHICLE SYSTEM COMPONENTS FOR THE NEXT GENERATION MARK 18 FAMILY REMUS 600 AUV.",
+      "label": "relevant",
+      "reason": "Builds REMUS AUV system components; matches ruggedized AUV components"
+    },
+    {
+      "id": "CONT_AWD_1605C120P00008_1605_-NONE-_-NONE-",
+      "title": "US DEPARTMENT OF LABOR IS TAX EXEMPT: E9970-4358-06  PURCHASE ORDER 1605C1-20-P-00008 IS FOR VARIOUS PUMPS AND ACCESSORI",
+      "label": "not_relevant",
+      "reason": "Department of Labor pumps; shares only the word 'monitoring'"
+    },
+    {
+      "id": "CONT_AWD_N6660423FF909_9700_N6660419DF900_9700",
+      "title": "DT-574 HYDROPHONE, 25 FT.",
+      "label": "relevant",
+      "reason": "DT-574 hydrophones"
+    },
+    {
+      "id": "CONT_AWD_SPE8EL24FJ1VR_9700_SPE8EJ21D0025_9700",
+      "title": "4564956853!UNDERWATER ACOUSTIC SONAR UNIT",
+      "label": "relevant",
+      "reason": "Underwater acoustic sonar unit; hardware in the acoustic sensor line"
+    },
+    {
+      "id": "CONT_AWD_J101_9700_N0017814D7932_9700",
+      "title": "IGF::OT::IGF ACOUSTIC SENSORS ENGINEERING SUPPORT SERVICES",
+      "label": "not_relevant",
+      "reason": "Engineering support services, not manufactured sensors"
+    },
+    {
+      "id": "CONT_AWD_N4008519F7158_9700_N4008516D3041_9700",
+      "title": "X099 DESIGN-BUILD BUILDING 1371, AUTONOMOUS UNDERWATER VEHICLE AD",
+      "label": "not_relevant",
+      "reason": "Construction of an AUV building; keyword match only"
+    },
+    {
+      "id": "CONT_AWD_1605C121P00019_1605_-NONE-_-NONE-",
+      "title": "GILAIR PUMPS & ACCESSORIES",
+      "label": "not_relevant",
+      "reason": "Industrial air-sampling pumps; unrelated"
+    },
+    {
+      "id": "CONT_AWD_N6660418F0407_9700_N6660411D0179_9700",
+      "title": "IGF::OT::IGF TB-23 HYDROPHONE DEPOT REPAIR AND ENGINEERING SERVICES",
+      "label": "not_relevant",
+      "reason": "Depot repair of TB-23 towed-array hydrophones; repair services, not new manufacturing"
+    },
+    {
+      "id": "CONT_AWD_N0001415C5118_9700_-NONE-_-NONE-",
+      "title": "IGF::CT::IGF  UNDERWATER ACOUSTIC TRACKING&COMMUNICATIONS FOR NEXTGEN UNMANNED UNDERWATER VEHICLES",
+      "label": "relevant",
+      "reason": "Underwater acoustic tracking/comms for UUVs; acoustic + AUV overlap (R&D)"
+    },
+    {
+      "id": "CONT_AWD_W911W617C0010_9700_-NONE-_-NONE-",
+      "title": "IGF::OT::IGF SBIR PHASE II TO DEVELOP AN IN-FLIGHT ACOUSTIC SENSOR FOR ACCURATE, REAL-TIME MEASUREMENT AND MONITORING OF",
+      "label": "not_relevant",
+      "reason": "In-flight (airborne) acoustic sensor; shared keyword, different domain"
+    },
+    {
+      "id": "CONT_AWD_N0017320C2007_9700_-NONE-_-NONE-",
+      "title": "MODIFICATION, PRODUCTION, MAINTENANCE AND AT SEA OPERATIONAL SUPPORT OF NAVAL RESEARCH LABORATORY'S AUTONOMOUS UNDERWATE",
+      "label": "not_relevant",
+      "reason": "At-sea operational support and maintenance of an NRL AUV; services"
+    },
+    {
+      "id": "CONT_AWD_1605CH19P00009_1605_-NONE-_-NONE-",
+      "title": "PURCHASE ORDER 1605CH-19-P-00009 IS FOR GILAIR PUMP SUPPLIES FOR OSHA CTC. THE AWARDEE IS INDUSTRIAL ENVIRONMENTAL MONIT",
+      "label": "not_relevant",
+      "reason": "Air-sampling pump supplies for OSHA; unrelated"
+    },
+    {
+      "id": "CONT_AWD_N6660420F8096_9700_N6660419DF900_9700",
+      "title": "DT-574 HYDROPHONE, 25 FT.",
+      "label": "relevant",
+      "reason": "DT-574 hydrophones"
+    },
+    {
+      "id": "CONT_AWD_W912EK24C0030_9700_-NONE-_-NONE-",
+      "title": "UNDERWATER ACOUSTIC TRANSDUCERS IN SUPPORT OF THE BRANDON ROAD INTERBASIN PROJECT",
+      "label": "relevant",
+      "reason": "Underwater acoustic transducers"
+    },
+    {
+      "id": "CONT_AWD_N0002420F8706_9700_N0002410D6318_9700",
+      "title": "MIXED CAPABILITY ACOUSTIC SENSOR FUSION ALGORITHMS AND TOOLS",
+      "label": "not_relevant",
+      "reason": "Sensor-fusion software and algorithms, not hardware"
+    },
+    {
+      "id": "CONT_AWD_N0017314C6002_9700_-NONE-_-NONE-",
+      "title": "IGF::OT::IGF  71-3021-13 BLACK PEARL AUTONOMOUS UNDERWATER VEHICLE",
+      "label": "not_relevant",
+      "reason": "Whole AUV development; AquaVector supplies components, not vehicles"
+    },
+    {
+      "id": "CONT_AWD_1605C121P00024_1605_-NONE-_-NONE-",
+      "title": "SENSIDYNE GILIAN GILAIR PLUS STP SAMPLING PUMPS",
+      "label": "not_relevant",
+      "reason": "Air-sampling pumps for industrial hygiene; not marine monitoring"
+    }
+  ],
+  "companyProfile": {
+    "name": "AquaVector Systems",
+    "capabilities": "12-person U.S. maker of hydrophones, underwater acoustic sensors, environmental monitoring instruments, and ruggedized components for autonomous underwater vehicles.",
+    "smallBusiness": true,
+    "certifications": []
+  },
+  "source": "hand_label"
+}

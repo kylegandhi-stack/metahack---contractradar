@@ -21,11 +21,12 @@ import {
   searchNotices,
 } from "../lib/data/sam";
 import { cleanKeywords, dedupeRecords, normalizeAward, searchAwards } from "../lib/data/usaspending";
+import { computeMetrics, EvalFileSchema } from "../lib/eval";
 import { chatJson, MetaError, parseJsonOutput, RunBudget } from "../lib/meta";
 import { applyGates, capCriticWarnings, isVerbatim, statusFromFindings, verifyCriticFinding } from "../lib/review";
 import { ResearchResponseSchema, SourceRecordSchema } from "../lib/schemas";
 import { computeFit, finalConfidence } from "../lib/scoring";
-import type { AuditFinding, CompanyProfile, SourceRecord } from "../lib/types";
+import type { AuditFinding, CompanyProfile, RankedResult, SourceRecord } from "../lib/types";
 
 const NOW = Date.parse("2026-11-03T12:00:00Z");
 const PROFILE: CompanyProfile = {
@@ -1135,4 +1136,44 @@ test("snapshot: a live notice wins over its saved copy, and a failed description
   });
   assert.equal(partial.dataMode, "live");
   assert.equal(partial.results[0].record.description, "Saved scope text");
+});
+
+const ranked = (id: string, overrides: Partial<SourceRecord> = {}, reviewStatus: RankedResult["reviewStatus"] = "APPROVED") =>
+  ({ record: notice({ id, ...overrides }), reviewStatus }) as RankedResult;
+
+test("eval: precision counts labeled records only and reports unlabeled ones separately", () => {
+  const file = EvalFileSchema.parse({
+    profile: "[TEST]",
+    source: "hand_label",
+    labels: [
+      { id: "A", label: "relevant" },
+      { id: "B", label: "not_relevant" },
+      { id: "LATER", label: "relevant" },
+    ],
+  });
+  const m = computeMetrics(file, ["A", "B", "X", "Y", "Z", "LATER"].map((id) => ranked(id)), NOW);
+  assert.equal(m.precisionAt5, 0.5);
+  assert.equal(m.top5Unlabeled, 3);
+  assert.equal(m.recallAt10, 1);
+});
+
+test("eval: no labeled record in the top 5 is unknown, not zero", () => {
+  const file = EvalFileSchema.parse({ profile: "[TEST]", source: "award_history", relevantIds: ["A"] });
+  const m = computeMetrics(file, [ranked("X")], NOW);
+  assert.equal(m.precisionAt5, null);
+  assert.equal(m.recallAt10, 0);
+});
+
+test("eval: expired notices count against HOLD, and none is n/a rather than 100%", () => {
+  const file = EvalFileSchema.parse({ profile: "[TEST]", source: "hand_label", labels: [] });
+  const past = { deadlineAt: "2026-01-15T17:00:00-05:00" };
+  const m = computeMetrics(file, [ranked("A", past, "HOLD"), ranked("B", past, "REVIEW_REQUIRED")], NOW);
+  assert.equal(m.expiredHoldRate, 0.5);
+  assert.equal(computeMetrics(file, [ranked("C")], NOW).expiredHoldRate, null);
+});
+
+test("eval: the committed label files are valid", () => {
+  const file = EvalFileSchema.parse(JSON.parse(readFileSync(new URL("../data/eval/aquavector.json", import.meta.url), "utf8")));
+  assert.equal(file.labels?.length, 20);
+  assert.equal(file.labels?.filter((entry) => entry.label === "relevant").length, 8);
 });
