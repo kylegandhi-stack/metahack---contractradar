@@ -7,6 +7,8 @@ const BASE_URL = "https://api.meta.ai/v1";
 // The limit covers reasoning plus visible output, so small values return empty content.
 const DEFAULT_MAX_COMPLETION_TOKENS = 8_000;
 const RUN_TOKEN_BUDGET = 150_000;
+// Measured on a small JSON call: default about 15s, low about 6s, minimal about 4s.
+const DEFAULT_REASONING_EFFORT = "low";
 
 export type MetaErrorCode = "RATE_LIMITED" | "UPSTREAM_ERROR" | "TIMEOUT";
 
@@ -75,6 +77,7 @@ export async function createCompletion(
     const completion = await getClient().chat.completions.create(
       {
         max_completion_tokens: DEFAULT_MAX_COMPLETION_TOKENS,
+        reasoning_effort: DEFAULT_REASONING_EFFORT,
         ...params,
         model: MODEL,
       },
@@ -94,6 +97,7 @@ export type JsonCall<T> = {
   system: string;
   user: string;
   maxCompletionTokens?: number;
+  reasoningEffort?: "minimal" | "low";
 };
 
 // Structured model step. Output is always validated here; invalid output gets exactly one retry (T9),
@@ -116,6 +120,7 @@ export async function chatJson<T>(call: JsonCall<T>): Promise<T> {
     const completion = await createCompletion(call.stage, call.budget, {
       messages,
       max_completion_tokens: call.maxCompletionTokens ?? DEFAULT_MAX_COMPLETION_TOKENS,
+      reasoning_effort: call.reasoningEffort ?? DEFAULT_REASONING_EFFORT,
       response_format: {
         type: "json_schema",
         json_schema: { name: `${call.stage}_output`, schema: jsonSchema },

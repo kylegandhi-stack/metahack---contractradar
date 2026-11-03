@@ -1,0 +1,358 @@
+// The five logical agents run in order inside one server-side function. Every AgentEvent wraps a
+// real call. Dependencies are injectable so the tests can drive the gates without the network.
+import { loadVerifiedRecords, type CachedRecords } from "../data/cache";
+import { isSamConfigured } from "../data/sam";
+import { enrichWithAwardDetail, UsaSpendingError } from "../data/usaspending";
+import { MetaError, RunBudget } from "../meta";
+import {
+  applyGates,
+  dedupeFindings,
+  sortFindings,
+  statusFromFindings,
+  verifyCriticFinding,
+} from "../review";
+import { ResearchResponseSchema } from "../schemas";
+import { computeFit, finalConfidence } from "../scoring";
+import type {
+  AgentEvent,
+  AgentStep,
+  AuditFinding,
+  CompanyProfile,
+  RankedResult,
+  ResearchResponse,
+  SourceRecord,
+} from "../types";
+import { runAnalyst, type Assessment } from "./analyst";
+import { runDevilsAdvocate, type CriticVerdict } from "./devils-advocate";
+import { runPlanner, type ResearchPlan } from "./planner";
+import { runScout, type ScoutResult } from "./scout";
+import { reviseShortlist, runStrategist, SHORTLIST_SIZE, type Pick } from "./strategist";
+
+export const RUN_CAP_MS = 105_000;
+const MAX_ANALYSES = 12;
+const MAX_RESULTS = 10;
+const REVISION_CUTOFF_MS = 50_000;
+const BID_LANGUAGE = /\b(apply|bid|submit|respond|response|proposal|quote)\b/i;
+const HISTORICAL_DEFAULT_STEP =
+  "Use this past award for buyer discovery: check this agency for current notices.";
+
+export type PipelineDeps = {
+  plan: typeof runPlanner;
+  scout: typeof runScout;
+  analyze: typeof runAnalyst;
+  strategize: typeof runStrategist;
+  revise: typeof reviseShortlist;
+  critique: typeof runDevilsAdvocate;
+  enrich: typeof enrichWithAwardDetail;
+  loadCache: () => CachedRecords | null;
+  samConfigured: () => boolean;
+  now: () => number;
+};
+
+const defaultDeps: PipelineDeps = {
+  plan: runPlanner,
+  scout: runScout,
+  analyze: runAnalyst,
+  strategize: runStrategist,
+  revise: reviseShortlist,
+  critique: runDevilsAdvocate,
+  enrich: enrichWithAwardDetail,
+  loadCache: loadVerifiedRecords,
+  samConfigured: isSamConfigured,
+  now: Date.now,
+};
+
+export class NoUsableDataError extends Error {}
+
+// Deterministic: same input and same records give the same analysis set between runs.
+export function selectForAnalysis(records: SourceRecord[], terms: string[]): SourceRecord[] {
+  const lowered = terms.map((term) => term.toLowerCase());
+  const score = (record: SourceRecord) => {
+    const text = `${record.title} ${record.description ?? ""}`.toLowerCase();
+    const matches = lowered.filter((term) => text.includes(term)).length;
+    return matches * 3 + (record.kind === "historical_award" ? 0 : 2);
+  };
+  return records
+    .map((record, index) => ({ record, index, value: score(record) }))
+    .sort((a, b) => b.value - a.value || a.index - b.index)
+    .slice(0, MAX_ANALYSES)
+    .map((entry) => entry.record);
+}
+
+function cleanNextSteps(record: SourceRecord, steps: string[]): string[] {
+  if (record.kind !== "historical_award") return steps;
+  const safe = steps.filter((step) => !BID_LANGUAGE.test(step));
+  return safe.length > 0 ? safe : [HISTORICAL_DEFAULT_STEP];
+}
+
+function criticFindings(record: SourceRecord, verdict: CriticVerdict | undefined): AuditFinding[] {
+  if (!verdict) {
+    return [
+      {
+        severity: "WARNING",
+        issue: "Devil's Advocate returned no verdict for this record",
+        whyItMatters: "This recommendation has not been independently challenged.",
+        evidenceSourceId: null,
+        evidenceExcerpt: null,
+        correctiveAction: "Needs verification against the source record.",
+      },
+    ];
+  }
+  const findings = verdict.findings.map((finding) => verifyCriticFinding(finding, record));
+  if (findings.length === 0 && verdict.noneFound) {
+    findings.push({
+      severity: "NOTE",
+      issue: "Devil's Advocate found no weakness after checking",
+      whyItMatters: verdict.verdict,
+      evidenceSourceId: record.id,
+      evidenceExcerpt: null,
+      correctiveAction: "Still confirm details on the source record before acting.",
+    });
+  }
+  return findings;
+}
+
+export function buildResult(args: {
+  record: SourceRecord;
+  profile: CompanyProfile;
+  assessment: Assessment | undefined;
+  pick: Pick | undefined;
+  extraFindings: AuditFinding[];
+  now: number;
+}): RankedResult {
+  const { record, profile, assessment, pick, extraFindings, now } = args;
+  const { fitBreakdown, fitScore } = computeFit(assessment ?? {}, record.kind);
+  const gate = applyGates(record, profile, fitBreakdown.technical, now);
+  const uncertainties: AuditFinding[] = (assessment?.uncertainties ?? []).slice(0, 3).map((issue) => ({
+    severity: "NOTE",
+    issue,
+    whyItMatters: "The analyst could not confirm this from the source record.",
+    evidenceSourceId: null,
+    evidenceExcerpt: null,
+    correctiveAction: "Check the source record.",
+  }));
+  const findings = sortFindings(
+    dedupeFindings([...gate.findings, ...extraFindings, ...uncertainties]),
+  );
+  const reviewStatus = statusFromFindings(findings);
+  return {
+    record,
+    fitScore,
+    fitBreakdown,
+    confidence: finalConfidence(assessment?.confidence ?? "low", reviewStatus),
+    eligibility: gate.eligibility,
+    whyMatched: [...(pick ? [pick.rationale] : []), ...(assessment?.whyMatched ?? [])],
+    blockers: findings.filter((finding) => finding.severity === "BLOCKER").map((finding) => finding.issue),
+    nextSteps: cleanNextSteps(record, pick?.nextSteps ?? ["Open the source record and verify scope."]),
+    findings,
+    reviewStatus,
+  };
+}
+
+export async function runResearch(
+  profile: CompanyProfile,
+  options: { signal?: AbortSignal; deps?: Partial<PipelineDeps> } = {},
+): Promise<ResearchResponse> {
+  const deps = { ...defaultDeps, ...options.deps };
+  const startedAt = deps.now();
+  const budget = new RunBudget(options.signal ?? AbortSignal.timeout(RUN_CAP_MS));
+  const agentEvents: AgentEvent[] = [];
+  const warnings: string[] = [];
+
+  async function stage<T>(step: AgentStep, start: string, work: () => Promise<T>, done: (value: T) => string) {
+    agentEvents.push({ step, status: "started", timestamp: new Date().toISOString(), detail: start });
+    try {
+      const value = await work();
+      agentEvents.push({ step, status: "completed", timestamp: new Date().toISOString(), detail: done(value) });
+      return value;
+    } catch (error) {
+      const detail = error instanceof MetaError ? error.message : "Stage failed";
+      agentEvents.push({ step, status: "failed", timestamp: new Date().toISOString(), detail });
+      throw error;
+    }
+  }
+
+  const plan: ResearchPlan = await stage(
+    "planner",
+    "Extracting capabilities and search terms",
+    () => deps.plan(profile, budget),
+    (value) =>
+      `Search terms: ${value.searchTerms.join(", ")}. Provisional categories: ${
+        value.categories.map((category) => `${category.scheme} ${category.code}`).join(", ") || "none"
+      }`,
+  );
+
+  const scout: ScoutResult = await stage(
+    "scout",
+    "Searching federal sources with model-directed tool calls",
+    () => deps.scout(plan, budget),
+    (value) =>
+      `${value.modelDirected ? `${value.turns} tool round(s)` : "Model made no tool call; server searched planner terms"}: ${
+        value.toolCalls.join("; ") || "no calls"
+      }. ${value.records.length} unique records.`,
+  );
+
+  let dataMode: "live" | "cached" = "live";
+  let candidates = scout.records;
+  if (candidates.length === 0 && !scout.usaspendingSucceeded) {
+    const cache = deps.loadCache();
+    if (!cache) throw new NoUsableDataError("Live sources failed and no cache is usable");
+    dataMode = "cached";
+    candidates = cache.records;
+    warnings.push(
+      `Live search failed (${scout.usaspendingFailure ?? "no source responded"}). Showing cached public records retrieved ${cache.retrievedAt}, saved for the AquaVector demo profile, so they may not fit other profiles.`,
+    );
+  } else if (scout.usaspendingFailure) {
+    warnings.push(`A USAspending search failed (${scout.usaspendingFailure}); results may be incomplete.`);
+  }
+  if (!deps.samConfigured()) {
+    warnings.push("SAM.gov is not configured: showing historical awards only, no open notices.");
+  } else if (scout.samFailure) {
+    warnings.push(`SAM.gov search failed (${scout.samFailure}): open notices may be missing.`);
+  }
+
+  const base = (results: RankedResult[]): ResearchResponse =>
+    ResearchResponseSchema.parse({
+      profile,
+      dataMode,
+      recordsUsed: candidates.length,
+      results,
+      agentEvents,
+      runAt: new Date(startedAt).toISOString(),
+      warnings,
+    });
+
+  if (candidates.length === 0) {
+    warnings.push("No matching records found. Try broader capability wording.");
+    return base([]);
+  }
+
+  // Confirm each USAspending record at the source and add its set-aside. Cached ones already have this.
+  const selected = selectForAnalysis(candidates, plan.searchTerms);
+  let analyzed = selected;
+  if (dataMode === "live") {
+    let lookupFailed = false;
+    const checked = await Promise.all(
+      selected.map(async (record) => {
+        if (record.source !== "usaspending") return record;
+        try {
+          return await deps.enrich(record);
+        } catch (error) {
+          if (!(error instanceof UsaSpendingError)) throw error;
+          lookupFailed = true;
+          return record;
+        }
+      }),
+    );
+    analyzed = checked.filter((record): record is SourceRecord => record !== null);
+    if (analyzed.length < selected.length) {
+      warnings.push(`${selected.length - analyzed.length} record(s) removed: the source did not confirm their id.`);
+    }
+    if (lookupFailed) warnings.push("Some award details could not be loaded; set-aside may show as unknown.");
+  }
+
+  const assessments = await stage(
+    "analyst",
+    `Assessing ${analyzed.length} records against the profile`,
+    () => deps.analyze(profile, analyzed, budget),
+    (value) => `Assessed ${value.length} of ${analyzed.length} records, with verbatim evidence checks.`,
+  );
+  if (assessments.length < analyzed.length) {
+    warnings.push(`The analyst skipped ${analyzed.length - assessments.length} record(s); those are left unscored.`);
+  }
+  const assessed = analyzed.filter((record) =>
+    assessments.some((assessment) => assessment.sourceId === record.id),
+  );
+
+  let shortlist = await stage(
+    "strategist",
+    "Choosing the shortlist and next steps",
+    () => deps.strategize(profile, assessed, assessments, budget),
+    (value) => `Shortlisted ${value.length} records.`,
+  );
+
+  const verdicts = await stage(
+    "devils_advocate",
+    `Independently challenging ${shortlist.length} shortlisted records`,
+    () => deps.critique(profile, assessed, assessments, shortlist.slice(0, SHORTLIST_SIZE), budget),
+    (value) => {
+      const count = value.reduce((sum, verdict) => sum + verdict.findings.length, 0);
+      return `Returned ${value.length} verdicts with ${count} findings.`;
+    },
+  );
+
+  const recordById = new Map(assessed.map((record) => [record.id, record]));
+  const findingsById: Record<string, AuditFinding[]> = {};
+  for (const pick of shortlist) {
+    const record = recordById.get(pick.sourceId);
+    if (!record) continue;
+    findingsById[pick.sourceId] = criticFindings(
+      record,
+      verdicts.find((verdict) => verdict.sourceId === pick.sourceId),
+    );
+  }
+
+  // One revision at most, and only when the critic's objection held up and time remains.
+  const challenged = Object.values(findingsById).some((list) =>
+    list.some((finding) => finding.severity === "BLOCKER"),
+  );
+  if (challenged && deps.now() - startedAt < REVISION_CUTOFF_MS) {
+    shortlist = await stage(
+      "strategist",
+      "Revising the shortlist after verified blockers",
+      () => deps.revise(profile, shortlist, assessed, findingsById, budget),
+      () => "Shortlist revised once.",
+    );
+  }
+
+  const now = deps.now();
+  const assessmentById = new Map(assessments.map((assessment) => [assessment.sourceId, assessment]));
+  const picked = shortlist
+    .map((pick) => {
+      const record = recordById.get(pick.sourceId);
+      if (!record) return null;
+      return buildResult({
+        record,
+        profile,
+        assessment: assessmentById.get(pick.sourceId),
+        pick,
+        extraFindings: findingsById[pick.sourceId] ?? [],
+        now,
+      });
+    })
+    .filter((result): result is RankedResult => result !== null);
+  // The deterministic score sets the order; the strategist decides what gets shortlisted.
+  // HOLD results stay visible below the rest.
+  picked.sort(
+    (a, b) =>
+      Number(a.reviewStatus === "HOLD") - Number(b.reviewStatus === "HOLD") || b.fitScore - a.fitScore,
+  );
+
+  const pickedIds = new Set(picked.map((result) => result.record.id));
+  const others = assessed
+    .filter((record) => !pickedIds.has(record.id))
+    .map((record) =>
+      buildResult({
+        record,
+        profile,
+        assessment: assessmentById.get(record.id),
+        pick: undefined,
+        extraFindings: [
+          {
+            severity: "WARNING",
+            issue: "Outside the shortlist: not reviewed by the Devil's Advocate",
+            whyItMatters: "Only the top five get an independent challenge in each run.",
+            evidenceSourceId: null,
+            evidenceExcerpt: null,
+            correctiveAction: "Needs verification against the source record.",
+          },
+        ],
+        now,
+      }),
+    )
+    .sort((a, b) => b.fitScore - a.fitScore);
+
+  const results = [...picked, ...others].slice(0, MAX_RESULTS);
+  console.info("research run", JSON.stringify({ tokens: budget.tokens, calls: budget.calls, ms: deps.now() - startedAt }));
+  return base(results);
+}
