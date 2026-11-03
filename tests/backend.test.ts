@@ -1407,3 +1407,28 @@ test("awards record who won", () => {
   const record = normalizeAward({ generated_internal_id: "X", "Recipient Name": "[TEST] Supplier" }, "2026-11-03T00:00:00.000Z");
   assert.equal(record?.recipient, "[TEST] Supplier");
 });
+
+test("usage: the run log counts SAM.gov requests and 429s, separately per concurrent run", async () => {
+  process.env.SAM_API_KEY = "secret-test-key";
+  const logged: string[] = [];
+  const realInfo = console.info;
+  console.info = (...args: unknown[]) => void logged.push(args.join(" "));
+  globalThis.fetch = async () => new Response("{}", { status: 429 });
+  const scoutCalling = (calls: number) => async () => {
+    for (let call = 0; call < calls; call += 1) await searchNotices({ title: "hydrophone" }).catch(() => undefined);
+    return scoutWith([notice()], { samFailure: "SAM.gov returned HTTP 429", samThrottled: true });
+  };
+  try {
+    await Promise.all([
+      runResearch(PROFILE, { deps: fakeDeps([notice()], { scout: scoutCalling(2) }) }),
+      runResearch(PROFILE, { deps: fakeDeps([notice()], { scout: scoutCalling(1) }) }),
+      runResearch(PROFILE, { deps: fakeDeps([notice()]) }),
+    ]);
+  } finally {
+    console.info = realInfo;
+  }
+  const sam = logged.map((line) => (JSON.parse(line.replace("research run ", "")) as { sam: { requests: number; throttled: boolean } }).sam);
+  assert.deepEqual(sam.map((usage) => usage.requests).sort(), [0, 1, 2]);
+  assert.equal(sam.find((usage) => usage.requests === 0)?.throttled, false);
+  assert.equal(sam.find((usage) => usage.requests === 2)?.throttled, true);
+});

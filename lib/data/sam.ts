@@ -1,6 +1,7 @@
 // SAM.gov Get Opportunities adapter. https://open.gsa.gov/api/get-opportunities-public-api/
 // Server-side only. The key goes in the query string, so it must never appear in errors or records.
 // The search `description` field is a link that needs the key, so text comes from describeNotices.
+import { AsyncLocalStorage } from "node:async_hooks";
 import type { RelatedNotice, SourceKind, SourceRecord } from "../types";
 
 const SEARCH_URL = "https://api.sam.gov/opportunities/v2/search";
@@ -10,6 +11,20 @@ const MAX_LIMIT = 25;
 const DESCRIPTION_URL = "https://api.sam.gov/prod/opportunities/v1/noticedesc";
 const DESCRIPTION_MAX_CHARS = 8_000;
 const DESCRIBE_CAP_MS = 8_000;
+
+// Counts SAM.gov requests per run, since the daily quota is small and SAM.gov shows no counter. Tied to
+// the request's async context because concurrent runs share this module. Reused memo hits don't count.
+export type SamUsage = { requests: number; throttled: boolean };
+const usageStore = new AsyncLocalStorage<SamUsage>();
+export const withSamUsage = <T>(usage: SamUsage, work: () => Promise<T>) => usageStore.run(usage, work);
+
+async function samFetch(url: string, init?: RequestInit): Promise<Response> {
+  const usage = usageStore.getStore();
+  if (usage) usage.requests += 1;
+  const response = await fetch(url, init);
+  if (usage && response.status === 429) usage.throttled = true;
+  return response;
+}
 
 export class SamError extends Error {
   constructor(
@@ -190,7 +205,7 @@ export async function searchNotices(search: NoticeSearch): Promise<SourceRecord[
 
   let response: Response;
   try {
-    response = await fetch(`${SEARCH_URL}?${params}`, { signal: AbortSignal.timeout(TIMEOUT_MS) });
+    response = await samFetch(`${SEARCH_URL}?${params}`, { signal: AbortSignal.timeout(TIMEOUT_MS) });
   } catch (error) {
     const reason = error instanceof Error ? error.name : "network error";
     throw new SamError(`SAM.gov request failed: ${reason}`, null);
@@ -233,7 +248,7 @@ export async function fetchNoticeDescription(noticeId: string, signal: AbortSign
   const params = new URLSearchParams({ noticeid: noticeId, api_key: apiKey });
   let response: Response;
   try {
-    response = await fetch(`${DESCRIPTION_URL}?${params}`, { signal });
+    response = await samFetch(`${DESCRIPTION_URL}?${params}`, { signal });
   } catch (error) {
     const reason = error instanceof Error ? error.name : "network error";
     throw new SamError(`SAM.gov description request failed: ${reason}`, null);
