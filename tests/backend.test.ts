@@ -1207,6 +1207,23 @@ test("codes: each code gets its own search, plus one small keyword backup", asyn
   assert.ok(result.toolCalls.some((call) => call.includes("keyword backup")));
 });
 
+test("codes: the keyword backup uses the first short term, not a long phrase", async () => {
+  clearScoutMemo();
+  delete process.env.SAM_API_KEY;
+  startFakeModel(() => completion({ content: "done" }));
+  const seen: string[][] = [];
+  const model = globalThis.fetch;
+  globalThis.fetch = async (url, init) => {
+    if (!String(url).includes("usaspending")) return model(url, init);
+    seen.push((JSON.parse(String(init?.body)) as { filters: AwardFilters }).filters.keywords);
+    return Response.json({ results: [] });
+  };
+  const longFirst = { ...PLAN, categories: [NAICS], searchTerms: ["lithium-ion and lithium-polymer battery packs", "battery pack"] };
+  const result = await runScout(longFirst, new RunBudget());
+  assert.ok(result.toolCalls.includes("search_awards(battery pack, keyword backup)"));
+  assert.deepEqual(seen.at(-1), ["battery pack"]);
+});
+
 test("codes: the keyword backup still gets in when the candidate list is full", async () => {
   const full = Array.from({ length: 30 }, (_, index) => rawAward(`FULL-${index}`));
   const { result } = await scoutWithCodes([NAICS], (filters) => (filters.naics_codes ? full : [rawAward("BACKUP")]));

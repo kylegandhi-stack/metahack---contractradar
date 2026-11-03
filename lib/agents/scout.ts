@@ -224,7 +224,8 @@ export async function runScout(plan: ResearchPlan, budget: RunBudget): Promise<S
   // Recall backup: code filters miss good records filed under another code. One small keyword search
   // on the most specific term catches some of them without bringing back the noise of the broad terms.
   if (naicsCodes.length || pscCodes.length) {
-    const term = plan.searchTerms[0];
+    // The first short term: the company's own phrases can be too long to match as one search.
+    const term = plan.searchTerms.find((candidate) => candidate.split(/\s+/).length <= 3) ?? plan.searchTerms[0];
     toolCalls.push(`search_awards(${term}, keyword backup)`);
     try {
       const backup = await remember(`awards:backup:${term}`, () => searchAwards({ keywords: [term], limit: BACKUP_LIMIT }));
