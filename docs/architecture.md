@@ -2,7 +2,7 @@
 
 Rauros Systems helps a small defense supplier decide which federal opportunities are worth its time. A company profile goes in, and ranked federal records come out, each with evidence, an adversarial review and a status of `APPROVED`, `REVIEW_REQUIRED` or `HOLD`. The repo and internal comments still use the working name ContractRadar.
 
-**Status, 2026-11-02:** this describes the system once PRs #19-#27 and the cost PR are merged. Those PRs were open when this was written. Features they add are marked **(open PR)**.
+**Status, 2026-11-02:** this describes `main`. Everything here is merged. Items that need a working SAM.gov key have not been tested against live SAM.gov, as noted below.
 
 ## How a request flows
 
@@ -61,14 +61,14 @@ Record text is passed to the model as data, and each prompt says not to treat it
 | Critic reviews | 5 |
 | Strategist revisions | 1 |
 | SAM.gov searches | 2 |
-| SAM.gov descriptions **(open PR)** | off by default; up to 5 with `SAM_DESCRIPTIONS=on` |
+| SAM.gov descriptions | off by default; up to 5 with `SAM_DESCRIPTIONS=on` |
 | Tokens | 150,000 |
-| Estimated cost **(open PR)** | $0.50 |
+| Estimated cost | $0.50 |
 | Run time | 105 s in code, 120 s function limit |
 
-**Timing:** production took 52-82 s before the open PRs. Local runs of those PRs took 40-53 s with SAM.gov blocked. **A full run with live SAM.gov and descriptions has not been measured yet.** The target is under 90 s.
+**Timing:** with SAM.gov off and USAspending live, three local runs of `main` took 45.1, 47.5 and 48.1 s, with the critic stage slowest at 14-21 s. **A full run with live SAM.gov and descriptions has not been measured.** The target is under 90 s.
 
-## Accuracy features (open PRs)
+## Accuracy features
 
 - **Repeat postings:** a presolicitation and solicitation of one buy become one result. Different solicitation numbers never merge.
 - **SAM descriptions:** off by default because of the SAM.gov quota, and turned on with `SAM_DESCRIPTIONS=on`. When on, or when saved text exists, the critic reads the real notice text for shortlisted notices. The Analyst doesn't, so fit scores can miss requirements found only in that text.
@@ -109,8 +109,9 @@ Please don't present these as general accuracy.
 
 ### Operations
 - **Single function:** a run is one long request with no streaming, so a dropped connection loses it.
-- **Cost:** tokens are capped per run. Per-stage logging and a $0.50 estimated cost cap are in an **(open PR)**. Costs are estimates until compared with Meta billing.
-- **Cached path:** the fallback logic has unit tests, but the end-to-end cached banner hasn't been tested in a browser.
+- **Cost:** per-stage usage is logged, with limits of 150,000 tokens and $0.50 estimated per run. Measured runs cost about $0.09-$0.11 at third-party listed rates that aren't confirmed against Meta's rate sheet.
+- **Cached path:** a Playwright run with federal sources blocked confirmed the USAspending cached banner and labels in the browser. The SAM.gov banner was only tested with a mocked response, because the snapshot is empty until a capture runs after the quota resets.
+- **Live SAM.gov behaviour:** `ccode`, `classificationCode` and the `noticedesc` URL match the official docs, but the description response shape isn't documented and hasn't been seen live.
 
 ## Data sources and acknowledgments
 
@@ -132,7 +133,7 @@ Please don't present these as general accuracy.
 | `lib/agents/` | The orchestrator and five agents |
 | `lib/meta.ts` | Model client, run budget, JSON validation |
 | `lib/review.ts`, `lib/scoring.ts` | Gates, status and fit score |
-| `lib/data/` | Source adapters, cache, and **(open PR)** snapshot, identity checks and buyer history |
+| `lib/data/` | Source adapters, cache, snapshot, identity checks and buyer history |
 | `lib/types.ts`, `docs/interface.md` | The shared API contract |
-| `data/` | Saved real records and **(open PR)** eval labels |
+| `data/` | Saved real records and eval labels |
 | `tests/` | `npm test`, plus `npm run test:live`, which uses real model calls |
