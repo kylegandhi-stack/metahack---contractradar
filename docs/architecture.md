@@ -79,7 +79,11 @@ Record text is passed to the model as data, and each prompt says not to treat it
 
 ## Measured accuracy
 
-From `npm run eval`, using 20 AquaVector records labeled by a person, with small samples:
+All of these are small samples.
+
+- **Hand-labeled production results:** precision@5 of 60% for AquaVector Systems (3 of 5) and 80% for a second test profile (4 of 5). These are 2 saved production runs from before the accuracy changes, labeled by one team member (`data/eval/labeling-sheet.csv`), so they don't measure the current search.
+
+From `npm run eval`, using 20 AquaVector records labeled by a person:
 
 - **Ranking, on fixed saved records:** precision@5 of 80% (4 of 5) in both of 2 runs, and recall@10 of 50%.
 - **Live retrieval: no usable number yet.** Most live results aren't among the 20 labeled records, and results vary between runs.
