@@ -1134,6 +1134,15 @@ test("selection: at most 2 of the same item, ignoring DLA number prefixes", () =
   assert.equal(picked.length, 5);
 });
 
+test("selection: a plural search term still finds the singular, and the reverse", () => {
+  const matching = ["A", "B", "C", "D", "E"].map((id) => titled(id, `[TEST] Hydrophone ${id}`));
+  assert.equal(selectForAnalysis([titled("X", "[TEST] Piston"), ...matching], ["hydrophones"]).length, 5);
+  const batteries = ["A", "B", "C", "D", "E"].map((id) => titled(id, `[TEST] Lithium battery ${id}`));
+  assert.equal(selectForAnalysis([titled("X", "[TEST] Piston"), ...batteries], ["lithium batteries"]).length, 5);
+  const plural = ["A", "B", "C", "D", "E"].map((id) => titled(id, `[TEST] Lithium batteries ${id}`));
+  assert.equal(selectForAnalysis([titled("X", "[TEST] Piston"), ...plural], ["lithium battery"]).length, 5);
+});
+
 test("selection: notices still rank ahead of awards with the same match", () => {
   const picked = selectForAnalysis([titled("AWARD", "[TEST] Radar antenna"), notice({ id: "NOTICE", title: "[TEST] Radar antenna one" })], ["radar antenna"]);
   assert.equal(picked[0].id, "NOTICE");

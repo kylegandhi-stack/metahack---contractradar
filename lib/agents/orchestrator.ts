@@ -91,7 +91,10 @@ const itemKey = (record: SourceRecord) =>
 // also match fields a person can't see, and return the largest awards first, so a record must show a
 // search term in its own text. The Planner lists its most specific terms first, so those count more.
 export function selectForAnalysis(records: SourceRecord[], terms: string[]): SourceRecord[] {
-  const lowered = terms.map((term) => term.toLowerCase());
+  // A singular stem also finds the plural, and the Planner may choose either form.
+  const lowered = terms.map((term) =>
+    term.toLowerCase().replace(/ies$/, "y").replace(/y$/, "").replace(/([^s])s$/, "$1"),
+  );
   const score = (record: SourceRecord) => {
     const text = `${record.title} ${record.description ?? ""}`.toLowerCase();
     return lowered.reduce((total, term, index) => {
