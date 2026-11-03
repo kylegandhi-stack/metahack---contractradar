@@ -1,7 +1,7 @@
 import { ArrowUpRight } from "lucide-react";
 import type { RankedResult } from "@/lib/types";
-import { ConfidencePill, EligibilityBadge, ReviewStatusBadge, SourceKindBadge } from "./badges";
-import { cn, fmtDate, fmtMoney, isHistorical, orUnknown, sourceName } from "./format";
+import { ConfidencePill, EligibilityBadge, ExpiredBadge, ReviewStatusBadge, SourceKindBadge } from "./badges";
+import { cn, fmtDate, fmtMoney, isExpired, isHistorical, orUnknown, sourceName } from "./format";
 
 export function FitScore({ result, size = "md" }: { result: RankedResult; size?: "md" | "lg" }) {
   const label = isHistorical(result) ? "Hist. relevance" : "Fit score";
@@ -21,11 +21,11 @@ export function FitScore({ result, size = "md" }: { result: RankedResult; size?:
   );
 }
 
-function Stat({ k, v }: { k: string; v: string }) {
+function Stat({ k, v, className }: { k: string; v: string; className?: string }) {
   return (
     <div className="min-w-0">
       <dt className="label">{k}</dt>
-      <dd className="mt-1 truncate font-mono text-[12.5px]">{v}</dd>
+      <dd className={cn("mt-1 truncate font-mono text-[12.5px]", className)}>{v}</dd>
     </div>
   );
 }
@@ -36,6 +36,7 @@ export function OpportunityCard({ result, rank, onOpen }: { result: RankedResult
   const blockers = result.findings.filter((f) => f.severity === "BLOCKER").length;
   const warnings = result.findings.filter((f) => f.severity === "WARNING").length;
   const hold = result.reviewStatus === "HOLD";
+  const expired = isExpired(result);
 
   return (
     <article className={cn("group relative border bg-panel/80 transition hover:bg-panel-2", hold ? "border-hold/50" : "border-line hover:border-line-strong")}>
@@ -50,6 +51,7 @@ export function OpportunityCard({ result, rank, onOpen }: { result: RankedResult
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-mono text-[11px] text-dim sm:hidden">#{String(rank).padStart(2, "0")}</span>
                 <SourceKindBadge kind={record.kind} />
+                {expired && <ExpiredBadge />}
                 <ReviewStatusBadge status={result.reviewStatus} short />
               </div>
               <h3 className="mt-3 text-base font-normal leading-snug tracking-tight sm:text-lg">
@@ -68,7 +70,7 @@ export function OpportunityCard({ result, rank, onOpen }: { result: RankedResult
               </>
             ) : (
               <>
-                <Stat k="Response due" v={fmtDate(record.deadlineAt)} />
+                <Stat k={expired ? "Deadline passed" : "Response due"} v={fmtDate(record.deadlineAt)} className={expired ? "text-hold line-through decoration-hold/60" : undefined} />
                 <Stat k="Posted" v={fmtDate(record.postedAt)} />
               </>
             )}
