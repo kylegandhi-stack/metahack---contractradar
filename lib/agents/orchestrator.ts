@@ -24,6 +24,7 @@ import type {
   SourceRecord,
 } from "../types";
 import { loadSamSnapshot, type ProfileSnapshot } from "../data/snapshot";
+import { verifyRecords } from "../data/verify";
 import { runAnalyst, type Assessment } from "./analyst";
 import { runDevilsAdvocate, type CriticVerdict } from "./devils-advocate";
 import { runPlanner, type ResearchPlan } from "./planner";
@@ -48,6 +49,7 @@ export type PipelineDeps = {
   enrich: typeof enrichWithAwardDetail;
   describe: typeof describeNotices;
   loadSnapshot: typeof loadSamSnapshot;
+  verify: typeof verifyRecords;
   loadCache: () => CachedRecords | null;
   samConfigured: () => boolean;
   now: () => number;
@@ -63,6 +65,7 @@ const defaultDeps: PipelineDeps = {
   enrich: enrichWithAwardDetail,
   describe: describeNotices,
   loadSnapshot: loadSamSnapshot,
+  verify: verifyRecords,
   loadCache: loadVerifiedRecords,
   samConfigured: isSamConfigured,
   now: Date.now,
@@ -369,13 +372,11 @@ export async function runResearch(
   );
 
   // The critic should judge the real scope, so shortlisted SAM notices get their text first.
-  const described = await addNoticeDescriptions(
-    assessed,
-    shortlist.slice(0, SHORTLIST_SIZE),
-    deps,
-    scout.samFailure,
-    deps.loadSnapshot(profile.name),
-  );
+  const shortlisted = shortlist.slice(0, SHORTLIST_SIZE);
+  const [described, identity] = await Promise.all([
+    addNoticeDescriptions(assessed, shortlisted, deps, scout.samFailure, deps.loadSnapshot(profile.name)),
+    deps.verify(assessed.filter((record) => shortlisted.some((pick) => pick.sourceId === record.id))),
+  ]);
   const verdicts = await stage(
     "devils_advocate",
     `Independently challenging ${shortlist.length} shortlisted records`,
@@ -394,7 +395,7 @@ export async function runResearch(
     findingsById[pick.sourceId] = criticFindings(
       record,
       verdicts.find((verdict) => verdict.sourceId === pick.sourceId),
-    ).concat(described.notes.get(pick.sourceId) ?? []);
+    ).concat(described.notes.get(pick.sourceId) ?? [], identity.get(pick.sourceId) ?? []);
   }
 
   // One revision at most, and only when the critic's objection held up and time remains.
