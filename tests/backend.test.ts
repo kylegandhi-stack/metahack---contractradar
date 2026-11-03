@@ -11,7 +11,7 @@ import type { ResearchPlan } from "../lib/agents/planner";
 import type { ScoutResult } from "../lib/agents/scout";
 import { clearScoutMemo, MAX_TOOL_TURNS, runScout } from "../lib/agents/scout";
 import { loadVerifiedRecords } from "../lib/data/cache";
-import { classifyNotice, normalizeNotice, searchNotices } from "../lib/data/sam";
+import { classifyNotice, collapseNotices, normalizeNotice, searchNotices } from "../lib/data/sam";
 import { cleanKeywords, dedupeRecords, normalizeAward, searchAwards } from "../lib/data/usaspending";
 import { chatJson, MetaError, parseJsonOutput, RunBudget } from "../lib/meta";
 import { applyGates, capCriticWarnings, isVerbatim, statusFromFindings, verifyCriticFinding } from "../lib/review";
@@ -591,6 +591,73 @@ test("the warning cap never changes the review status", () => {
     const critic = Array.from({ length: count }, (_, index) => warning(`w${index}`));
     assert.equal(statusFromFindings(capCriticWarnings(critic, new Set(critic))), statusFromFindings(critic));
   }
+});
+
+const samNotice = (id: string, overrides: Partial<SourceRecord> = {}): SourceRecord => ({
+  id,
+  source: "sam",
+  kind: "open_notice",
+  title: "[TEST] Hydrophone assembly",
+  agency: "[TEST] NAVSUP",
+  url: `https://sam.gov/workspace/contract/opp/${id}/view`,
+  retrievedAt: "2026-11-03T00:00:00.000Z",
+  postedAt: "2026-11-02",
+  solicitationNumber: "SOL-1",
+  excerpts: [{ field: "title", text: "[TEST] Hydrophone assembly" }],
+  ...overrides,
+});
+
+test("collapse: presolicitation and solicitation of one buy become one card", () => {
+  const pre = samNotice("PRE", { kind: "early_stage_notice", postedAt: "2026-10-15" });
+  const sol = samNotice("SOL");
+  const [card, ...rest] = collapseNotices([pre, sol]);
+  assert.equal(rest.length, 0);
+  assert.equal(card.id, "SOL");
+  assert.deepEqual(card.relatedNotices, [{ id: "PRE", kind: "early_stage_notice", postedAt: "2026-10-15", url: pre.url }]);
+});
+
+test("collapse: the latest solicitation wins and the number match ignores case and spacing", () => {
+  const older = samNotice("OLD", { postedAt: "2026-10-01", solicitationNumber: "sol-1 " });
+  const newer = samNotice("NEW", { postedAt: "2026-10-20" });
+  const [card] = collapseNotices([older, newer]);
+  assert.equal(card.id, "NEW");
+  assert.deepEqual(card.relatedNotices?.map((related) => related.id), ["OLD"]);
+});
+
+test("collapse: an expired solicitation still wins, so its HOLD is not hidden by a presolicitation", () => {
+  const expired = samNotice("SOL", { deadlineAt: "2026-01-15T17:00:00-05:00", postedAt: "2026-01-01" });
+  const pre = samNotice("PRE", { kind: "early_stage_notice", deadlineAt: "2027-01-15", postedAt: "2026-12-01" });
+  assert.equal(collapseNotices([pre, expired])[0].id, "SOL");
+});
+
+test("collapse: the same title under different numbers stays separate", () => {
+  const records = [samNotice("A", { solicitationNumber: "SOL-A" }), samNotice("B", { solicitationNumber: "SOL-B" })];
+  assert.deepEqual(collapseNotices(records), records);
+});
+
+test("collapse: without a number, only the same title and office merge", () => {
+  const none = { solicitationNumber: null };
+  const a = samNotice("A", none);
+  const sameBuy = samNotice("B", { ...none, title: " [test]  hydrophone ASSEMBLY", postedAt: "2026-10-01" });
+  const otherOffice = samNotice("C", { ...none, agency: "[TEST] DLA" });
+  const numbered = samNotice("D");
+  const out = collapseNotices([a, sameBuy, otherOffice, numbered]);
+  assert.deepEqual(out.map((record) => record.id), ["A", "C", "D"]);
+  assert.deepEqual(out[0].relatedNotices?.map((related) => related.id), ["B"]);
+});
+
+test("collapse: running again keeps related notices and leaves awards alone", () => {
+  const award: SourceRecord = {
+    ...samNotice("AWARD", { source: "usaspending", kind: "historical_award", solicitationNumber: null }),
+    url: "https://www.usaspending.gov/award/AWARD",
+  };
+  const first = collapseNotices([samNotice("PRE", { kind: "early_stage_notice", postedAt: "2026-10-15" }), samNotice("SOL"), award]);
+  const again = collapseNotices([...first, samNotice("LATER", { postedAt: "2026-11-05" })]);
+  assert.equal(again.length, 2);
+  const card = again.find((record) => record.source === "sam");
+  assert.equal(card?.id, "LATER");
+  assert.deepEqual(card?.relatedNotices?.map((related) => related.id).sort(), ["PRE", "SOL"]);
+  assert.ok(again.includes(award));
 });
 
 test("schemas keep the optional accuracy fields and still accept records without them", () => {
