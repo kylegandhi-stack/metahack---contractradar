@@ -6,7 +6,7 @@ import type { FitBreakdown, RankedResult } from "@/lib/types";
 import { ConfidencePill, EligibilityBadge, ExpiredBadge, ReviewStatusBadge, SourceKindBadge } from "./badges";
 import { FindingItem, sortFindings } from "./FindingsPanel";
 import { FitScore } from "./OpportunityCard";
-import { cn, fmtDate, fmtDateTime, fmtMoney, isExpired, isHistorical, orUnknown, sourceName } from "./format";
+import { cn, fmtDate, fmtDateTime, fmtMoney, isExpired, isHistorical, KIND_LABEL, orUnknown, sourceName } from "./format";
 
 function Section({ n, title, children, tone }: { n: string; title: string; children: React.ReactNode; tone?: string }) {
   return (
@@ -164,6 +164,8 @@ export function OpportunityDetail({ result, onClose }: { result: RankedResult | 
                 <dl className="grid grid-cols-[9rem_1fr] divide-y divide-line border-y border-line [&>*]:border-line">
                   <Row k="Source">{sourceName(r.record.source)}</Row>
                   <Row k="Record ID">{r.record.id}</Row>
+                  {r.record.solicitationNumber && <Row k="Solicitation no.">{r.record.solicitationNumber}</Row>}
+                  {isHistorical(r) && <Row k="Awarded to">{orUnknown(r.record.recipient)}</Row>}
                   <Row k={isHistorical(r) ? "Award date" : "Posted"}>{fmtDate(r.record.postedAt)}</Row>
                   {!isHistorical(r) && <Row k="Response due">{isExpired(r) ? <span className="text-hold">{fmtDate(r.record.deadlineAt)} · expired</span> : fmtDate(r.record.deadlineAt)}</Row>}
                   {isHistorical(r) && <Row k="Award amount">{fmtMoney(r.record.awardAmount)} <span className="text-dim">(past obligation, not available budget)</span></Row>}
@@ -181,7 +183,52 @@ export function OpportunityDetail({ result, onClose }: { result: RankedResult | 
                 </a>
               </Section>
 
-              <Section n="F" title="Next actions" tone="text-foreground">
+              {!!r.record.relatedNotices?.length && (
+                <Section n="E1" title="Other postings of this buy">
+                  <ul className="divide-y divide-line border-y border-line">
+                    {r.record.relatedNotices.map((n) => (
+                      <li key={n.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
+                        <span className="font-mono text-[12px]">
+                          <span className="uppercase tracking-[0.1em] text-muted">{KIND_LABEL[n.kind]}</span>
+                          <span className="text-dim"> · posted {fmtDate(n.postedAt)} · {n.id}</span>
+                        </span>
+                        <a href={n.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 font-mono text-[11px] uppercase tracking-[0.12em] text-muted hover:text-foreground">
+                          Open <ArrowUpRight className="size-3.5" aria-hidden />
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="mt-2 text-xs text-dim">Merged into this target because SAM.gov lists them as the same buy.</p>
+                </Section>
+              )}
+
+              {!isHistorical(r) && r.priorAwards && (
+                <Section n="F" title="Buyer history · past awards from this buyer">
+                  {r.priorAwards.length === 0 ? (
+                    <p className="text-sm text-dim">No past awards from this buyer were found in USAspending.</p>
+                  ) : (
+                    <ul className="space-y-2">
+                      {[...r.priorAwards].sort((a, b) => (b.date ?? "").localeCompare(a.date ?? "")).map((a) => (
+                        <li key={a.id} className="border border-line bg-panel px-4 py-3">
+                          <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                            <p className="font-mono text-[11px] uppercase tracking-[0.1em]">
+                              <span className="text-muted">Winner</span> <span className="text-foreground">{orUnknown(a.recipient)}</span>
+                            </p>
+                            <p className="font-mono text-[11px] text-dim">{fmtDate(a.date)} · {fmtMoney(a.amount)}</p>
+                          </div>
+                          <p className="mt-1.5 text-sm leading-snug">{a.title}</p>
+                          <a href={a.url} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1 font-mono text-[10.5px] uppercase tracking-[0.12em] text-muted hover:text-foreground">
+                            USAspending.gov <ArrowUpRight className="size-3" aria-hidden />
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <p className="mt-2 text-xs text-dim">Past obligations from public records, not available budget. The incumbent is whoever won before; it is not a prediction.</p>
+                </Section>
+              )}
+
+              <Section n="G" title="Next actions" tone="text-foreground">
                 <Bullets items={r.nextSteps} empty="No next actions provided." marker="→" />
               </Section>
 

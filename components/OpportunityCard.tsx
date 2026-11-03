@@ -1,7 +1,7 @@
 import { ArrowUpRight } from "lucide-react";
 import type { RankedResult } from "@/lib/types";
 import { ConfidencePill, EligibilityBadge, ExpiredBadge, ReviewStatusBadge, SourceKindBadge } from "./badges";
-import { cn, fmtDate, fmtMoney, isExpired, isHistorical, orUnknown, sourceName } from "./format";
+import { cn, fmtDate, fmtMoney, isExpired, isHistorical, KIND_LABEL, latestPriorWinner, orUnknown, sourceName } from "./format";
 
 export function FitScore({ result, size = "md" }: { result: RankedResult; size?: "md" | "lg" }) {
   const label = isHistorical(result) ? "Hist. relevance" : "Fit score";
@@ -37,6 +37,7 @@ export function OpportunityCard({ result, rank, onOpen }: { result: RankedResult
   const warnings = result.findings.filter((f) => f.severity === "WARNING").length;
   const hold = result.reviewStatus === "HOLD";
   const expired = isExpired(result);
+  const prior = latestPriorWinner(result);
 
   return (
     <article className={cn("group relative border bg-panel/80 transition hover:bg-panel-2", hold ? "border-hold/50" : "border-line hover:border-line-strong")}>
@@ -58,6 +59,21 @@ export function OpportunityCard({ result, rank, onOpen }: { result: RankedResult
                 <button onClick={onOpen} className="text-left decoration-line-strong underline-offset-4 hover:underline">{record.title}</button>
               </h3>
               <p className="label mt-1.5 normal-case tracking-[0.06em]">{orUnknown(record.agency)}</p>
+              {hist && record.recipient && (
+                <p className="mt-1.5 font-mono text-[11px] uppercase tracking-[0.1em] text-muted">Awarded to <span className="text-foreground">{record.recipient}</span></p>
+              )}
+              {!hist && prior && (
+                <p className="mt-1.5 font-mono text-[11px] uppercase tracking-[0.1em] text-muted">
+                  Prior winner <span className="text-foreground">{prior.recipient}</span>
+                  {prior.date && <span className="text-dim"> · {fmtDate(prior.date)}</span>}
+                  {prior.count > 1 && <span className="text-dim"> · {prior.count} past awards from this buyer</span>}
+                </p>
+              )}
+              {!!record.relatedNotices?.length && (
+                <p className="mt-1 font-mono text-[11px] uppercase tracking-[0.1em] text-dim">
+                  Also posted as {record.relatedNotices.map((n) => `${KIND_LABEL[n.kind]}${n.postedAt ? ` · ${fmtDate(n.postedAt)}` : ""}`).join(" / ")}
+                </p>
+              )}
             </div>
             <FitScore result={result} />
           </div>
