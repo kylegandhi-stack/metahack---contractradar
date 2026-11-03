@@ -115,6 +115,7 @@ export const AgentEventSchema = z.object({
 export const ResearchResponseSchema = z.object({
   profile: CompanyProfileSchema,
   dataMode: z.enum(["live", "cached"]),
+  cachedSources: z.array(z.enum(["sam", "usaspending"])).optional(),
   recordsUsed: z.number().int().min(0),
   results: z.array(RankedResultSchema),
   agentEvents: z.array(AgentEventSchema),

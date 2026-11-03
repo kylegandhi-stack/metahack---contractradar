@@ -101,7 +101,8 @@ export type ResearchRequest = {
 
 export type ResearchResponse = {
   profile: CompanyProfile;
-  dataMode: "live" | "cached";
+  dataMode: "live" | "cached"; // "cached" when any shown record comes from saved public data
+  cachedSources?: ("sam" | "usaspending")[]; // which sources are saved in this run; absent when live
   recordsUsed: number;
   results: RankedResult[];
   agentEvents: AgentEvent[];
