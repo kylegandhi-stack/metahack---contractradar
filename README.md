@@ -76,7 +76,7 @@ Both are off by default, because SAM.gov keys can have small daily quotas.
 - **Results vary between runs.** The model chooses different searches, and no search is complete. Only the top 5 get a critic review.
 - **Partial notice text.** Descriptions are off by default, so the critic may see only a notice's title and summary fields. Attachments are never read.
 - **Live SAM.gov quota.** A spent quota means no live notices until it resets. Demo profiles can fall back to labeled saved notices once a snapshot is captured.
-- **Early accuracy numbers.** On 20 hand-labeled records, ranking precision@5 was 80% in 2 runs. That's a small sample and doesn't measure live search.
+- **Early accuracy numbers.** Hand-labeled precision@5 was 60% for AquaVector Systems (3 of 5) and 80% for a second test profile (4 of 5). Those are 2 production runs from before the accuracy changes (deduping, search by code, source checks), labeled by one team member, so they don't measure the current search. Ranking on 20 other hand-labeled records also scored 80% in 2 runs. See [the labeled sheet](data/eval/labeling-sheet.csv).
 - **Not fully tested live:** a full run with live SAM.gov and descriptions hasn't been timed. With SAM.gov off, local runs took 45-48 s.
 
 ## Built during the hackathon, Oct 26 to Nov 4
