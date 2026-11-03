@@ -1426,8 +1426,13 @@ test("labeling sheet: quoted cells parse, and only y or n in the top 5 count tow
   assert.equal(q.precisionAt5, null);
 });
 
-test("labeling sheet: the committed sheet is valid, with real records and blank answers", () => {
+test("labeling sheet: the committed labels give the reported precision@5", () => {
   const scores = scoreSheet(readFileSync(new URL("../data/eval/labeling-sheet.csv", import.meta.url), "utf8"));
-  assert.equal(scores.length, 2);
-  assert.ok(scores.every((score) => score.labeled === 0 && score.blank > 0));
+  assert.deepEqual(
+    scores.map((score) => [score.profile, score.top5Relevant, score.top5Labeled, score.blank, score.invalid]),
+    [
+      ["AquaVector Systems", 3, 5, 0, 0],
+      ["[TEST] Northgate Composites", 4, 5, 0, 0],
+    ],
+  );
 });
