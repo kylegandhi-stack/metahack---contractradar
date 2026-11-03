@@ -11,7 +11,14 @@ import type { ResearchPlan } from "../lib/agents/planner";
 import type { ScoutResult } from "../lib/agents/scout";
 import { clearScoutMemo, MAX_TOOL_TURNS, runScout } from "../lib/agents/scout";
 import { loadVerifiedRecords } from "../lib/data/cache";
-import { classifyNotice, collapseNotices, normalizeNotice, searchNotices } from "../lib/data/sam";
+import {
+  classifyNotice,
+  clearDescriptionMemo,
+  collapseNotices,
+  describeNotices,
+  normalizeNotice,
+  searchNotices,
+} from "../lib/data/sam";
 import { cleanKeywords, dedupeRecords, normalizeAward, searchAwards } from "../lib/data/usaspending";
 import { chatJson, MetaError, parseJsonOutput, RunBudget } from "../lib/meta";
 import { applyGates, capCriticWarnings, isVerbatim, statusFromFindings, verifyCriticFinding } from "../lib/review";
@@ -109,6 +116,7 @@ function fakeDeps(records: SourceRecord[], overrides: Partial<PipelineDeps> = {}
     critique: async (_profile, _records, _assessments, shortlist) =>
       shortlist.map((pick) => ({ sourceId: pick.sourceId, verdict: "Checked", noneFound: true, findings: [] })),
     enrich: async (record) => record,
+    describe: async () => ({ texts: new Map(), unavailable: [], shortened: [] }),
     samConfigured: () => true,
     now: () => NOW,
     ...overrides,
@@ -658,6 +666,107 @@ test("collapse: running again keeps related notices and leaves awards alone", ()
   assert.equal(card?.id, "LATER");
   assert.deepEqual(card?.relatedNotices?.map((related) => related.id).sort(), ["PRE", "SOL"]);
   assert.ok(again.includes(award));
+});
+
+test("descriptions: markup is removed, the key stays out of errors, and repeat runs reuse the text", async () => {
+  clearDescriptionMemo();
+  process.env.SAM_API_KEY = "secret-test-key";
+  const urls: string[] = [];
+  globalThis.fetch = (async (url: string) => {
+    urls.push(String(url));
+    return Response.json({ description: "<p>Source&nbsp;Control &amp; <b>First Article</b></p>" });
+  }) as typeof fetch;
+  const record = notice();
+  const first = await describeNotices([record]);
+  assert.equal(first.texts.get(record.id), "Source Control & First Article");
+  assert.match(urls[0], /noticedesc\?noticeid=TEST-NOTICE-1/);
+  await describeNotices([record]);
+  assert.equal(urls.length, 1);
+
+  clearDescriptionMemo();
+  globalThis.fetch = async () => new Response("{}", { status: 500 });
+  const failed = await describeNotices([record]);
+  assert.deepEqual(failed.unavailable, [record.id]);
+});
+
+test("descriptions: the first 429 stops further SAM calls", async () => {
+  clearDescriptionMemo();
+  process.env.SAM_API_KEY = "secret-test-key";
+  let calls = 0;
+  globalThis.fetch = async () => {
+    calls += 1;
+    return new Response("{}", { status: 429 });
+  };
+  const records = [notice({ id: "A" }), notice({ id: "B" }), notice({ id: "C" })];
+  const result = await describeNotices(records);
+  assert.equal(calls, 1);
+  assert.deepEqual(result.unavailable, ["A", "B", "C"]);
+});
+
+test("descriptions: long text is shortened and reported, a missing notice is unavailable", async () => {
+  clearDescriptionMemo();
+  process.env.SAM_API_KEY = "secret-test-key";
+  globalThis.fetch = async () => Response.json({ description: "x".repeat(9_000) });
+  const long = await describeNotices([notice({ id: "LONG" })]);
+  assert.equal(long.texts.get("LONG")?.length, 8_000);
+  assert.deepEqual(long.shortened, ["LONG"]);
+  globalThis.fetch = async () => new Response("{}", { status: 404 });
+  assert.deepEqual((await describeNotices([notice({ id: "GONE" })])).unavailable, ["GONE"]);
+});
+
+test("descriptions: only shortlisted SAM notices are fetched, and the critic sees the text", async () => {
+  const records = [notice({ id: "PICKED" }), notice({ id: "NOT-PICKED" }), award()];
+  let asked: string[] = [];
+  let seen: SourceRecord | undefined;
+  const response = await runResearch(PROFILE, {
+    deps: fakeDeps(records, {
+      strategize: async () => [
+        { sourceId: "PICKED", rationale: "Fits", nextSteps: ["Verify"] },
+        { sourceId: award().id, rationale: "Buyer", nextSteps: ["Research"] },
+      ],
+      describe: async (targets) => {
+        asked = targets.map((record) => record.id);
+        return { texts: new Map([["PICKED", "Only approved sources"]]), unavailable: [], shortened: [] };
+      },
+      critique: async (_profile, list, _assessments, shortlist) => {
+        seen = list.find((record) => record.id === "PICKED");
+        return shortlist.map((pick) => ({ sourceId: pick.sourceId, verdict: "Checked", noneFound: true, findings: [] }));
+      },
+    }),
+  });
+  assert.deepEqual(asked, ["PICKED"]);
+  assert.ok(seen?.excerpts.some((excerpt) => excerpt.field === "description" && excerpt.text === "Only approved sources"));
+  const picked = response.results.find((result) => result.record.id === "PICKED");
+  assert.equal(picked?.record.description, "Only approved sources");
+  assert.ok(!picked?.findings.some((finding) => finding.issue.includes("description")));
+});
+
+test("descriptions: a failed fetch adds a NOTE, keeps the status and leaves the description null", async () => {
+  const response = await runResearch(PROFILE, {
+    deps: fakeDeps([notice()], {
+      describe: async (targets) => ({ texts: new Map(), unavailable: targets.map((record) => record.id), shortened: [] }),
+    }),
+  });
+  const result = response.results[0];
+  assert.equal(result.record.description, null);
+  const note = result.findings.find((finding) => finding.issue === "SAM.gov description could not be retrieved");
+  assert.equal(note?.severity, "NOTE");
+  assert.equal(result.reviewStatus, "APPROVED");
+});
+
+test("descriptions: nothing is fetched after a SAM.gov search failure", async () => {
+  let called = false;
+  const response = await runResearch(PROFILE, {
+    deps: fakeDeps([notice()], {
+      scout: async () => scoutWith([notice()], { samFailure: "SAM.gov returned HTTP 429" }),
+      describe: async () => {
+        called = true;
+        return { texts: new Map(), unavailable: [], shortened: [] };
+      },
+    }),
+  });
+  assert.equal(called, false);
+  assert.ok(response.results[0].findings.some((finding) => finding.issue === "SAM.gov description could not be retrieved"));
 });
 
 test("schemas keep the optional accuracy fields and still accept records without them", () => {

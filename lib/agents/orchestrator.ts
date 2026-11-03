@@ -1,7 +1,7 @@
 // The five logical agents run in order inside one server-side function. Every AgentEvent wraps a
 // real call. Dependencies are injectable so the tests can drive the gates without the network.
 import { loadVerifiedRecords, type CachedRecords } from "../data/cache";
-import { isSamConfigured } from "../data/sam";
+import { describeNotices, isSamConfigured } from "../data/sam";
 import { enrichWithAwardDetail, UsaSpendingError } from "../data/usaspending";
 import { MetaError, RunBudget } from "../meta";
 import {
@@ -45,6 +45,7 @@ export type PipelineDeps = {
   revise: typeof reviseShortlist;
   critique: typeof runDevilsAdvocate;
   enrich: typeof enrichWithAwardDetail;
+  describe: typeof describeNotices;
   loadCache: () => CachedRecords | null;
   samConfigured: () => boolean;
   now: () => number;
@@ -58,6 +59,7 @@ const defaultDeps: PipelineDeps = {
   revise: reviseShortlist,
   critique: runDevilsAdvocate,
   enrich: enrichWithAwardDetail,
+  describe: describeNotices,
   loadCache: loadVerifiedRecords,
   samConfigured: isSamConfigured,
   now: Date.now,
@@ -151,6 +153,62 @@ export function buildResult(args: {
     nextSteps: cleanNextSteps(record, pick?.nextSteps ?? ["Open the source record and verify scope."]),
     findings,
     reviewStatus,
+  };
+}
+
+function descriptionNote(record: SourceRecord, issue: string, whyItMatters: string): AuditFinding {
+  return {
+    severity: "NOTE",
+    issue,
+    whyItMatters,
+    evidenceSourceId: record.id,
+    evidenceExcerpt: null,
+    correctiveAction: "Read the full notice on the source record.",
+  };
+}
+
+// Adds source text to shortlisted SAM notices. A failed fetch leaves the description null and adds a
+// NOTE: it never blocks a run. Skipped when SAM.gov already failed, to avoid spending more quota.
+async function addNoticeDescriptions(
+  records: SourceRecord[],
+  shortlist: Pick[],
+  deps: PipelineDeps,
+  samFailure: string | null,
+) {
+  const ids = new Set(shortlist.map((pick) => pick.sourceId));
+  const targets = records.filter((record) => record.source === "sam" && ids.has(record.id));
+  const notes = new Map<string, AuditFinding[]>();
+  if (targets.length === 0 || !deps.samConfigured()) return { records, notes, count: 0 };
+  const { texts, unavailable, shortened } = samFailure
+    ? { texts: new Map<string, string>(), unavailable: targets.map((record) => record.id), shortened: [] as string[] }
+    : await deps.describe(targets);
+  for (const record of targets) {
+    if (unavailable.includes(record.id)) {
+      notes.set(record.id, [
+        descriptionNote(
+          record,
+          "SAM.gov description could not be retrieved",
+          "This review used the notice's title and summary fields only, so requirements in its full text were not checked.",
+        ),
+      ]);
+    } else if (shortened.includes(record.id)) {
+      notes.set(record.id, [
+        descriptionNote(
+          record,
+          "SAM.gov description was shortened for review",
+          "Requirements later in the notice's full text were not checked.",
+        ),
+      ]);
+    }
+  }
+  return {
+    notes,
+    count: texts.size,
+    records: records.map((record) => {
+      const text = texts.get(record.id);
+      if (!text) return record;
+      return { ...record, description: text, excerpts: [...record.excerpts, { field: "description", text }] };
+    }),
   };
 }
 
@@ -276,17 +334,19 @@ export async function runResearch(
     (value) => `Shortlisted ${value.length} records.`,
   );
 
+  // The critic should judge the real scope, so shortlisted SAM notices get their text first.
+  const described = await addNoticeDescriptions(assessed, shortlist.slice(0, SHORTLIST_SIZE), deps, scout.samFailure);
   const verdicts = await stage(
     "devils_advocate",
     `Independently challenging ${shortlist.length} shortlisted records`,
-    () => deps.critique(profile, assessed, assessments, shortlist.slice(0, SHORTLIST_SIZE), budget),
+    () => deps.critique(profile, described.records, assessments, shortlist.slice(0, SHORTLIST_SIZE), budget),
     (value) => {
       const count = value.reduce((sum, verdict) => sum + verdict.findings.length, 0);
-      return `Returned ${value.length} verdicts with ${count} findings.`;
+      return `Read ${described.count} SAM.gov description(s). Returned ${value.length} verdicts with ${count} findings.`;
     },
   );
 
-  const recordById = new Map(assessed.map((record) => [record.id, record]));
+  const recordById = new Map(described.records.map((record) => [record.id, record]));
   const findingsById: Record<string, AuditFinding[]> = {};
   for (const pick of shortlist) {
     const record = recordById.get(pick.sourceId);
@@ -294,7 +354,7 @@ export async function runResearch(
     findingsById[pick.sourceId] = criticFindings(
       record,
       verdicts.find((verdict) => verdict.sourceId === pick.sourceId),
-    );
+    ).concat(described.notes.get(pick.sourceId) ?? []);
   }
 
   // One revision at most, and only when the critic's objection held up and time remains.
@@ -305,7 +365,7 @@ export async function runResearch(
     shortlist = await stage(
       "strategist",
       "Revising the shortlist after verified blockers",
-      () => deps.revise(profile, shortlist, assessed, findingsById, budget),
+      () => deps.revise(profile, shortlist, described.records, findingsById, budget),
       () => "Shortlist revised once.",
     );
   }
