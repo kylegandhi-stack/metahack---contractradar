@@ -742,6 +742,20 @@ test("descriptions: markup is removed, the key stays out of errors, and repeat r
   assert.deepEqual(failed.unavailable, [record.id]);
 });
 
+test("descriptions: the documented not-found message is not stored as notice text", async () => {
+  process.env.SAM_API_KEY = "secret-test-key";
+  for (const message of ["Description not found", "<p>Description Not Found.</p>"]) {
+    clearDescriptionMemo();
+    globalThis.fetch = async () => Response.json({ description: message });
+    const result = await describeNotices([notice({ id: "NONE" })]);
+    assert.equal(result.texts.size, 0);
+    assert.deepEqual(result.unavailable, ["NONE"]);
+  }
+  clearDescriptionMemo();
+  globalThis.fetch = async () => new Response("<html>not json</html>");
+  assert.deepEqual((await describeNotices([notice({ id: "HTML" })])).unavailable, ["HTML"]);
+});
+
 test("descriptions: the first 429 stops further SAM calls", async () => {
   clearDescriptionMemo();
   process.env.SAM_API_KEY = "secret-test-key";
