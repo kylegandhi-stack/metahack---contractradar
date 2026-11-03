@@ -38,7 +38,7 @@ If live sources fail but `data/verified-records.json` is usable, the route retur
 
 - `record.kind`
   - `historical_award`: a past USAspending award. `deadlineAt` is always null. UI shows "Historical award", labels the score "Historical relevance", and shows no apply/bid CTA.
-  - `open_notice`: SAM.gov solicitation (ptype `o`/`k`) with a response deadline that the server verified is in the future.
+  - `open_notice`: the SAM.gov notice type is a solicitation (ptype `o`/`k`). This describes the notice type, not whether it can still be answered. An expired `open_notice` must carry a BLOCKER and `reviewStatus: "HOLD"`, and the UI must show it as expired.
   - `early_stage_notice`: SAM.gov sources sought / presolicitation (ptype `r`/`p`).
 - `record.url` is always an official source URL. `record.excerpts[].text` is verbatim from the source field named in `field`.
 - `awardAmount` is the historical obligation, never "available budget".
