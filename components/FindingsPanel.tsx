@@ -1,5 +1,6 @@
 import type { AuditFinding, RankedResult } from "@/lib/types";
 import { ReviewStatusBadge, SeverityBadge } from "./badges";
+import { isUnreviewed } from "./format";
 
 const ORDER = { BLOCKER: 0, WARNING: 1, NOTE: 2 } as const;
 export const sortFindings = (f: AuditFinding[]) => [...f].sort((a, b) => ORDER[a.severity] - ORDER[b.severity]);
@@ -29,10 +30,13 @@ export function FindingItem({ f }: { f: AuditFinding }) {
 
 /** Devil's Advocate summary across the shortlist. */
 export function FindingsPanel({ results, onOpen }: { results: RankedResult[]; onOpen: (r: RankedResult) => void }) {
+  // Only results the critic actually reviewed count here; the rest are summarized in one line below.
+  const unreviewed = results.filter(isUnreviewed).length;
+  const reviewed = results.filter((r) => !isUnreviewed(r));
   const counts = { BLOCKER: 0, WARNING: 0, NOTE: 0 };
-  results.forEach((r) => r.findings.forEach((f) => counts[f.severity]++));
+  reviewed.forEach((r) => r.findings.forEach((f) => counts[f.severity]++));
   const RANK = { HOLD: 0, REVIEW_REQUIRED: 1, APPROVED: 2 } as const;
-  const flaggedAll = results
+  const flaggedAll = reviewed
     .filter((r) => r.findings.some((f) => f.severity !== "NOTE") || r.reviewStatus !== "APPROVED")
     .sort((a, b) => RANK[a.reviewStatus] - RANK[b.reviewStatus]);
   const MAX = 5;
@@ -72,6 +76,7 @@ export function FindingsPanel({ results, onOpen }: { results: RankedResult[]; on
             );
           })}
           {more > 0 && <li className="label pt-1 text-dim">+{more} more flagged. Open any target to see its findings.</li>}
+          {unreviewed > 0 && <li className="label pt-1 text-dim">{unreviewed} result{unreviewed === 1 ? "" : "s"} below the shortlist {unreviewed === 1 ? "was" : "were"} not reviewed.</li>}
         </ul>
       )}
     </section>

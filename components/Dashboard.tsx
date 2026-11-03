@@ -9,7 +9,7 @@ import { HeroBackdrop, HeroCredit } from "./HeroBackdrop";
 import { OpportunityCard } from "./OpportunityCard";
 import { OpportunityDetail } from "./OpportunityDetail";
 import { ProfileForm } from "./ProfileForm";
-import { cn, fmtDateTime, KIND_LABEL } from "./format";
+import { cn, fmtDateTime, isUnreviewed, KIND_LABEL } from "./format";
 
 const TIMEOUT_MS = 150_000;
 type Filter = "all" | SourceKind;
@@ -264,8 +264,17 @@ export function Dashboard({ sampleMode }: { sampleMode: boolean }) {
                   <div className="hud p-6 text-sm text-muted">No matching records were found for this profile. Try broader capability wording or remove target agencies.</div>
                 ) : (
                   <div className="space-y-3">
-                    {visible.map((r) => (
-                      <OpportunityCard key={`${r.record.source}:${r.record.id}`} result={r} rank={data.results.indexOf(r) + 1} onOpen={() => setOpen(r)} />
+                    {visible.map((r, i) => (
+                      <div key={`${r.record.source}:${r.record.id}`} className="space-y-3">
+                        {isUnreviewed(r) && (i === 0 || !isUnreviewed(visible[i - 1])) && (
+                          <div className="flex items-center gap-3 pt-3" role="separator" aria-label="Not reviewed by the Devil's Advocate">
+                            <span className="h-px flex-1 bg-line-strong" aria-hidden />
+                            <span className="label text-dim">Below the shortlist · not reviewed by the Devil&apos;s Advocate</span>
+                            <span className="h-px flex-1 bg-line-strong" aria-hidden />
+                          </div>
+                        )}
+                        <OpportunityCard result={r} rank={data.results.indexOf(r) + 1} onOpen={() => setOpen(r)} />
+                      </div>
                     ))}
                   </div>
                 )}

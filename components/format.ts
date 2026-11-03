@@ -87,3 +87,15 @@ export function latestPriorWinner(r: RankedResult): { recipient: string; date: s
   const sorted = [...awards].sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""));
   return { recipient: sorted[0].recipient as string, date: sorted[0].date, count: r.priorAwards?.length ?? 0 };
 }
+
+/** Points this record could earn (docs/interface.md): scores are never rescaled to 100. */
+export const fitMaxOf = (r: RankedResult) => (r.fitMax && r.fitMax > 0 ? r.fitMax : 100);
+
+/** Results below the shortlist carry this deterministic gate finding: the critic never saw them. */
+export const isUnreviewed = (r: RankedResult) => r.findings.some((f) => f.issue.startsWith("Outside the shortlist"));
+
+/** A past award at its maximum must read as a strong historical match, never "perfect" or an open opportunity. */
+export function fitLabel(r: RankedResult): string {
+  if (!isHistorical(r)) return "Fit score";
+  return Math.round(r.fitScore) >= fitMaxOf(r) ? "Strong historical match" : "Hist. relevance";
+}

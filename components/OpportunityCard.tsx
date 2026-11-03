@@ -1,22 +1,27 @@
 import { ArrowUpRight } from "lucide-react";
 import type { RankedResult } from "@/lib/types";
 import { ConfidencePill, EligibilityBadge, ExpiredBadge, ReviewStatusBadge, SourceKindBadge } from "./badges";
-import { cn, fmtDate, fmtMoney, isExpired, isHistorical, KIND_LABEL, latestPriorWinner, orUnknown, sourceName } from "./format";
+import { cn, fitLabel, fitMaxOf, fmtDate, fmtMoney, isExpired, isHistorical, KIND_LABEL, latestPriorWinner, orUnknown, sourceName } from "./format";
 
 export function FitScore({ result, size = "md" }: { result: RankedResult; size?: "md" | "lg" }) {
-  const label = isHistorical(result) ? "Hist. relevance" : "Fit score";
-  const score = Math.max(0, Math.min(100, Math.round(result.fitScore)));
+  const max = fitMaxOf(result);
+  const score = Math.max(0, Math.min(max, Math.round(result.fitScore)));
   const bar = { HOLD: "bg-hold", REVIEW_REQUIRED: "bg-warn", APPROVED: "bg-foreground" }[result.reviewStatus];
+  const hist = isHistorical(result);
   return (
-    <div className={cn("shrink-0 text-right", size === "lg" ? "w-28" : "w-24")}>
+    <div
+      className={cn("shrink-0 text-right", size === "lg" ? "w-36" : "w-32")}
+      title={hist ? `Past awards can earn at most ${max} points: eligibility and timing don't apply.` : `Relevance points out of ${max}, not a win probability.`}
+    >
       <p className={cn("font-light leading-none tabular-nums tracking-tight", size === "lg" ? "text-5xl" : "text-4xl")}>
         {score}
-        <span className="ml-0.5 font-mono text-xs text-dim">/100</span>
+        <span className="ml-0.5 font-mono text-xs text-dim">/{max}</span>
       </p>
       <div className="mt-2 h-[2px] w-full bg-line-strong" aria-hidden>
-        <div className={cn("h-full", bar)} style={{ width: `${score}%` }} />
+        <div className={cn("h-full", hist ? "bg-muted" : bar)} style={{ width: `${(score / max) * 100}%` }} />
       </div>
-      <p className="label mt-1.5">{label}</p>
+      <p className="label mt-1.5">{fitLabel(result)}</p>
+      {hist && <p className="mt-0.5 font-mono text-[9.5px] uppercase tracking-[0.1em] text-dim">of {max} available</p>}
     </div>
   );
 }
