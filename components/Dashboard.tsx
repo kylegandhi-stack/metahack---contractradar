@@ -82,6 +82,23 @@ function Notice({ tone, title, children }: { tone: "hold" | "warn" | "neutral" |
   );
 }
 
+const SOURCE_NAME = { sam: "SAM.gov notices", usaspending: "USAspending awards" } as const;
+
+/** Names which sources are saved copies (docs/interface.md): absent cachedSources means all are saved. */
+function CachedBanner({ data }: { data: ResearchResponse }) {
+  const all = ["sam", "usaspending"] as const;
+  const saved = data.cachedSources ?? [...all];
+  const live = all.filter((s) => !saved.includes(s));
+  const oldest = data.results.filter((r) => saved.includes(r.record.source)).map((r) => r.record.retrievedAt).sort()[0];
+  const names = saved.map((s) => SOURCE_NAME[s]).join(" and ");
+  return (
+    <Notice tone="warn" title={`Cached ${names} — retrieved ${fmtDateTime(oldest ?? data.runAt)}`}>
+      The live {saved.length > 1 ? "searches" : "search"} failed or {saved.length > 1 ? "aren't" : "isn't"} configured, so saved copies of real public records are shown.
+      {live.length > 0 && ` ${live.map((s) => SOURCE_NAME[s]).join(" and ")} are live.`}
+    </Notice>
+  );
+}
+
 export function Dashboard({ sampleMode }: { sampleMode: boolean }) {
   const [state, setState] = useState<State>({ phase: "idle" });
   const [filter, setFilter] = useState<Filter>("all");
@@ -194,9 +211,7 @@ export function Dashboard({ sampleMode }: { sampleMode: boolean }) {
             <div className="mt-8 space-y-2">
               {state.isSample && <Notice tone="signal" title="Demo / sample data">These records are a development fixture, not live government data.</Notice>}
               {data.dataMode === "cached" && (
-                <Notice tone="warn" title={`Cached public records — retrieved ${fmtDateTime(data.results.map((r) => r.record.retrievedAt).sort()[0] ?? data.runAt)}`}>
-                  Live sources were not queried for this run.
-                </Notice>
+                <CachedBanner data={data} />
               )}
               {historicalOnly && (
                 <Notice tone="neutral" title="Historical buyers and procurement intelligence">Every result below is a past award. None is an open solicitation.</Notice>
