@@ -53,7 +53,7 @@ export function OpportunityCard({ result, rank, onOpen }: { result: RankedResult
                 <span className="font-mono text-[11px] text-dim sm:hidden">#{String(rank).padStart(2, "0")}</span>
                 <SourceKindBadge kind={record.kind} />
                 {expired && <ExpiredBadge />}
-                <ReviewStatusBadge status={result.reviewStatus} short />
+                <ReviewStatusBadge status={result.reviewStatus} kind={record.kind} short />
               </div>
               <h3 className="mt-3 text-base font-normal leading-snug tracking-tight sm:text-lg">
                 <button onClick={onOpen} className="text-left decoration-line-strong underline-offset-4 hover:underline">{record.title}</button>

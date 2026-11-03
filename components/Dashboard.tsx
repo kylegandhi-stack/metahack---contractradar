@@ -88,7 +88,8 @@ const SOURCE_NAME = { sam: "SAM.gov notices", usaspending: "USAspending awards" 
 function CachedBanner({ data }: { data: ResearchResponse }) {
   const all = ["sam", "usaspending"] as const;
   const saved = data.cachedSources ?? [...all];
-  const live = all.filter((s) => !saved.includes(s));
+  // Only call a source live if this run actually shows records from it (#34): an unconfigured source isn't "live".
+  const live = all.filter((s) => !saved.includes(s) && data.results.some((r) => r.record.source === s));
   const oldest = data.results.filter((r) => saved.includes(r.record.source)).map((r) => r.record.retrievedAt).sort()[0];
   const names = saved.map((s) => SOURCE_NAME[s]).join(" and ");
   return (
@@ -163,7 +164,7 @@ export function Dashboard({ sampleMode }: { sampleMode: boolean }) {
               </h1>
               <p className="mt-6 max-w-xl text-[15px] leading-relaxed text-muted">
                 An AI business-development team for small defense suppliers. Five agents search public federal records,
-                qualify each lead against your capabilities, and a red-team critic argues against every recommendation
+                qualify each lead against your capabilities, and a red-team critic argues against every shortlisted recommendation
                 before you spend a week on a proposal.
               </p>
             </div>

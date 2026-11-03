@@ -44,7 +44,7 @@ export function FindingsPanel({ results, onOpen }: { results: RankedResult[]; on
       <div className="flex items-baseline justify-between gap-2">
         <h2 id="da-heading" className="label text-foreground"><span className="text-dim">[03]</span> Red team — Devil&apos;s Advocate</h2>
       </div>
-      <p className="mt-1 text-xs text-dim">An independent critic tried to disprove every recommendation.</p>
+      <p className="mt-1 text-xs text-dim">An independent critic tried to disprove every shortlisted recommendation.</p>
 
       <dl className="mt-4 grid grid-cols-3 border border-line">
         {([["Blockers", counts.BLOCKER, "text-hold"], ["Warnings", counts.WARNING, "text-warn"], ["Notes", counts.NOTE, "text-muted"]] as const).map(([k, v, c], i) => (
@@ -64,7 +64,7 @@ export function FindingsPanel({ results, onOpen }: { results: RankedResult[]; on
             return (
               <li key={r.record.id}>
                 <button onClick={() => onOpen(r)} className="w-full border border-line bg-panel-2 p-3 text-left transition hover:border-line-strong">
-                  <ReviewStatusBadge status={r.reviewStatus} short />
+                  <ReviewStatusBadge status={r.reviewStatus} kind={r.record.kind} short />
                   <p className="mt-2 line-clamp-2 text-sm">{r.record.title}</p>
                   {top && <p className="mt-1 text-xs text-muted"><span className="font-mono text-[10.5px] tracking-[0.1em]">{top.severity} ·</span> {top.issue}</p>}
                 </button>

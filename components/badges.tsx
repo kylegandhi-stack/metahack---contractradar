@@ -22,13 +22,21 @@ export function SourceKindBadge({ kind, className }: { kind: SourceKind; classNa
   );
 }
 
-export function ReviewStatusBadge({ status, className, short }: { status: ReviewStatus; className?: string; short?: boolean }) {
-  const style = {
-    APPROVED: ["border-clear/50 text-clear", "bg-clear"],
-    REVIEW_REQUIRED: ["border-warn/60 text-warn", "bg-warn"],
-    HOLD: ["border-hold/70 bg-hold/10 text-hold", "bg-hold blink"],
-  }[status];
-  const text = short ? { APPROVED: "Approved", REVIEW_REQUIRED: "Review required", HOLD: "Hold" }[status] : STATUS_LABEL[status];
+export function ReviewStatusBadge({ status, className, short, kind }: { status: ReviewStatus; className?: string; short?: boolean; kind?: SourceKind }) {
+  // A past award has nothing to bid on, so APPROVED reads as "Reviewed, no open bid" in neutral styling.
+  const reviewedOnly = status === "APPROVED" && kind === "historical_award";
+  const style = reviewedOnly
+    ? ["border-line-strong text-muted", "bg-muted"]
+    : {
+        APPROVED: ["border-clear/50 text-clear", "bg-clear"],
+        REVIEW_REQUIRED: ["border-warn/60 text-warn", "bg-warn"],
+        HOLD: ["border-hold/70 bg-hold/10 text-hold", "bg-hold blink"],
+      }[status];
+  const text = reviewedOnly
+    ? "Reviewed, no open bid"
+    : short
+      ? { APPROVED: "Approved", REVIEW_REQUIRED: "Review required", HOLD: "Hold" }[status]
+      : STATUS_LABEL[status];
   return (
     <span className={cn(base, style[0], className)}>
       <Dot className={style[1]} />
