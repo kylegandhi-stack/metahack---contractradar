@@ -9,6 +9,8 @@ import { VoiceOrb, type OrbState } from "./VoiceOrb";
 import { encodeWav, resampleTo } from "./wav";
 
 const REQUEST_TIMEOUT_MS = 60_000;
+// Wake word is opt-in per deployment (see lib/voice.ts wakeEnabled). Off unless NEXT_PUBLIC_VOICE_WAKE=on.
+const WAKE_AVAILABLE = process.env.NEXT_PUBLIC_VOICE_WAKE === "on";
 const MIN_PHRASE_SECONDS = 0.5;
 
 // Support can only be known in the browser. Subscribing fires one callback right after hydration, so React
@@ -233,20 +235,22 @@ export function VoiceInput({ disabled, onResult }: Props) {
           >
             <Mic className="size-3.5" aria-hidden /> Hey Rauros
           </button>
+          {WAKE_AVAILABLE && (
           <button
-            type="button"
-            onClick={() => void toggleWake()}
-            disabled={disabled}
-            aria-pressed={wakeOn}
-            title={wakeOn ? "Stop listening for “Hey Rauros”" : "Listen for “Hey Rauros” (keeps the mic on)"}
-            className={cn(
-              "inline-flex items-center gap-2 border border-l-0 px-2.5 py-1.5 font-mono text-[10.5px] uppercase tracking-[0.12em] transition disabled:opacity-60",
-              wakeOn ? "border-signal/50 bg-signal/10 text-signal" : "border-line-strong text-muted hover:text-foreground",
-            )}
-          >
-            <span aria-hidden className={cn("size-1.5 rounded-full", wakeOn ? (heardSomething ? "bg-signal" : "bg-signal blink") : "bg-dim")} />
-            {wakeOn ? "Listening" : "Wake word"}
-          </button>
+              type="button"
+              onClick={() => void toggleWake()}
+              disabled={disabled}
+              aria-pressed={wakeOn}
+              title={wakeOn ? "Stop listening for “Hey Rauros”" : "Listen for “Hey Rauros” (keeps the mic on)"}
+              className={cn(
+                "inline-flex items-center gap-2 border border-l-0 px-2.5 py-1.5 font-mono text-[10.5px] uppercase tracking-[0.12em] transition disabled:opacity-60",
+                wakeOn ? "border-signal/50 bg-signal/10 text-signal" : "border-line-strong text-muted hover:text-foreground",
+              )}
+            >
+              <span aria-hidden className={cn("size-1.5 rounded-full", wakeOn ? (heardSomething ? "bg-signal" : "bg-signal blink") : "bg-dim")} />
+              {wakeOn ? "Listening" : "Wake word"}
+            </button>
+          )}
         </div>
         <p role="status" aria-live="polite" className={cn("max-w-xs text-right text-[11px]", error ? "text-hold" : "text-dim")}>
           {error ?? (wakeOn ? (heardSomething ? "Heard something…" : "Say “Hey Rauros” anytime.") : "")}
