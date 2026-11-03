@@ -248,6 +248,7 @@ async function addNoticeDescriptions(
   };
 }
 
+// Wraps a run so usage is logged for failed runs too, which are the ones most worth seeing.
 export async function runResearch(
   profile: CompanyProfile,
   options: { signal?: AbortSignal; deps?: Partial<PipelineDeps> } = {},
@@ -255,6 +256,22 @@ export async function runResearch(
   const deps = { ...defaultDeps, ...options.deps };
   const startedAt = deps.now();
   const budget = new RunBudget(options.signal ?? AbortSignal.timeout(RUN_CAP_MS));
+  let outcome = "failed";
+  try {
+    const response = await executeRun(profile, deps, budget, startedAt);
+    outcome = "completed";
+    return response;
+  } finally {
+    console.info("research run", JSON.stringify({ outcome, ms: deps.now() - startedAt, ...budget.summary() }));
+  }
+}
+
+async function executeRun(
+  profile: CompanyProfile,
+  deps: PipelineDeps,
+  budget: RunBudget,
+  startedAt: number,
+): Promise<ResearchResponse> {
   const agentEvents: AgentEvent[] = [];
   const warnings: string[] = [];
 
@@ -476,6 +493,5 @@ export async function runResearch(
     .sort((a, b) => b.fitScore - a.fitScore);
 
   const results = [...picked, ...others].slice(0, MAX_RESULTS);
-  console.info("research run", JSON.stringify({ tokens: budget.tokens, calls: budget.calls, ms: deps.now() - startedAt }));
   return base(results);
 }
