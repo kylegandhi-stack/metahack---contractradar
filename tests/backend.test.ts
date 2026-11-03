@@ -481,7 +481,7 @@ test("T11: an expired run budget stops with TIMEOUT instead of spinning", async 
     (error: unknown) => error instanceof MetaError && error.code === "TIMEOUT",
   );
   const exhausted = new RunBudget(undefined, 10);
-  exhausted.record("analyst", 11);
+  exhausted.record("analyst", { total_tokens: 11 });
   assert.throws(
     () => exhausted.assertAvailable(),
     (error: unknown) => error instanceof MetaError && error.code === "RATE_LIMITED",
