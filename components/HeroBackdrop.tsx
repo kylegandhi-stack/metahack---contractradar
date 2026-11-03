@@ -32,9 +32,9 @@ export function HeroBackdrop() {
         />
       ))}
       {/* Darken, tint and fade into the page */}
-      <div className="absolute inset-0 bg-background/70" />
-      <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-background/30" />
-      <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-background/60" />
+      <div className="absolute inset-0 bg-background/35" />
+      <div className="absolute inset-0" style={{ background: "linear-gradient(90deg, #050506 0%, rgb(5 5 6 / 0.75) 35%, rgb(5 5 6 / 0.15) 75%, rgb(5 5 6 / 0.35) 100%)" }} />
+      <div className="absolute inset-0" style={{ background: "linear-gradient(0deg, #050506 0%, transparent 35%, transparent 80%, rgb(5 5 6 / 0.5) 100%)" }} />
       <div className="hero-scanlines absolute inset-0" />
     </div>
   );

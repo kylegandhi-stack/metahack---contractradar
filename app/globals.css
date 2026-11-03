@@ -70,7 +70,8 @@ body::before {
   .hud {
     position: relative;
     border: 1px solid var(--color-line);
-    background: rgb(11 11 13 / 0.85);
+    background: rgb(8 8 10 / 0.62);
+    backdrop-filter: blur(6px);
   }
   .hud::before,
   .hud::after {
@@ -145,7 +146,7 @@ body::before {
 
 /* Hero imagery: grayscale, high-contrast, slow crossfade + drift (18 s cycle, 2 frames) */
 .hero-frame {
-  filter: grayscale(1) contrast(1.25) brightness(0.75);
+  filter: grayscale(1) contrast(1.3) brightness(1.05);
   opacity: 0;
   transform: scale(1.06);
   animation: hero-cycle 18s ease-in-out infinite;
