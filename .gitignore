@@ -2,3 +2,17 @@
 .env*.local
 node_modules/
 .next/
+
+# Added with Next.js scaffold (Builder 2)
+.env
+.env.*
+!.env.example
+.vercel
+*.tsbuildinfo
+next-env.d.ts
+/out/
+/build
+/coverage
+.DS_Store
+*.pem
+npm-debug.log*
