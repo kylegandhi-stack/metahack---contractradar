@@ -1,67 +1,81 @@
-import { AlertOctagon, AlertTriangle, CheckCircle2, History, Info, Megaphone, PauseCircle, Radar } from "lucide-react";
 import type { AuditSeverity, RankedResult, ReviewStatus, SourceKind } from "@/lib/types";
 import { cn, ELIGIBILITY_LABEL, KIND_LABEL, STATUS_LABEL } from "./format";
 
-const base = "inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-xs font-medium whitespace-nowrap";
+const base =
+  "inline-flex items-center gap-1.5 border px-2 py-[3px] font-mono text-[10.5px] uppercase leading-none tracking-[0.12em] whitespace-nowrap";
+
+function Dot({ className }: { className: string }) {
+  return <span aria-hidden className={cn("inline-block size-1.5 shrink-0", className)} />;
+}
 
 export function SourceKindBadge({ kind, className }: { kind: SourceKind; className?: string }) {
   const style = {
-    open_notice: "border-emerald-500/40 bg-emerald-500/10 text-emerald-300",
-    early_stage_notice: "border-sky-500/40 bg-sky-500/10 text-sky-300",
-    historical_award: "border-slate-500/50 bg-slate-500/10 text-slate-300",
+    open_notice: ["border-clear/50 text-clear", "bg-clear"],
+    early_stage_notice: ["border-sky-300/40 text-sky-200", "bg-sky-300"],
+    historical_award: ["border-line-strong text-muted", "bg-muted"],
   }[kind];
-  const Icon = { open_notice: Megaphone, early_stage_notice: Radar, historical_award: History }[kind];
   return (
-    <span className={cn(base, style, className)}>
-      <Icon className="size-3.5" aria-hidden />
+    <span className={cn(base, style[0], className)}>
+      <Dot className={style[1]} />
       {KIND_LABEL[kind]}
     </span>
   );
 }
 
-export function ReviewStatusBadge({ status, className }: { status: ReviewStatus; className?: string }) {
+export function ReviewStatusBadge({ status, className, short }: { status: ReviewStatus; className?: string; short?: boolean }) {
   const style = {
-    APPROVED: "border-emerald-500/40 bg-emerald-500/10 text-emerald-300",
-    REVIEW_REQUIRED: "border-amber-500/50 bg-amber-500/10 text-amber-300",
-    HOLD: "border-red-500/60 bg-red-500/15 text-red-300",
+    APPROVED: ["border-clear/50 text-clear", "bg-clear"],
+    REVIEW_REQUIRED: ["border-warn/60 text-warn", "bg-warn"],
+    HOLD: ["border-hold/70 bg-hold/10 text-hold", "bg-hold blink"],
   }[status];
-  const Icon = { APPROVED: CheckCircle2, REVIEW_REQUIRED: AlertTriangle, HOLD: PauseCircle }[status];
+  const text = short ? { APPROVED: "Approved", REVIEW_REQUIRED: "Review required", HOLD: "Hold" }[status] : STATUS_LABEL[status];
   return (
-    <span className={cn(base, style, className)}>
-      <Icon className="size-3.5" aria-hidden />
-      {STATUS_LABEL[status]}
+    <span className={cn(base, style[0], className)}>
+      <Dot className={style[1]} />
+      {text}
     </span>
   );
 }
 
 export function EligibilityBadge({ value }: { value: RankedResult["eligibility"] }) {
   const style = {
-    meets_known_requirements: "border-emerald-500/30 text-emerald-300",
-    needs_verification: "border-amber-500/40 text-amber-300",
-    known_blocker: "border-red-500/50 text-red-300",
+    meets_known_requirements: "text-clear",
+    needs_verification: "text-warn",
+    known_blocker: "text-hold",
   }[value];
-  return <span className={cn(base, "bg-transparent", style)}>{ELIGIBILITY_LABEL[value]}</span>;
+  return (
+    <span className="inline-flex items-center gap-2">
+      <span className="label">Eligibility</span>
+      <span className={cn("font-mono text-[11px] uppercase tracking-[0.1em]", style)}>{ELIGIBILITY_LABEL[value]}</span>
+    </span>
+  );
 }
 
 export function SeverityBadge({ severity }: { severity: AuditSeverity }) {
   const style = {
-    BLOCKER: "border-red-500/60 bg-red-500/15 text-red-300",
-    WARNING: "border-amber-500/50 bg-amber-500/10 text-amber-300",
-    NOTE: "border-slate-500/50 bg-slate-500/10 text-slate-300",
+    BLOCKER: ["border-hold/70 bg-hold/10 text-hold", "bg-hold"],
+    WARNING: ["border-warn/60 text-warn", "bg-warn"],
+    NOTE: ["border-line-strong text-muted", "bg-muted"],
   }[severity];
-  const Icon = { BLOCKER: AlertOctagon, WARNING: AlertTriangle, NOTE: Info }[severity];
   return (
-    <span className={cn(base, style)}>
-      <Icon className="size-3.5" aria-hidden />
+    <span className={cn(base, style[0])}>
+      <Dot className={style[1]} />
       {severity}
     </span>
   );
 }
 
 export function ConfidencePill({ value }: { value: RankedResult["confidence"] }) {
+  const bars = { low: 1, medium: 2, high: 3 }[value];
   return (
-    <span className="inline-flex items-center gap-1 text-xs text-muted">
-      Confidence: <span className="font-medium text-foreground capitalize">{value}</span>
+    <span className="inline-flex items-center gap-2">
+      <span className="label">Confidence</span>
+      <span className="inline-flex items-end gap-[2px]" aria-hidden>
+        {[1, 2, 3].map((i) => (
+          <span key={i} className={cn("w-[3px]", i <= bars ? "bg-foreground" : "bg-line-strong")} style={{ height: 4 + i * 3 }} />
+        ))}
+      </span>
+      <span className="font-mono text-[11px] uppercase tracking-[0.1em]">{value}</span>
     </span>
   );
 }
