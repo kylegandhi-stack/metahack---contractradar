@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, Search, Sparkles } from "lucide-react";
+import { ArrowRight, Loader2 } from "lucide-react";
 import type { CompanyProfile } from "@/lib/types";
 
 export const AQUAVECTOR_PRESET: CompanyProfile = {
@@ -16,6 +16,19 @@ export const AQUAVECTOR_PRESET: CompanyProfile = {
 const splitList = (s: string) => s.split(",").map((x) => x.trim()).filter(Boolean);
 
 type Props = { onSubmit: (p: CompanyProfile) => void; loading: boolean };
+
+function Field({ id, n, label, hint, children, className }: { id: string; n: string; label: string; hint?: string; children: React.ReactNode; className?: string }) {
+  return (
+    <div className={className}>
+      <label htmlFor={id} className="label flex items-baseline gap-2">
+        <span className="text-dim">{n}</span>
+        <span>{label}</span>
+        {hint && <span className="normal-case tracking-normal text-dim">{hint}</span>}
+      </label>
+      {children}
+    </div>
+  );
+}
 
 export function ProfileForm({ onSubmit, loading }: Props) {
   const [name, setName] = useState("");
@@ -48,53 +61,56 @@ export function ProfileForm({ onSubmit, loading }: Props) {
     });
   };
 
-  const field = "w-full rounded-md border border-line bg-background px-3 py-2 text-sm placeholder:text-slate-500 focus:border-accent focus:outline-none";
-  const label = "mb-1 block text-xs font-medium uppercase tracking-wide text-muted";
-
   return (
-    <form onSubmit={submit} className="rounded-xl border border-line bg-panel p-5" aria-labelledby="profile-heading" noValidate>
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <h2 id="profile-heading" className="text-base font-semibold">Company profile</h2>
-        <button type="button" onClick={usePreset} className="inline-flex items-center gap-1.5 rounded-md border border-accent/40 bg-accent/10 px-3 py-1.5 text-xs font-medium text-sky-200 hover:bg-accent/20">
-          <Sparkles className="size-3.5" aria-hidden /> Use AquaVector demo profile
+    <form onSubmit={submit} className="hud p-5 sm:p-7" aria-labelledby="profile-heading" noValidate>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <h2 id="profile-heading" className="label text-foreground">
+          <span className="text-dim">[01]</span> Mission input — company profile
+        </h2>
+        <button
+          type="button"
+          onClick={usePreset}
+          className="border border-line-strong px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.12em] text-foreground transition hover:border-foreground"
+        >
+          Load demo: AquaVector Systems
         </button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <div>
-          <label htmlFor="cr-name" className={label}>Company name</label>
-          <input id="cr-name" className={field} value={name} onChange={(e) => setName(e.target.value)} placeholder="Fictional company name" />
-        </div>
-        <div>
-          <label htmlFor="cr-small" className={label}>Small business?</label>
-          <select id="cr-small" className={field} value={small} onChange={(e) => setSmall(e.target.value as typeof small)}>
+      <div className="grid gap-x-8 gap-y-6 md:grid-cols-2">
+        <Field id="cr-name" n="A" label="Company name">
+          <input id="cr-name" className="field" value={name} onChange={(e) => setName(e.target.value)} placeholder="Fictional company name" />
+        </Field>
+        <Field id="cr-small" n="B" label="Small business">
+          <select id="cr-small" className="field" value={small} onChange={(e) => setSmall(e.target.value as typeof small)}>
             <option value="unknown">Not stated</option>
             <option value="yes">Yes</option>
             <option value="no">No</option>
           </select>
-        </div>
-        <div className="md:col-span-2">
-          <label htmlFor="cr-cap" className={label}>Capabilities</label>
-          <textarea id="cr-cap" rows={3} className={field} value={capabilities} onChange={(e) => setCapabilities(e.target.value)} placeholder="What you make or do, in plain language" />
-        </div>
-        <div>
-          <label htmlFor="cr-certs" className={label}>Claimed certifications <span className="normal-case text-slate-500">(optional, comma-separated)</span></label>
-          <input id="cr-certs" className={field} value={certs} onChange={(e) => setCerts(e.target.value)} placeholder="e.g. 8(a), HUBZone, WOSB" />
-        </div>
-        <div>
-          <label htmlFor="cr-ag" className={label}>Target agencies <span className="normal-case text-slate-500">(optional)</span></label>
-          <input id="cr-ag" className={field} value={agencies} onChange={(e) => setAgencies(e.target.value)} placeholder="e.g. Department of the Navy" />
-        </div>
+        </Field>
+        <Field id="cr-cap" n="C" label="Capabilities" className="md:col-span-2">
+          <textarea id="cr-cap" rows={3} className="field resize-none" value={capabilities} onChange={(e) => setCapabilities(e.target.value)} placeholder="What you build or do, in plain language" />
+        </Field>
+        <Field id="cr-certs" n="D" label="Claimed certifications" hint="optional, comma-separated">
+          <input id="cr-certs" className="field" value={certs} onChange={(e) => setCerts(e.target.value)} placeholder="e.g. 8(a), HUBZone, WOSB" />
+        </Field>
+        <Field id="cr-ag" n="E" label="Target agencies" hint="optional">
+          <input id="cr-ag" className="field" value={agencies} onChange={(e) => setAgencies(e.target.value)} placeholder="e.g. Department of the Navy" />
+        </Field>
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center gap-3">
-        <button type="submit" disabled={loading} className="inline-flex items-center gap-2 rounded-md bg-sky-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60">
-          {loading ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Search className="size-4" aria-hidden />}
-          {loading ? "Researching…" : "Find opportunities"}
+      <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3">
+        <button
+          type="submit"
+          disabled={loading}
+          className="group inline-flex items-center gap-3 bg-foreground px-5 py-3 font-mono text-xs font-medium uppercase tracking-[0.14em] text-background transition hover:bg-signal disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {loading ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
+          {loading ? "Running agents" : "Run research"}
+          {!loading && <ArrowRight className="size-4 transition group-hover:translate-x-0.5" aria-hidden />}
         </button>
-        <p className="text-xs text-muted">Use fictional company details only. Results are recommendations, not eligibility or legal determinations.</p>
+        <p className="max-w-md text-xs text-dim">Fictional company details only. Output is a recommendation, not an eligibility, legal or win-probability determination.</p>
       </div>
-      {error && <p role="alert" className="mt-3 text-sm text-red-300">{error}</p>}
+      {error && <p role="alert" className="mt-4 font-mono text-xs uppercase tracking-[0.1em] text-hold">! {error}</p>}
     </form>
   );
 }

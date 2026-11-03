@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { AlertCircle, Database, FlaskConical, Radar, RotateCcw } from "lucide-react";
 import type { CompanyProfile, RankedResult, ResearchResponse, SourceKind } from "@/lib/types";
 import sample from "@/data/sample-research-response.json";
 import { AgentActivity } from "./AgentActivity";
@@ -28,6 +27,58 @@ async function readError(res: Response): Promise<string> {
   if (res.status === 429) return "Too many requests right now. Wait a moment and try again.";
   if (res.status === 404) return "The research service isn't available yet.";
   return `The research service returned an error (HTTP ${res.status}).`;
+}
+
+function RadarMark() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-5" aria-hidden fill="none" stroke="currentColor" strokeWidth="1.25">
+      <circle cx="12" cy="12" r="10" opacity="0.5" />
+      <circle cx="12" cy="12" r="6" opacity="0.7" />
+      <path d="M12 12 L19 5" />
+      <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+function TopBar({ sampleMode, dataMode }: { sampleMode: boolean; dataMode?: "live" | "cached" }) {
+  const item = "hidden items-center gap-2 border-l border-line px-4 md:flex";
+  return (
+    <div className="sticky top-0 z-30 border-b border-line bg-background/85 backdrop-blur">
+      <div className="mx-auto flex h-12 max-w-[1400px] items-stretch justify-between px-4 sm:px-6">
+        <div className="flex items-center gap-2.5">
+          <RadarMark />
+          <span className="font-mono text-[13px] font-medium uppercase tracking-[0.22em]">ContractRadar</span>
+        </div>
+        <div className="flex items-stretch">
+          <span className={item}><span className="label">Sys</span><span className="size-1.5 bg-clear blink" aria-hidden /><span className="font-mono text-[11px] uppercase tracking-[0.12em]">Online</span></span>
+          <span className={item}><span className="label">Model</span><span className="font-mono text-[11px] uppercase tracking-[0.12em]">Muse Spark 1.3</span></span>
+          <span className={item}><span className="label">Agents</span><span className="font-mono text-[11px] tracking-[0.12em]">05</span></span>
+          {dataMode && <span className={item}><span className="label">Data</span><span className={cn("font-mono text-[11px] uppercase tracking-[0.12em]", dataMode === "cached" ? "text-warn" : "text-clear")}>{dataMode}</span></span>}
+          {sampleMode && (
+            <span className="flex items-center gap-2 border-l border-line pl-4">
+              <span className="border border-signal/60 px-2 py-[3px] font-mono text-[10.5px] uppercase tracking-[0.12em] text-signal">Sample mode</span>
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Notice({ tone, title, children }: { tone: "hold" | "warn" | "neutral" | "signal"; title: string; children: React.ReactNode }) {
+  const t = {
+    hold: ["border-hold/50 bg-hold/[0.06]", "bg-hold", "text-hold"],
+    warn: ["border-warn/50 bg-warn/[0.06]", "bg-warn", "text-warn"],
+    neutral: ["border-line-strong bg-panel-2", "bg-muted", "text-foreground"],
+    signal: ["border-signal/40 bg-signal/[0.05]", "bg-signal", "text-signal"],
+  }[tone];
+  return (
+    <div role="note" className={cn("relative border py-3 pl-5 pr-4 text-sm", t[0])}>
+      <span aria-hidden className={cn("absolute inset-y-0 left-0 w-[2px]", t[1])} />
+      <p className={cn("font-mono text-[11px] uppercase tracking-[0.14em]", t[2])}>{title}</p>
+      <p className="mt-1 text-foreground/80">{children}</p>
+    </div>
+  );
 }
 
 export function Dashboard({ sampleMode }: { sampleMode: boolean }) {
@@ -76,123 +127,144 @@ export function Dashboard({ sampleMode }: { sampleMode: boolean }) {
   }, [data]);
   const visible = data?.results.filter((r) => filter === "all" || r.record.kind === filter) ?? [];
   const historicalOnly = !!data && data.results.length > 0 && counts.historical_award === counts.all;
+  const holds = data?.results.filter((r) => r.reviewStatus === "HOLD").length ?? 0;
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6">
-      <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <Radar className="size-6 text-sky-400" aria-hidden />
-            <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">ContractRadar</h1>
-          </div>
-          <p className="mt-1 text-sm text-muted">
-            An AI business-development team for small defense suppliers: finds federal procurement leads, qualifies them, and argues against bad bids.
-          </p>
-        </div>
-        {sampleMode && (
-          <span className="inline-flex items-center gap-1.5 rounded-md border border-fuchsia-500/50 bg-fuchsia-500/10 px-2.5 py-1 text-xs font-semibold text-fuchsia-200">
-            <FlaskConical className="size-3.5" aria-hidden /> Sample data mode
-          </span>
-        )}
-      </header>
-
-      <ProfileForm onSubmit={run} loading={state.phase === "loading"} />
-
-      {state.phase === "loading" && (
-        <div role="status" className="mt-6 rounded-xl border border-line bg-panel p-6 text-sm">
-          <p className="font-medium">Running five agents against public federal records…</p>
-          <p className="mt-1 text-muted">This usually takes under a minute. The agent log appears when the run completes.</p>
-        </div>
-      )}
-
-      {state.phase === "error" && (
-        <div role="alert" className="mt-6 flex flex-wrap items-start justify-between gap-3 rounded-xl border border-red-500/50 bg-red-500/10 p-4">
-          <div className="flex gap-2">
-            <AlertCircle className="mt-0.5 size-5 shrink-0 text-red-300" aria-hidden />
+    <>
+      <TopBar sampleMode={sampleMode} dataMode={data?.dataMode} />
+      <main className="mx-auto w-full max-w-[1400px] flex-1 px-4 sm:px-6">
+        {/* Hero */}
+        <section className="grid gap-10 border-b border-line py-12 sm:py-16 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:gap-14">
+          <div className="flex flex-col justify-between gap-8">
             <div>
-              <p className="text-sm font-medium text-red-200">Research run failed</p>
-              <p className="mt-0.5 text-sm text-red-200/80">{state.message}</p>
+              <p className="label"><span className="text-signal">{"//"}</span> Federal procurement intelligence</p>
+              <h1 className="mt-5 text-[2.6rem] font-light leading-[1.02] tracking-[-0.035em] sm:text-6xl xl:text-7xl">
+                Find the contracts worth bidding.
+                <span className="block text-muted">Kill the ones that aren&apos;t.</span>
+              </h1>
+              <p className="mt-6 max-w-xl text-[15px] leading-relaxed text-muted">
+                An AI business-development team for small defense suppliers. Five agents search public federal records,
+                qualify each lead against your capabilities, and a red-team critic argues against every recommendation
+                before you spend a week on a proposal.
+              </p>
             </div>
+            <ol className="grid grid-cols-5 border border-line">
+              {["Plan", "Scout", "Qualify", "Strategize", "Red team"].map((s, i) => (
+                <li key={s} className={cn("px-2 py-3 sm:px-3", i > 0 && "border-l border-line")}>
+                  <p className="font-mono text-[10.5px] text-dim">0{i + 1}</p>
+                  <p className={cn("mt-1 font-mono text-[10px] uppercase tracking-[0.1em] sm:text-[11px]", i === 4 ? "text-hold" : "text-foreground")}>{s}</p>
+                </li>
+              ))}
+            </ol>
           </div>
-          {lastProfile && (
-            <button onClick={() => run(lastProfile)} className="inline-flex items-center gap-1.5 rounded-md border border-red-400/50 px-3 py-1.5 text-sm hover:bg-red-500/10">
-              <RotateCcw className="size-4" aria-hidden /> Retry
-            </button>
-          )}
-        </div>
-      )}
+          <ProfileForm onSubmit={run} loading={state.phase === "loading"} />
+        </section>
 
-      {data && state.phase === "done" && (
-        <>
-          {state.isSample && (
-            <div role="note" className="mt-6 rounded-xl border border-fuchsia-500/50 bg-fuchsia-500/10 p-3 text-sm text-fuchsia-100">
-              <strong>Demo/sample data.</strong> These records are a development fixture, not live government data.
-            </div>
-          )}
-          {data.dataMode === "cached" && (
-            <div role="note" className="mt-3 flex items-start gap-2 rounded-xl border border-amber-500/50 bg-amber-500/10 p-3 text-sm text-amber-100">
-              <Database className="mt-0.5 size-4 shrink-0" aria-hidden />
-              <p><strong>Cached public records</strong> — retrieved {fmtDateTime(data.results.map((r) => r.record.retrievedAt).sort()[0] ?? data.runAt)}. Live sources were not queried for this run.</p>
-            </div>
-          )}
-          {historicalOnly && (
-            <div role="note" className="mt-3 rounded-xl border border-slate-500/50 bg-slate-500/10 p-3 text-sm text-slate-200">
-              <strong>Historical buyers and procurement intelligence.</strong> Every result below is a past award. None is an open solicitation.
-            </div>
-          )}
-          {data.warnings.filter((w) => !(state.isSample && w.startsWith("SAMPLE"))).map((w, i) => (
-            <p key={i} className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-xs text-amber-200">{w}</p>
-          ))}
+        {state.phase === "loading" && (
+          <section role="status" className="hud relative mt-8 overflow-hidden p-6">
+            <span aria-hidden className="scanbar absolute inset-y-0 left-0 w-1/4 bg-gradient-to-r from-transparent via-signal/10 to-transparent" />
+            <p className="label text-foreground"><span className="text-signal">●</span> Agents running</p>
+            <p className="mt-2 text-sm text-muted">Querying public federal records and running five agents. This usually takes under a minute. The pipeline log appears when the run completes.</p>
+          </section>
+        )}
 
-          <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-            <section aria-labelledby="results-heading">
-              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                <h2 id="results-heading" className="text-base font-semibold">
-                  Ranked results <span className="text-sm font-normal text-muted">· {data.recordsUsed} records reviewed · run {fmtDateTime(data.runAt)}</span>
-                </h2>
-              </div>
-              <div role="tablist" aria-label="Filter by record type" className="mb-4 flex flex-wrap gap-2">
-                {(["all", "open_notice", "early_stage_notice", "historical_award"] as Filter[]).map((f) => (
-                  <button
-                    key={f}
-                    role="tab"
-                    aria-selected={filter === f}
-                    onClick={() => setFilter(f)}
-                    disabled={f !== "all" && counts[f] === 0}
-                    className={cn(
-                      "rounded-full border px-3 py-1 text-xs font-medium disabled:opacity-40",
-                      filter === f ? "border-sky-400 bg-sky-400/15 text-sky-200" : "border-line text-muted hover:text-foreground",
-                    )}
-                  >
-                    {f === "all" ? "All" : KIND_LABEL[f]} ({counts[f]})
-                  </button>
-                ))}
-              </div>
-              {visible.length === 0 ? (
-                <div className="rounded-xl border border-line bg-panel p-6 text-sm text-muted">
-                  No matching records were found for this profile. Try broader capability wording or remove target agencies.
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {visible.map((r) => (
-                    <OpportunityCard key={`${r.record.source}:${r.record.id}`} result={r} rank={data.results.indexOf(r) + 1} onOpen={() => setOpen(r)} />
-                  ))}
-                </div>
+        {state.phase === "error" && (
+          <section role="alert" className="relative mt-8 flex flex-wrap items-start justify-between gap-4 border border-hold/60 bg-hold/[0.06] py-4 pl-5 pr-4">
+            <span aria-hidden className="absolute inset-y-0 left-0 w-[2px] bg-hold" />
+            <div>
+              <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-hold">Run failed</p>
+              <p className="mt-1 text-sm text-foreground/85">{state.message}</p>
+            </div>
+            {lastProfile && (
+              <button onClick={() => run(lastProfile)} className="border border-line-strong px-4 py-2 font-mono text-[11px] uppercase tracking-[0.12em] transition hover:bg-foreground hover:text-background">
+                Retry
+              </button>
+            )}
+          </section>
+        )}
+
+        {data && state.phase === "done" && (
+          <>
+            <div className="mt-8 space-y-2">
+              {state.isSample && <Notice tone="signal" title="Demo / sample data">These records are a development fixture, not live government data.</Notice>}
+              {data.dataMode === "cached" && (
+                <Notice tone="warn" title={`Cached public records — retrieved ${fmtDateTime(data.results.map((r) => r.record.retrievedAt).sort()[0] ?? data.runAt)}`}>
+                  Live sources were not queried for this run.
+                </Notice>
               )}
-            </section>
-            <aside className="space-y-6">
-              <FindingsPanel results={data.results} onOpen={setOpen} />
-              <AgentActivity events={data.agentEvents} />
-            </aside>
-          </div>
-        </>
-      )}
+              {historicalOnly && (
+                <Notice tone="neutral" title="Historical buyers and procurement intelligence">Every result below is a past award. None is an open solicitation.</Notice>
+              )}
+              {data.warnings.filter((w) => !(state.isSample && w.toUpperCase().startsWith("SAMPLE"))).map((w, i) => (
+                <Notice key={i} tone="warn" title="Warning">{w}</Notice>
+              ))}
+            </div>
+
+            {/* Run summary strip */}
+            <dl className="mt-8 grid grid-cols-2 border border-line sm:grid-cols-4">
+              {[
+                ["Records reviewed", String(data.recordsUsed).padStart(2, "0")],
+                ["Ranked targets", String(data.results.length).padStart(2, "0")],
+                ["Held by red team", String(holds).padStart(2, "0")],
+                ["Run time", fmtDateTime(data.runAt)],
+              ].map(([k, v], i) => (
+                <div key={k} className={cn("px-4 py-4", i % 2 === 1 && "border-l border-line", i >= 2 && "border-t border-line sm:border-t-0", i === 2 && "sm:border-l")}>
+                  <dt className="label">{k}</dt>
+                  <dd className={cn("mt-2 tabular-nums", i < 3 ? "text-3xl font-light tracking-tight" : "font-mono text-[12.5px]", i === 2 && holds > 0 && "text-hold")}>{v}</dd>
+                </div>
+              ))}
+            </dl>
+
+            <div className="mt-8 grid gap-6 pb-16 lg:grid-cols-[minmax(0,1fr)_380px]">
+              <section aria-labelledby="results-heading">
+                <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+                  <h2 id="results-heading" className="label text-foreground"><span className="text-dim">[02]</span> Ranked targets</h2>
+                  <div role="tablist" aria-label="Filter by record type" className="flex flex-wrap border border-line">
+                    {(["all", "open_notice", "early_stage_notice", "historical_award"] as Filter[]).map((f, i) => (
+                      <button
+                        key={f}
+                        role="tab"
+                        aria-selected={filter === f}
+                        onClick={() => setFilter(f)}
+                        disabled={f !== "all" && counts[f] === 0}
+                        className={cn(
+                          "px-3 py-1.5 font-mono text-[10.5px] uppercase tracking-[0.12em] transition disabled:cursor-not-allowed disabled:opacity-30",
+                          i > 0 && "border-l border-line",
+                          filter === f ? "bg-foreground text-background" : "text-muted hover:text-foreground",
+                        )}
+                      >
+                        {f === "all" ? "All" : KIND_LABEL[f]} <span className="opacity-60">{counts[f]}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {visible.length === 0 ? (
+                  <div className="hud p-6 text-sm text-muted">No matching records were found for this profile. Try broader capability wording or remove target agencies.</div>
+                ) : (
+                  <div className="space-y-3">
+                    {visible.map((r) => (
+                      <OpportunityCard key={`${r.record.source}:${r.record.id}`} result={r} rank={data.results.indexOf(r) + 1} onOpen={() => setOpen(r)} />
+                    ))}
+                  </div>
+                )}
+              </section>
+              <aside className="space-y-6">
+                <FindingsPanel results={data.results} onOpen={setOpen} />
+                <AgentActivity events={data.agentEvents} />
+              </aside>
+            </div>
+          </>
+        )}
+      </main>
 
       <OpportunityDetail result={open} onClose={() => setOpen(null)} />
 
-      <footer className="mt-10 border-t border-line pt-4 text-xs text-muted">
-        Public federal records from USAspending.gov{" "}and SAM.gov. Fictional company profiles only. Not legal, compliance or eligibility advice.
+      <footer className="border-t border-line">
+        <div className="mx-auto flex max-w-[1400px] flex-wrap items-center justify-between gap-3 px-4 py-5 sm:px-6">
+          <p className="label">Sources: USAspending.gov · SAM.gov</p>
+          <p className="text-xs text-dim">Public federal records. Fictional company profiles only. Not legal, compliance or eligibility advice.</p>
+        </div>
       </footer>
-    </div>
+    </>
   );
 }

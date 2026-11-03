@@ -9,7 +9,7 @@ async function DashboardFromParams({ searchParams }: { searchParams: PageProps<"
 
 export default function Home({ searchParams }: PageProps<"/">) {
   return (
-    <Suspense fallback={<div className="p-6 text-sm text-muted">Loading ContractRadar…</div>}>
+    <Suspense fallback={<div className="label p-6">Initializing ContractRadar…</div>}>
       <DashboardFromParams searchParams={searchParams} />
     </Suspense>
   );

@@ -1,22 +1,28 @@
 @import "tailwindcss";
 
-/* ContractRadar — dark navy/slate dashboard. Dark-only by design. */
+/* ContractRadar — defense-tech HUD. Near-black, white type, mono labels, hairlines, square corners.
+   Color is reserved for signal: red = blocker/hold, amber = warning, green = clear. */
 :root {
-  --background: #0b1220;
-  --foreground: #e2e8f0;
+  --background: #050506;
+  --foreground: #f5f5f4;
   color-scheme: dark;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-panel: #111a2e;
-  --color-panel-2: #16213a;
-  --color-line: #24314f;
-  --color-muted: #94a3b8;
-  --color-accent: #38bdf8;
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --color-panel: #0b0b0d;
+  --color-panel-2: #121215;
+  --color-line: rgb(255 255 255 / 0.1);
+  --color-line-strong: rgb(255 255 255 / 0.22);
+  --color-muted: #8a8a8f;
+  --color-dim: #5c5c62;
+  --color-signal: #d7ff3a;
+  --color-hold: #ff4d4d;
+  --color-warn: #ffb020;
+  --color-clear: #3ddc97;
+  --font-sans: var(--font-geist), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
 body {
@@ -25,7 +31,114 @@ body {
   font-family: var(--font-sans);
 }
 
+/* Faint tactical grid + top glow behind everything */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgb(215 255 58 / 0.06), transparent 60%),
+    linear-gradient(rgb(255 255 255 / 0.035) 1px, transparent 1px) 0 0 / 64px 64px,
+    linear-gradient(90deg, rgb(255 255 255 / 0.035) 1px, transparent 1px) 0 0 / 64px 64px;
+  mask-image: linear-gradient(to bottom, black 0%, black 40%, transparent 100%);
+}
+
+::selection {
+  background: #d7ff3a;
+  color: #050506;
+}
+
 :focus-visible {
-  outline: 2px solid #38bdf8;
+  outline: 1px solid #d7ff3a;
   outline-offset: 2px;
+}
+
+@layer components {
+  /* Small uppercase mono label */
+  .label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    line-height: 1.2;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+
+  /* Panel with HUD corner brackets */
+  .hud {
+    position: relative;
+    border: 1px solid var(--color-line);
+    background: rgb(11 11 13 / 0.85);
+  }
+  .hud::before,
+  .hud::after {
+    content: "";
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    pointer-events: none;
+    border-color: rgb(255 255 255 / 0.55);
+    border-style: solid;
+  }
+  .hud::before {
+    top: -1px;
+    left: -1px;
+    border-width: 1px 0 0 1px;
+  }
+  .hud::after {
+    bottom: -1px;
+    right: -1px;
+    border-width: 0 1px 1px 0;
+  }
+
+  .field {
+    width: 100%;
+    border: 0;
+    border-bottom: 1px solid var(--color-line-strong);
+    background: transparent;
+    padding: 0.55rem 0;
+    font-size: 0.95rem;
+    color: var(--foreground);
+    border-radius: 0;
+  }
+  .field::placeholder {
+    color: var(--color-dim);
+  }
+  .field:focus {
+    outline: none;
+    border-bottom-color: #d7ff3a;
+  }
+  select.field option {
+    background: #0b0b0d;
+  }
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0.25;
+  }
+}
+.blink {
+  animation: blink 1.6s steps(2, start) infinite;
+}
+
+@keyframes scan {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(400%);
+  }
+}
+.scanbar {
+  animation: scan 1.8s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .blink,
+  .scanbar {
+    animation: none;
+  }
 }
