@@ -79,3 +79,11 @@ export function isExpired(r: RankedResult, now: Date = new Date()): boolean {
   const t = new Date(/^\d{4}-\d{2}-\d{2}$/.test(d) ? `${d}T23:59:59Z` : d).getTime();
   return !Number.isNaN(t) && t < now.getTime();
 }
+
+/** Most recent prior award that names a winner, for the "Prior winner" line. */
+export function latestPriorWinner(r: RankedResult): { recipient: string; date: string | null; count: number } | null {
+  const awards = (r.priorAwards ?? []).filter((a) => a.recipient && a.recipient.trim());
+  if (!awards.length) return null;
+  const sorted = [...awards].sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""));
+  return { recipient: sorted[0].recipient as string, date: sorted[0].date, count: r.priorAwards?.length ?? 0 };
+}
