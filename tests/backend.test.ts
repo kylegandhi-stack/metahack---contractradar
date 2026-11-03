@@ -7,7 +7,7 @@ import { z } from "zod";
 import { keepVerified, type Assessment } from "../lib/agents/analyst";
 import { DEVILS_ADVOCATE_PROMPT } from "../lib/agents/devils-advocate";
 import { NoUsableDataError, runResearch, selectForAnalysis, type PipelineDeps } from "../lib/agents/orchestrator";
-import type { ResearchPlan } from "../lib/agents/planner";
+import { withProductPhrases, type ResearchPlan } from "../lib/agents/planner";
 import type { ScoutResult } from "../lib/agents/scout";
 import { clearScoutMemo, MAX_TOOL_TURNS, runScout } from "../lib/agents/scout";
 import { loadVerifiedRecords } from "../lib/data/cache";
@@ -85,6 +85,7 @@ function award(overrides: Partial<SourceRecord> = {}): SourceRecord {
 
 const PLAN: ResearchPlan = {
   capabilities: ["hydrophones"],
+  productPhrases: ["hydrophones"],
   searchTerms: ["hydrophone"],
   categories: [],
   rationale: "test",
@@ -1303,6 +1304,35 @@ test("selection: a plural search term still finds the singular, and the reverse"
   assert.equal(selectForAnalysis([titled("X", "[TEST] Piston"), ...batteries], ["lithium batteries"]).length, 5);
   const plural = ["A", "B", "C", "D", "E"].map((id) => titled(id, `[TEST] Lithium batteries ${id}`));
   assert.equal(selectForAnalysis([titled("X", "[TEST] Piston"), ...plural], ["lithium battery"]).length, 5);
+});
+
+const CAPABILITIES = "12-person U.S. maker of hydrophones, underwater acoustic sensors, and ruggedized components for AUVs.";
+
+test("planner: the company's phrases stay word for word, ahead of the model's variations", () => {
+  assert.deepEqual(
+    withProductPhrases(["hydrophone", "Hydrophones", "sonar"], ["hydrophones", "underwater acoustic sensors"], CAPABILITIES),
+    ["hydrophones", "underwater acoustic sensors", "hydrophone", "sonar"],
+  );
+});
+
+test("planner: a phrase that isn't really in the profile is dropped, and invented wording never counts", () => {
+  assert.deepEqual(withProductPhrases(["sonar"], ["hydrophones", "quantum radar"], CAPABILITIES), ["hydrophones", "sonar"]);
+});
+
+test("planner: with no real phrase from the model, code takes them from the profile text", () => {
+  assert.deepEqual(withProductPhrases(["sonar"], [], CAPABILITIES), [
+    "hydrophones",
+    "underwater acoustic sensors",
+    "ruggedized components for AUVs",
+    "sonar",
+  ]);
+  assert.deepEqual(withProductPhrases(["sonar"], ["invented"], "Maker of drone batteries."), ["drone batteries", "sonar"]);
+});
+
+test("planner: phrases and total terms are capped", () => {
+  const terms = withProductPhrases(["t1a", "t2a", "t3a", "t4a", "t5a", "t6a"], ["hydrophones", "underwater", "acoustic", "sensors", "ruggedized"], CAPABILITIES);
+  assert.deepEqual(terms.slice(0, 4), ["hydrophones", "underwater", "acoustic", "sensors"]);
+  assert.equal(terms.length, 8);
 });
 
 test("selection: notices still rank ahead of awards with the same match", () => {
