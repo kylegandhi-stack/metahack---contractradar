@@ -32,7 +32,9 @@ Errors: JSON `ResearchError` = `{ "error": { "code", "message" } }`
 | 504 | `TIMEOUT` | Run exceeded the server time cap (target 60 s) |
 | 500 | `INTERNAL` | Anything else |
 
-If live sources fail but `data/verified-records.json` is usable, the route returns 200 with `dataMode: "cached"` and a warning. It never substitutes invented records.
+If live sources fail but saved real records are usable, the route returns 200 with `dataMode: "cached"` and a warning. It never substitutes invented records. There are two saved sets:
+- `data/verified-records.json`: USAspending awards, used when USAspending fails.
+- `data/sam-snapshot.json`: SAM notices captured for demo profiles, used only when SAM.gov returns a 429 or its key is missing. USAspending stays live.
 
 ## Semantics the UI can rely on
 
@@ -55,7 +57,10 @@ If live sources fail but `data/verified-records.json` is usable, the route retur
   - else `APPROVED`
 - `findings` is never hidden: every BLOCKER and WARNING must be visible on the card and in the drawer.
 - `agentEvents` is the real log of the five stages in order: planner, scout, analyst, strategist, devils_advocate. P0 returns it after completion (no streaming).
-- `dataMode: "cached"` means the UI must show a non-dismissable banner: `Cached public records - retrieved <date>`.
+- `dataMode: "cached"` means at least one shown record comes from saved public data, and the UI must show a non-dismissable banner: `Cached public records - retrieved <date>`.
+  - `cachedSources` lists which sources are saved in this run. Other sources were live. If it's absent, treat every source as saved.
+  - The banner must name what is saved, for example `Cached SAM.gov notices - retrieved <date>`, and must not say live sources were not queried: they were queried and failed, or are not configured.
+  - `<date>` is the oldest `retrievedAt` among records from `cachedSources`.
 
 ## Run budget (server enforced)
 
