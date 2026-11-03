@@ -1,8 +1,10 @@
-# Release checklist: Wednesday morning
+# Release checklist: Tuesday 4 PM run through submission
 
 **Santiago** is Builder 1 (backend and data). **Kyle** is Builder 2 (frontend, deployment, video and submission). Times are Pacific. Coding agents can prepare and run most steps, but a human approves each decision and merge.
 
-**Deadlines:** recording by 11 AM, feature freeze at 1 PM, submitted and verified by **3 PM**. The official deadline is 6 PM.
+**Starts:** Tuesday at 4 PM, when the SAM.gov quotas reset. No SAM.gov calls before then.
+
+**Wednesday deadlines:** recording by 11 AM, feature freeze at 1 PM, submitted and verified by **3 PM**. The official deadline is 6 PM.
 
 ## SAM.gov call budget
 
@@ -24,16 +26,32 @@ Treat each key as **10 calls for this whole period**. Quotas reset at 4 PM PT, s
 
 | # | Target | Step | Owner | Done when |
 |---|---|---|---|---|
-| 1 | Before 8 AM | Merge #42 and #43 | Kyle | Production deployed from `main` |
-| 2 | 8:00 | "After" eval | Santiago | Sheet labeled and scored |
-| 3 | 8:30 | Snapshot capture | Santiago | Snapshot merged and deployed |
-| 4 | 9:00 | Final production check | Santiago runs, Kyle watches logs | All checks below pass |
-| 5 | 9:30 | Link spot-check | Santiago | Top 5 match their sources |
-| 6 | 9:30-11:00 | Fill in the script, time it, record | Kyle | Video is under 3:00 |
-| 7 | By 1:00 PM | Feature freeze and `v1-demo` tag | Kyle, Santiago confirms | Tag pushed |
-| 8 | By 3:00 PM | Submit and verify | Kyle | Receipt confirmed |
+| 1 | Tue, before 3:50 PM | Merge #42 → #45 → #47 → #48, plus #43 | Kyle | Production deployed from `main` |
+| 1b | Tue 3:50 PM | Pull `main` fresh | Santiago | Local `main` matches `origin/main` |
+| 2 | Tue 4:00 PM | "After" eval | Santiago | Sheet labeled and scored |
+| 3 | Tue, after step 2 | Snapshot capture | Santiago | Snapshot merged and deployed |
+| 4 | Tue, after step 3 deploys | Final production check | Santiago runs, Kyle watches logs | All checks below pass |
+| 5 | Tue, after step 4 | Link spot-check | Santiago | Top 5 match their sources |
+| 6 | Wed, by 11:00 AM | Fill in the script, time it, record | Kyle | Video is under 3:00 |
+| 7 | Wed, by 1:00 PM | Feature freeze and `v1-demo` tag | Kyle, Santiago confirms | Tag pushed |
+| 8 | Wed, by 3:00 PM | Submit and verify | Kyle | Receipt confirmed |
+
+**Don't start step 2 until #47 is merged.** The eval has to measure the code being shipped. If #47 isn't merged at 4 PM, wait: the quota budget lasts until Wed 4 PM.
+
+**Kyle needs to be available after the capture** to merge the snapshot PR, because step 4 runs on the deployed snapshot.
 
 **Run the "after" eval before the capture.** It costs 2 calls and is the first real test of `ccode`, so a problem shows up before the 7-call capture spends the rest.
+
+### 1. Merges and fresh pull (Kyle, then Santiago, no SAM.gov calls)
+
+- [ ] Kyle merges in this order: #42, #45, #47, #48. #47 and #48 are both built on #45.
+- [ ] Kyle merges #43 before 4 PM, because step 4 tests the rate limit. #44 can merge any time.
+- [ ] Production is deployed from `main`.
+- [ ] At 3:50 PM, Santiago pulls `main`, so the eval measures merged code:
+
+```bash
+git fetch origin && git checkout main && git pull --ff-only origin main
+```
 
 ### 2. "After" eval (Santiago, 2 calls)
 
