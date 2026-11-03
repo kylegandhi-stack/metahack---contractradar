@@ -117,6 +117,7 @@ function fakeDeps(records: SourceRecord[], overrides: Partial<PipelineDeps> = {}
       shortlist.map((pick) => ({ sourceId: pick.sourceId, verdict: "Checked", noneFound: true, findings: [] })),
     enrich: async (record) => record,
     describe: async () => ({ texts: new Map(), unavailable: [], shortened: [] }),
+    descriptionsEnabled: () => true,
     samConfigured: () => true,
     now: () => NOW,
     ...overrides,
@@ -749,7 +750,7 @@ test("descriptions: a failed fetch adds a NOTE, keeps the status and leaves the 
   });
   const result = response.results[0];
   assert.equal(result.record.description, null);
-  const note = result.findings.find((finding) => finding.issue === "SAM.gov description could not be retrieved");
+  const note = result.findings.find((finding) => finding.issue === "SAM.gov description was not retrieved");
   assert.equal(note?.severity, "NOTE");
   assert.equal(result.reviewStatus, "APPROVED");
 });
@@ -766,7 +767,40 @@ test("descriptions: nothing is fetched after a SAM.gov search failure", async ()
     }),
   });
   assert.equal(called, false);
-  assert.ok(response.results[0].findings.some((finding) => finding.issue === "SAM.gov description could not be retrieved"));
+  assert.ok(response.results[0].findings.some((finding) => finding.issue === "SAM.gov description was not retrieved"));
+});
+
+test("descriptions: off by default, so no SAM.gov calls unless SAM_DESCRIPTIONS is on", async () => {
+  const describe: PipelineDeps["describe"] = async () => {
+    throw new Error("must not fetch descriptions");
+  };
+  const realSwitch = process.env.SAM_DESCRIPTIONS;
+  try {
+    for (const value of [undefined, "off", "true"]) {
+      if (value === undefined) delete process.env.SAM_DESCRIPTIONS;
+      else process.env.SAM_DESCRIPTIONS = value;
+      const deps = fakeDeps([notice()], { describe });
+      delete deps.descriptionsEnabled; // Use the real switch.
+      const response = await runResearch(PROFILE, { deps });
+      const result = response.results[0];
+      assert.equal(result.record.description, null);
+      assert.ok(result.findings.some((finding) => finding.issue === "SAM.gov description was not retrieved"));
+    }
+    process.env.SAM_DESCRIPTIONS = "on";
+    let called = false;
+    const deps = fakeDeps([notice()], {
+      describe: async () => {
+        called = true;
+        return { texts: new Map(), unavailable: [], shortened: [] };
+      },
+    });
+    delete deps.descriptionsEnabled;
+    await runResearch(PROFILE, { deps });
+    assert.equal(called, true);
+  } finally {
+    if (realSwitch === undefined) delete process.env.SAM_DESCRIPTIONS;
+    else process.env.SAM_DESCRIPTIONS = realSwitch;
+  }
 });
 
 test("schemas keep the optional accuracy fields and still accept records without them", () => {
