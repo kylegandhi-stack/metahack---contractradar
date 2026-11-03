@@ -34,9 +34,10 @@ export type RawNotice = {
   typeOfSetAsideDescription?: string | null;
   active?: string | null;
   uiLink?: string | null;
+  classificationCode?: string | null;
 };
 
-export type NoticeSearch = { title?: string; naicsCode?: string; daysBack?: number; limit?: number };
+export type NoticeSearch = { title?: string; naicsCode?: string; pscCode?: string; daysBack?: number; limit?: number };
 
 const KIND_BY_TYPE: Record<string, SourceKind> = {
   solicitation: "open_notice",
@@ -176,6 +177,7 @@ export async function searchNotices(search: NoticeSearch): Promise<SourceRecord[
   });
   if (present(search.title)) params.set("title", search.title.trim());
   if (present(search.naicsCode)) params.set("ncode", search.naicsCode.trim());
+  if (present(search.pscCode)) params.set("ccode", search.pscCode.trim());
 
   let response: Response;
   try {
@@ -194,8 +196,11 @@ export async function searchNotices(search: NoticeSearch): Promise<SourceRecord[
   }
   if (!Array.isArray(payload.opportunitiesData)) return [];
   const retrievedAt = new Date().toISOString();
-  return payload.opportunitiesData
-    .map((raw) => normalizeNotice(raw as RawNotice, retrievedAt))
+  // SAM.gov could ignore a filter and return everything, so a PSC search keeps only exact matches.
+  const wantedPsc = search.pscCode?.trim().toUpperCase();
+  return (payload.opportunitiesData as RawNotice[])
+    .filter((raw) => !wantedPsc || raw.classificationCode?.trim().toUpperCase() === wantedPsc)
+    .map((raw) => normalizeNotice(raw, retrievedAt))
     .filter((record): record is SourceRecord => record !== null);
 }
 
