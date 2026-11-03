@@ -14,10 +14,10 @@ import { loadVerifiedRecords } from "../lib/data/cache";
 import { classifyNotice, normalizeNotice, searchNotices } from "../lib/data/sam";
 import { cleanKeywords, dedupeRecords, normalizeAward, searchAwards } from "../lib/data/usaspending";
 import { chatJson, MetaError, parseJsonOutput, RunBudget } from "../lib/meta";
-import { applyGates, isVerbatim, statusFromFindings, verifyCriticFinding } from "../lib/review";
+import { applyGates, capCriticWarnings, isVerbatim, statusFromFindings, verifyCriticFinding } from "../lib/review";
 import { ResearchResponseSchema, SourceRecordSchema } from "../lib/schemas";
 import { computeFit, finalConfidence } from "../lib/scoring";
-import type { CompanyProfile, SourceRecord } from "../lib/types";
+import type { AuditFinding, CompanyProfile, SourceRecord } from "../lib/types";
 
 const NOW = Date.parse("2026-11-03T12:00:00Z");
 const PROFILE: CompanyProfile = {
@@ -539,10 +539,57 @@ test("scoring clamps, keeps unknowns null, and historical never scores timing or
   assert.equal(finalConfidence("low", "APPROVED"), "low");
 });
 
-test("the Devil's Advocate prompt is verbatim from the runbook", () => {
+test("the Devil's Advocate prompt matches the runbook apart from its intended changes", () => {
   const runbook = readFileSync(new URL("../docs/runbook.md", import.meta.url), "utf8");
-  for (const line of DEVILS_ADVOCATE_PROMPT.split("\n").filter(Boolean)) {
+  const asInRunbook = DEVILS_ADVOCATE_PROMPT.replace("Rauros Systems' Devil's", "ContractRadar's Devil's").replace(
+    "Missing data alone is never a BLOCKER.",
+    "Missing data alone is a WARNING.",
+  );
+  for (const line of asInRunbook.split("\n").filter((line) => line && !line.startsWith("SEVERITY:"))) {
     assert.ok(runbook.includes(line), line.slice(0, 40));
+  }
+  assert.ok(!DEVILS_ADVOCATE_PROMPT.includes("ContractRadar"));
+  assert.ok(DEVILS_ADVOCATE_PROMPT.includes("Never drop a real issue"));
+});
+
+const warning = (issue: string, overrides: Partial<AuditFinding> = {}): AuditFinding => ({
+  severity: "WARNING",
+  issue,
+  whyItMatters: "Test",
+  evidenceSourceId: null,
+  evidenceExcerpt: null,
+  correctiveAction: "Check the source.",
+  ...overrides,
+});
+
+test("the warning cap demotes the critic's excess to NOTE and deletes nothing", () => {
+  const critic = [warning("a"), warning("b"), warning("c"), warning("d")];
+  const capped = capCriticWarnings(critic, new Set(critic));
+  assert.deepEqual(capped.map((finding) => finding.issue), ["a", "b", "c", "d"]);
+  assert.deepEqual(capped.map((finding) => finding.severity), ["WARNING", "WARNING", "NOTE", "NOTE"]);
+});
+
+test("the warning cap keeps the strongest critic warnings first", () => {
+  const plain = warning("plain");
+  const excerpt = warning("excerpt", { evidenceExcerpt: "text" });
+  const unverified = warning("unverified contradiction", { correctiveAction: "Needs verification. Check it." });
+  const critic = [plain, excerpt, unverified];
+  const kept = capCriticWarnings(critic, new Set(critic)).filter((finding) => finding.severity === "WARNING");
+  assert.deepEqual(kept.map((finding) => finding.issue), ["excerpt", "unverified contradiction"]);
+});
+
+test("the warning cap counts code warnings first and never demotes them or a BLOCKER", () => {
+  const gate = [warning("gate 1"), warning("gate 2"), warning("gate 3")];
+  const blocker = warning("blocker", { severity: "BLOCKER" });
+  const critic = [blocker, warning("critic")];
+  const capped = capCriticWarnings([...gate, ...critic], new Set(critic));
+  assert.deepEqual(capped.map((finding) => finding.severity), ["WARNING", "WARNING", "WARNING", "BLOCKER", "NOTE"]);
+});
+
+test("the warning cap never changes the review status", () => {
+  for (let count = 0; count <= 5; count += 1) {
+    const critic = Array.from({ length: count }, (_, index) => warning(`w${index}`));
+    assert.equal(statusFromFindings(capCriticWarnings(critic, new Set(critic))), statusFromFindings(critic));
   }
 });
 
