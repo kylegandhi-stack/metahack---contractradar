@@ -26,35 +26,6 @@
   "results": [
     {
       "record": {
-        "id": "SAMPLE-HIST-001",
-        "source": "usaspending",
-        "kind": "historical_award",
-        "title": "[SAMPLE] Hydrophone array maintenance and repair",
-        "agency": "Department of Defense / Department of the Navy",
-        "description": "[SAMPLE] Repair and calibration of towed hydrophone arrays.",
-        "url": "https://www.usaspending.gov/",
-        "retrievedAt": "2026-11-03T04:30:00Z",
-        "postedAt": "2024-03-15",
-        "deadlineAt": null,
-        "awardAmount": 1250000,
-        "setAside": null,
-        "naics": "334511",
-        "excerpts": [{ "text": "[SAMPLE] REPAIR AND CALIBRATION OF TOWED HYDROPHONE ARRAYS", "field": "Description" }]
-      },
-      "fitScore": 78,
-      "fitBreakdown": { "technical": 34, "category": 17, "eligibility": null, "execution": 8, "timing": null },
-      "confidence": "medium",
-      "eligibility": "needs_verification",
-      "whyMatched": ["Scope is hydrophone repair and calibration, a core AquaVector capability"],
-      "blockers": [],
-      "nextSteps": ["Identify the contracting office as a buyer to contact", "Watch SAM.gov for a recompete"],
-      "findings": [
-        { "severity": "NOTE", "issue": "Historical award, not an open opportunity", "whyItMatters": "This shows a past buyer, not something to bid on now.", "evidenceSourceId": "SAMPLE-HIST-001", "evidenceExcerpt": null, "correctiveAction": "Use for buyer discovery only." }
-      ],
-      "reviewStatus": "APPROVED"
-    },
-    {
-      "record": {
         "id": "SAMPLE-OPEN-002",
         "source": "sam",
         "kind": "open_notice",
@@ -70,8 +41,14 @@
         "naics": "334511",
         "excerpts": [{ "text": "[SAMPLE] Offerors must hold ISO 9001 certification.", "field": "Description" }]
       },
-      "fitScore": 71,
-      "fitBreakdown": { "technical": 30, "category": 16, "eligibility": 10, "execution": 7, "timing": 8 },
+      "fitScore": 69,
+      "fitBreakdown": { "technical": 30, "category": 14, "eligibility": 10, "execution": 7, "timing": 8 },
+      "fitMax": 100,
+      "fitSignals": [
+        { "signal": "product_term", "points": 2, "max": 8, "detail": "Only the word \"acoustic\" matches" },
+        { "signal": "target_agency", "points": 7, "max": 7, "detail": "Matches target agency Department of the Navy" },
+        { "signal": "recency", "points": 5, "max": 5, "detail": "Dated 2026-10-20" }
+      ],
       "confidence": "medium",
       "eligibility": "needs_verification",
       "whyMatched": ["Ruggedized UUV components match the profile"],
@@ -81,6 +58,42 @@
         { "severity": "WARNING", "issue": "Required ISO 9001 certification not stated in company profile", "whyItMatters": "If AquaVector lacks it, the bid is non-responsive.", "evidenceSourceId": "SAMPLE-OPEN-002", "evidenceExcerpt": "[SAMPLE] Offerors must hold ISO 9001 certification.", "correctiveAction": "Verify certification before pursuing." }
       ],
       "reviewStatus": "REVIEW_REQUIRED"
+    },
+    {
+      "record": {
+        "id": "SAMPLE-HIST-001",
+        "source": "usaspending",
+        "kind": "historical_award",
+        "title": "[SAMPLE] Hydrophone array maintenance and repair",
+        "agency": "Department of Defense / Department of the Navy",
+        "description": "[SAMPLE] Repair and calibration of towed hydrophone arrays.",
+        "url": "https://www.usaspending.gov/",
+        "retrievedAt": "2026-11-03T04:30:00Z",
+        "postedAt": "2024-03-15",
+        "deadlineAt": null,
+        "awardAmount": 1250000,
+        "setAside": null,
+        "naics": "334511",
+        "excerpts": [{ "text": "[SAMPLE] REPAIR AND CALIBRATION OF TOWED HYDROPHONE ARRAYS", "field": "Description" }]
+      },
+      "fitScore": 62,
+      "fitBreakdown": { "technical": 34, "category": 18, "eligibility": null, "execution": 10, "timing": null },
+      "fitMax": 70,
+      "fitSignals": [
+        { "signal": "product_term", "points": 8, "max": 8, "detail": "\"hydrophone\" in the title" },
+        { "signal": "target_agency", "points": 7, "max": 7, "detail": "Matches target agency Department of the Navy" },
+        { "signal": "recency", "points": 3, "max": 5, "detail": "Dated 2024-03-15" },
+        { "signal": "award_size", "points": 10, "max": 10, "detail": "Estimate: $1,250,000 is a comfortable size for 12 people" }
+      ],
+      "confidence": "medium",
+      "eligibility": "needs_verification",
+      "whyMatched": ["Scope is hydrophone repair and calibration, a core AquaVector capability"],
+      "blockers": [],
+      "nextSteps": ["Identify the contracting office as a buyer to contact", "Watch SAM.gov for a recompete"],
+      "findings": [
+        { "severity": "NOTE", "issue": "Historical award, not an open opportunity", "whyItMatters": "This shows a past buyer, not something to bid on now.", "evidenceSourceId": "SAMPLE-HIST-001", "evidenceExcerpt": null, "correctiveAction": "Use for buyer discovery only." }
+      ],
+      "reviewStatus": "APPROVED"
     },
     {
       "record": {
@@ -99,8 +112,14 @@
         "naics": "334519",
         "excerpts": [{ "text": "[SAMPLE] Responses due September 1, 2026.", "field": "responseDeadLine" }]
       },
-      "fitScore": 64,
-      "fitBreakdown": { "technical": 28, "category": 14, "eligibility": 12, "execution": 6, "timing": 0 },
+      "fitScore": 51,
+      "fitBreakdown": { "technical": 28, "category": 5, "eligibility": 12, "execution": 6, "timing": 0 },
+      "fitMax": 100,
+      "fitSignals": [
+        { "signal": "product_term", "points": 0, "max": 8, "detail": "No search term in the record" },
+        { "signal": "target_agency", "points": 0, "max": 7, "detail": "Not one of the target agencies" },
+        { "signal": "recency", "points": 5, "max": 5, "detail": "Dated 2026-08-01" }
+      ],
       "confidence": "low",
       "eligibility": "known_blocker",
       "whyMatched": ["Environmental monitoring instruments match the profile"],
