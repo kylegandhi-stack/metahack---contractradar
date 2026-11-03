@@ -165,3 +165,85 @@ body::before {
   .hero-frame { animation: none; transform: none; opacity: 0; }
   .hero-frame:first-child { opacity: 1; }
 }
+
+/* "Hey Rauros" voice orb: three blurred colour fields orbiting a dark core */
+.orb {
+  isolation: isolate;
+}
+.orb-field {
+  position: absolute;
+  inset: 8%;
+  border-radius: 9999px;
+  filter: blur(14px);
+  mix-blend-mode: screen;
+  transition: transform 90ms linear;
+}
+.orb-field::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  animation: orb-spin var(--spin, 6s) linear infinite;
+}
+.orb-a::before {
+  background: conic-gradient(from 0deg, #d7ff3a, transparent 40%, #d7ff3a 70%, transparent);
+  --spin: 5s;
+}
+.orb-b::before {
+  background: conic-gradient(from 120deg, #38bdf8, transparent 45%, #6366f1 75%, transparent);
+  --spin: 7s;
+  animation-direction: reverse;
+}
+.orb-c::before {
+  background: conic-gradient(from 240deg, #ffffff, transparent 35%, #3ddc97 65%, transparent);
+  --spin: 9s;
+}
+.orb-error .orb-field::before {
+  background: conic-gradient(from 0deg, #ff4d4d, transparent 50%, #ff4d4d 80%, transparent);
+}
+@keyframes orb-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes orb-pop {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.orb-pop {
+  animation: orb-pop 380ms cubic-bezier(0.2, 0.9, 0.25, 1.25) both;
+}
+@keyframes orb-breathe {
+  50% {
+    transform: scale(1.06);
+  }
+}
+.orb-breathe {
+  animation: orb-breathe 1.4s ease-in-out infinite;
+}
+@keyframes orb-bar {
+  0%,
+  100% {
+    height: 4px;
+  }
+  50% {
+    height: 18px;
+  }
+}
+.orb-bar {
+  animation: orb-bar 1s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .orb-field::before,
+  .orb-pop,
+  .orb-breathe,
+  .orb-bar {
+    animation: none;
+  }
+}

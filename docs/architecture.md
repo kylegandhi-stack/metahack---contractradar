@@ -31,6 +31,8 @@ Every agent call uses `muse-spark-1.3` through the OpenAI SDK, with base URL `ht
 
 **Voice input ("Hey Rauros"), optional:** the browser records up to 20 s of push-to-talk audio, resamples it to 16 kHz mono 16-bit WAV, and posts it to `POST /api/voice-profile`. The server sends it to **Muse Voice Transcribe 1.0** (`muse-voice-transcribe-1.0`, `POST https://api.meta.ai/v1/asr/transcribe`, `PUSH_TO_TALK` mode, keyword-biased toward procurement terms). One `muse-spark-1.3` JSON call then turns the transcript into `CompanyProfile` fields, using only what the speaker said (`lib/voice.ts`). The user reviews the filled form before running research. No audio or transcript is stored or logged.
 
+With the opt-in **wake word** toggle, the mic stays open, but a local voice-activity detector in the browser keeps audio on the device until someone speaks. Each spoken phrase goes to Muse Voice in `wake` mode, and only phrases starting with "Hey Rauros" go on to Muse Spark. A Siri-style orb opens on wake and follows the mic level. Listening stops when the tab is hidden.
+
 | Agent | What the model does | Calls per run | Reasoning effort | Max output tokens |
 |---|---|---|---|---|
 | Research Planner | Keeps the company's product phrases word for word, and adds search variations and 1-3 candidate codes | 1 | minimal | 3,000 |

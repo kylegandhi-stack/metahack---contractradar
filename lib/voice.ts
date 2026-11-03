@@ -15,6 +15,7 @@ export const MIN_VOICE_SECONDS = 0.5;
 
 // Vocabulary bias: product and procurement terms the model might otherwise mishear. Bias only, never forced.
 export const VOICE_KEYWORDS = [
+  "Hey Rauros",
   "Rauros",
   "hydrophone",
   "hydrophones",
@@ -195,4 +196,72 @@ export async function extractVoiceProfile(transcript: string, budget: RunBudget)
     maxCompletionTokens: 2_000,
   });
   return normalizeVoiceProfile(extraction, transcript);
+}
+
+// ---------------------------------------------------------------------------------------------------------
+// Wake phrase. With "Listen for Hey Rauros" on, the browser sends each spoken phrase here; only phrases that
+// start with the wake phrase go on to Muse Spark. Matching is fuzzy because the name is unusual.
+
+const WAKE_TARGETS = ["rauros", "raurus", "rarus", "roros"];
+const WAKE_PREFIXES = new Set(["hey", "hi", "hay", "ok", "okay", "a", "yo"]);
+
+function levenshtein(a: string, b: string): number {
+  const dp = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    let prev = dp[0];
+    dp[0] = i;
+    for (let j = 1; j <= b.length; j++) {
+      const tmp = dp[j];
+      dp[j] = Math.min(dp[j] + 1, dp[j - 1] + 1, prev + (a[i - 1] === b[j - 1] ? 0 : 1));
+      prev = tmp;
+    }
+  }
+  return dp[b.length];
+}
+
+const norm = (w: string) => w.toLowerCase().replace(/[^a-z]/g, "");
+const soundsLikeRauros = (w: string) => w.length >= 4 && WAKE_TARGETS.some((t) => levenshtein(w, t) <= (w.length >= 6 ? 2 : 1));
+
+/**
+ * Finds "Hey Rauros" at the start of a transcript (within the first few words), tolerating mis-hearings such as
+ * "Hey Rarus", "Hi, Roros" or "Hey rare us". A bare name without "hey"/"hi"/"ok" only counts as the first word, spelled exactly.
+ * Returns the words after the wake phrase, with leading punctuation removed.
+ */
+export function splitWakePhrase(transcript: string): { woke: boolean; rest: string } {
+  const words = transcript.trim().split(/\s+/).filter(Boolean);
+  const n = words.map(norm);
+  for (let i = 0; i < Math.min(words.length, 4); i++) {
+    const prefixed = i > 0 && WAKE_PREFIXES.has(n[i - 1]);
+    const candidates: { text: string; span: number }[] = [{ text: n[i], span: 1 }];
+    if (i + 1 < words.length) candidates.push({ text: n[i] + n[i + 1], span: 2 }); // "rare us", "roar us"
+    for (const c of candidates) {
+      const exact = i === 0 && c.span === 1 && c.text === "rauros";
+      if ((prefixed && soundsLikeRauros(c.text)) || exact) {
+        const rest = words.slice(i + c.span).join(" ").replace(/^[\s,.;:!?\-]+/, "").trim();
+        return { woke: true, rest };
+      }
+    }
+  }
+  return { woke: false, rest: "" };
+}
+
+/** Enough words after the wake phrase to be a description, rather than "Hey Rauros" followed by a pause. */
+export const hasCommand = (rest: string) => rest.split(/\s+/).filter((w) => norm(w).length > 0).length >= 3;
+
+// Wake checks fire on every phrase while listening, so they get their own, more generous per-IP window,
+// kept here rather than in lib/rate-limit.ts. In memory per server instance, like the research limiter.
+const WAKE_PER_IP = Number(process.env.VOICE_WAKE_PER_IP ?? 60) || 60;
+const WAKE_WINDOW_MS = 10 * 60_000;
+const wakeHits = new Map<string, number[]>();
+
+export function checkWakeLimit(ip: string, now = Date.now()): { allowed: true } | { allowed: false; retryAfterSeconds: number } {
+  const recent = (wakeHits.get(ip) ?? []).filter((t) => now - t < WAKE_WINDOW_MS);
+  if (recent.length >= WAKE_PER_IP) {
+    wakeHits.set(ip, recent);
+    return { allowed: false, retryAfterSeconds: Math.ceil((WAKE_WINDOW_MS - (now - recent[0])) / 1000) };
+  }
+  recent.push(now);
+  wakeHits.set(ip, recent);
+  if (wakeHits.size > 5_000) wakeHits.clear(); // keep memory bounded on a long-lived instance
+  return { allowed: true };
 }

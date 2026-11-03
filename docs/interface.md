@@ -72,11 +72,15 @@ If live sources fail but saved real records are usable, the route returns 200 wi
 
 Max 3 Scout tool turns, 30 candidate records, 12 deep analyses, 5 critic reviews, 1 strategist revision. Model for every stage: `muse-spark-1.3`.
 
-## `POST /api/voice-profile` (optional voice input)
+## `POST /api/voice-profile[?mode=command|wake]` (optional voice input)
 
 Body: a WAV recording, `Content-Type: audio/wav`. RIFF/WAVE, mono, 16-bit PCM, 16 or 24 kHz, between 0.5 and 25 seconds, at most 1.5 MB. The browser records up to 20 s.
 
 Pipeline: `muse-voice-transcribe-1.0` (`POST /v1/asr/transcribe`, `PUSH_TO_TALK`) produces the transcript, then one `muse-spark-1.3` JSON call produces profile fields. Uses no SAM.gov or USAspending calls.
+
+Modes:
+- `command` (default): the whole phrase is a company description. A leading "Hey Rauros" is stripped.
+- `wake`: sent by the browser's opt-in wake-word listener for each phrase its local voice detector hears. Only Muse Voice runs unless the transcript starts with "Hey Rauros" (fuzzy: "Hey Rarus", "Hi Roros", "Hey rare us"; a bare name only as the first word). Responses: `{ "wake": false }` (nothing else returned, no Muse Spark call), `{ "wake": true, "needsCommand": true }` (the name alone, so the UI opens the orb and records the description in `command` mode), or `{ "wake": true, "transcript", "profile", "models" }` when the description followed in the same breath. Wake checks have their own per-IP window (`VOICE_WAKE_PER_IP`, default 60 per 10 minutes).
 
 Success: `200`
 

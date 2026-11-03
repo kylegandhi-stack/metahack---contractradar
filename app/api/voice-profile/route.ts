@@ -1,10 +1,13 @@
 import { MetaError, RunBudget } from "@/lib/meta";
 import { checkRateLimit, clientIp } from "@/lib/rate-limit";
 import type { ResearchError, ResearchErrorCode } from "@/lib/types";
-import { extractVoiceProfile, inspectWav, MAX_VOICE_BYTES, transcribe, VoiceInputError } from "@/lib/voice";
+import { checkWakeLimit, extractVoiceProfile, hasCommand, inspectWav, MAX_VOICE_BYTES, splitWakePhrase, transcribe, VoiceInputError } from "@/lib/voice";
 
-// POST /api/voice-profile: body is a mono 16-bit PCM WAV (16 or 24 kHz, at most 25 s).
-// Muse Voice Transcribe -> transcript, then Muse Spark -> CompanyProfile fields. No SAM.gov or USAspending calls.
+// POST /api/voice-profile[?mode=command|wake]: body is a mono 16-bit PCM WAV (16 or 24 kHz, at most 25 s).
+// command (default): Muse Voice Transcribe -> transcript, then Muse Spark -> CompanyProfile fields.
+// wake: Muse Voice Transcribe only, unless the phrase starts with "Hey Rauros". Without it, the response is
+// { wake: false } and nothing else runs; with it, the words after it are structured as in command mode.
+// No SAM.gov or USAspending calls.
 // No `runtime` export: cacheComponents always uses Node.js and rejects `runtime = "nodejs"`.
 export const maxDuration = 60;
 
@@ -29,8 +32,11 @@ export async function POST(request: Request) {
     return errorResponse(400, "BAD_REQUEST", message);
   }
 
-  // Separate bucket from research runs, so trying the mic doesn't use up searches. The daily cap is shared.
-  const limit = checkRateLimit(`voice:${clientIp(request.headers)}`);
+  const mode = new URL(request.url).searchParams.get("mode") === "wake" ? "wake" : "command";
+  const ip = clientIp(request.headers);
+  // Wake checks run on every phrase while listening, so they have their own generous window. Commands use a
+  // separate bucket from research runs, so trying the mic doesn't use up searches. The daily cap is shared.
+  const limit = mode === "wake" ? checkWakeLimit(ip) : checkRateLimit(`voice:${ip}`);
   if (!limit.allowed) {
     return errorResponse(429, "RATE_LIMITED", "Too many voice requests. Try again in a few minutes.", {
       "Retry-After": String(limit.retryAfterSeconds),
@@ -39,15 +45,28 @@ export async function POST(request: Request) {
 
   const started = Date.now();
   try {
-    const { transcript, audioDurationMs } = await transcribe(wav, AbortSignal.timeout(TRANSCRIBE_TIMEOUT_MS));
+    const heard = await transcribe(wav, AbortSignal.timeout(TRANSCRIBE_TIMEOUT_MS));
+    const { audioDurationMs } = heard;
+    let transcript = heard.transcript;
+    if (mode === "wake") {
+      const { woke, rest } = splitWakePhrase(transcript);
+      // Not addressed to us: return nothing about what was said and make no Muse Spark call.
+      if (!woke) return Response.json({ wake: false });
+      if (!hasCommand(rest)) return Response.json({ wake: true, needsCommand: true });
+      transcript = rest;
+    } else {
+      // A command recorded after "Hey Rauros" may repeat it; drop it so it never lands in the form.
+      const { woke, rest } = splitWakePhrase(transcript);
+      if (woke && hasCommand(rest)) transcript = rest;
+    }
     if (!transcript) return errorResponse(422, "BAD_REQUEST", "No speech was recognized. Try again a little closer to the mic.");
     const transcribedMs = Date.now() - started;
 
     const budget = new RunBudget(AbortSignal.timeout(EXTRACT_TIMEOUT_MS));
     const profile = await extractVoiceProfile(transcript, budget);
     // Counts and durations only: never audio, transcript text or the key.
-    console.info("voice profile", JSON.stringify({ audioDurationMs, transcribedMs, totalMs: Date.now() - started, fields: Object.keys(profile), ...budget.summary() }));
-    return Response.json({ transcript, profile, models: { transcription: "muse-voice-transcribe-1.0", extraction: "muse-spark-1.3" } });
+    console.info("voice profile", JSON.stringify({ mode, audioDurationMs, transcribedMs, totalMs: Date.now() - started, fields: Object.keys(profile), ...budget.summary() }));
+    return Response.json({ ...(mode === "wake" ? { wake: true } : {}), transcript, profile, models: { transcription: "muse-voice-transcribe-1.0", extraction: "muse-spark-1.3" } });
   } catch (error) {
     if (error instanceof MetaError) {
       console.error("voice profile: Meta error:", error.code, error.message);
