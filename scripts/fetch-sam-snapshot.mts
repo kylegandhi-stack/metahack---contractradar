@@ -28,6 +28,7 @@ let shortened: string[] = [];
 await runResearch(PROFILE, {
   signal: AbortSignal.timeout(180_000),
   deps: {
+    descriptionsEnabled: () => true, // A capture always fetches them, whatever the production setting.
     scout: async (plan, budget) => {
       const result = await runScout(plan, budget);
       notices = result.records.filter((record) => record.source === "sam");
