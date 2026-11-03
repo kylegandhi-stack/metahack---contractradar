@@ -91,7 +91,7 @@ export function OpportunityDetail({ result, onClose }: { result: RankedResult | 
                 <div className="flex flex-wrap gap-2">
                   <SourceKindBadge kind={r.record.kind} />
                   {isExpired(r) && <ExpiredBadge />}
-                  <ReviewStatusBadge status={r.reviewStatus} />
+                  <ReviewStatusBadge status={r.reviewStatus} kind={r.record.kind} />
                 </div>
                 <div className="mt-5 flex items-start justify-between gap-6">
                   <div className="min-w-0">
