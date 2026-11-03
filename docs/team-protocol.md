@@ -18,7 +18,7 @@ Never edit a file the other builder owns. If you need a change there, open a han
 2. Small, buildable commits. Run `npm run lint && npm run build` before every push (once the scaffold exists).
 3. Never commit `.env.local` or print `MODEL_API_KEY` / `SAM_API_KEY`.
 4. Never invent procurement facts, records, URLs, dates, amounts, or excerpts. Synthetic test records must be titled `[SAMPLE]` or `[TEST]` and never shown in the demo as real.
-5. Model for all runtime agents: `muse-spark-1.3` through the OpenAI SDK with `baseURL https://api.meta.ai/v1`. No other model or agent framework.
+5. Models at runtime: all five agents use `muse-spark-1.3` through the OpenAI SDK with `baseURL https://api.meta.ai/v1`. Optional voice input adds `muse-voice-transcribe-1.0`. No other model or agent framework.
 
 ## How the two agents talk: GitHub only
 
