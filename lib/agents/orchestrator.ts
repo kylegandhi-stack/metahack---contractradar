@@ -53,6 +53,7 @@ export type PipelineDeps = {
   loadSnapshot: typeof loadSamSnapshot;
   verify: typeof verifyRecords;
   history: typeof findBuyerHistory;
+  descriptionsEnabled: () => boolean;
   loadCache: () => CachedRecords | null;
   samConfigured: () => boolean;
   now: () => number;
@@ -70,6 +71,8 @@ const defaultDeps: PipelineDeps = {
   loadSnapshot: loadSamSnapshot,
   verify: verifyRecords,
   history: findBuyerHistory,
+  // Up to 5 extra SAM.gov calls per run, against a small daily quota, so this is opt-in.
+  descriptionsEnabled: () => process.env.SAM_DESCRIPTIONS === "on",
   loadCache: loadVerifiedRecords,
   samConfigured: isSamConfigured,
   now: Date.now,
@@ -184,8 +187,9 @@ function descriptionNote(record: SourceRecord, issue: string, whyItMatters: stri
   };
 }
 
-// Adds source text to shortlisted SAM notices. A failed fetch leaves the description null and adds a
-// NOTE: it never blocks a run. Skipped when SAM.gov already failed, to avoid spending more quota.
+// Adds source text to shortlisted SAM notices when SAM_DESCRIPTIONS is "on". A failed or skipped fetch
+// leaves the description null and adds a NOTE: it never blocks a run. Also skipped when SAM.gov already
+// failed, to avoid spending more quota.
 async function addNoticeDescriptions(
   records: SourceRecord[],
   shortlist: Pick[],
@@ -198,7 +202,7 @@ async function addNoticeDescriptions(
   const notes = new Map<string, AuditFinding[]>();
   if (targets.length === 0) return { records, notes, count: 0 };
   const fetched =
-    samFailure || !deps.samConfigured()
+    samFailure || !deps.samConfigured() || !deps.descriptionsEnabled()
       ? { texts: new Map<string, string>(), unavailable: targets.map((record) => record.id), shortened: [] as string[] }
       : await deps.describe(targets);
   // Saved text fills in only what could not be fetched live.
@@ -219,7 +223,7 @@ async function addNoticeDescriptions(
       notes.set(record.id, [
         descriptionNote(
           record,
-          "SAM.gov description could not be retrieved",
+          "SAM.gov description was not retrieved",
           "This review used the notice's title and summary fields only, so requirements in its full text were not checked.",
         ),
       ]);
