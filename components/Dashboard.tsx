@@ -52,7 +52,7 @@ function TopBar({ sampleMode, dataMode }: { sampleMode: boolean; dataMode?: "liv
         </div>
         <div className="flex items-stretch">
           <span className={item}><span className="label">Sys</span><span className="size-1.5 bg-clear blink" aria-hidden /><span className="font-mono text-[11px] uppercase tracking-[0.12em]">Online</span></span>
-          <span className={item}><span className="label">Model</span><span className="font-mono text-[11px] uppercase tracking-[0.12em]">Muse Spark 1.3</span></span>
+          <span className={item}><span className="label">Models</span><span className="font-mono text-[11px] uppercase tracking-[0.12em]">Muse Spark 1.3 · Muse Voice 1.0</span></span>
           <span className={item}><span className="label">Agents</span><span className="font-mono text-[11px] tracking-[0.12em]">05</span></span>
           {dataMode && <span className={item}><span className="label">Data</span><span className={cn("font-mono text-[11px] uppercase tracking-[0.12em]", dataMode === "cached" ? "text-warn" : "text-clear")}>{dataMode}</span></span>}
           {sampleMode && (

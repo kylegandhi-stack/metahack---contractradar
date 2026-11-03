@@ -12,7 +12,7 @@ Every result links to its official source record and carries a status set by cod
 
 ## The five agents
 
-Each agent runs on **Meta's Muse Spark 1.3** (`muse-spark-1.3`), called through the OpenAI SDK at `https://api.meta.ai/v1`. No other model or agent framework is used at runtime.
+Each agent runs on **Meta's Muse Spark 1.3** (`muse-spark-1.3`), called through the OpenAI SDK at `https://api.meta.ai/v1`. Optional voice input (**Hey Rauros**) adds a second Meta model: **Muse Voice Transcribe 1.0** (`muse-voice-transcribe-1.0`) turns a spoken company description into text, and Muse Spark 1.3 turns that text into the profile form. No other models or agent frameworks are used at runtime.
 
 | # | Agent | How Muse Spark 1.3 runs it |
 |---|---|---|
@@ -99,4 +99,4 @@ git log --reverse --format='%ad %s' --date=iso | head   # earliest commits
 - Procurement records come from the public sources above.
 - Hero imagery is public-domain U.S. Navy photography.
 
-**How it was built:** by a two-person team, Santiago Cavalieri (backend and agents) and Kyle Gandhi (frontend, product and deployment), with AI coding assistants helping write the code. Commits made with Claude Code say so in their messages. At runtime, the product uses only Muse Spark 1.3.
+**How it was built:** by a two-person team, Santiago Cavalieri (backend and agents) and Kyle Gandhi (frontend, product and deployment), with AI coding assistants helping write the code. Commits made with Claude Code say so in their messages. At runtime, the product uses two Meta models: Muse Spark 1.3 for the five agents and for structuring voice input, and Muse Voice Transcribe 1.0 for speech-to-text.
