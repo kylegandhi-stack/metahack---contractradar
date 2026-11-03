@@ -227,6 +227,8 @@ function htmlToText(html: string): string {
     .trim();
 }
 
+// The docs give this URL and say to append the key, but not the response shape. Reading a JSON
+// `description` field is unverified until a live call: any other shape ends as a NOTE, not bad text.
 export async function fetchNoticeDescription(noticeId: string, signal: AbortSignal): Promise<string | null> {
   const apiKey = process.env.SAM_API_KEY;
   if (!present(apiKey)) throw new SamError("SAM.gov key is not configured", null);
@@ -246,7 +248,10 @@ export async function fetchNoticeDescription(noticeId: string, signal: AbortSign
   } catch {
     throw new SamError("SAM.gov returned invalid JSON", response.status);
   }
-  return present(payload.description) ? htmlToText(payload.description) || null : null;
+  if (!present(payload.description)) return null;
+  // The docs give "Description not found" as the message when there is none. That is not notice text.
+  const text = htmlToText(payload.description);
+  return !text || /^description not found\.?$/i.test(text) ? null : text;
 }
 
 // Notice text does not change often and SAM.gov's daily quota is small, so repeat runs reuse it.
