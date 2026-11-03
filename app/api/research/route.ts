@@ -1,5 +1,6 @@
 import { NoUsableDataError, RUN_CAP_MS, runResearch } from "@/lib/agents/orchestrator";
 import { MetaError } from "@/lib/meta";
+import { checkRateLimit, clientIp } from "@/lib/rate-limit";
 import { ResearchRequestSchema } from "@/lib/schemas";
 import type { ResearchError, ResearchErrorCode } from "@/lib/types";
 
@@ -7,9 +8,9 @@ import type { ResearchError, ResearchErrorCode } from "@/lib/types";
 // build on `runtime = "nodejs"` ("not compatible with nextConfig.cacheComponents").
 export const maxDuration = 120;
 
-function errorResponse(status: number, code: ResearchErrorCode, message: string) {
+function errorResponse(status: number, code: ResearchErrorCode, message: string, headers?: HeadersInit) {
   const body: ResearchError = { error: { code, message } };
-  return Response.json(body, { status });
+  return Response.json(body, { status, headers });
 }
 
 export async function POST(request: Request) {
@@ -22,6 +23,16 @@ export async function POST(request: Request) {
   const parsed = ResearchRequestSchema.safeParse(body);
   if (!parsed.success) {
     return errorResponse(400, "BAD_REQUEST", "Profile failed validation");
+  }
+
+  // After validation, so a malformed request costs nothing and uses no limit.
+  const limit = checkRateLimit(clientIp(request.headers));
+  if (!limit.allowed) {
+    const message =
+      limit.scope === "ip"
+        ? `Too many runs from this address. Try again in about ${Math.ceil(limit.retryAfterSeconds / 60)} minutes.`
+        : "This demo has reached its daily run limit. Please try again tomorrow.";
+    return errorResponse(429, "RATE_LIMITED", message, { "Retry-After": String(limit.retryAfterSeconds) });
   }
 
   try {
