@@ -250,11 +250,29 @@ export const hasCommand = (rest: string) => rest.split(/\s+/).filter((w) => norm
 
 // Wake checks fire on every phrase while listening, so they get their own, more generous per-IP window,
 // kept here rather than in lib/rate-limit.ts. In memory per server instance, like the research limiter.
+// Kill switch, OFF by default: the wake route is public and every phrase costs a Muse Voice call, so it only
+// runs when VOICE_WAKE=on is set in the server environment (and the toggle only shows with
+// NEXT_PUBLIC_VOICE_WAKE=on). Not approved for production before the hackathon freeze (#53).
+export const wakeEnabled = () => process.env.VOICE_WAKE === "on";
+
 const WAKE_PER_IP = Number(process.env.VOICE_WAKE_PER_IP ?? 60) || 60;
 const WAKE_WINDOW_MS = 10 * 60_000;
+// Overall ceiling per UTC day and server instance when wake is on, so one or many addresses can't run it unbounded.
+const WAKE_DAILY = Number(process.env.VOICE_WAKE_DAILY ?? 300) || 300;
 const wakeHits = new Map<string, number[]>();
+let wakeDay = "";
+let wakeDayCount = 0;
 
 export function checkWakeLimit(ip: string, now = Date.now()): { allowed: true } | { allowed: false; retryAfterSeconds: number } {
+  const day = new Date(now).toISOString().slice(0, 10);
+  if (day !== wakeDay) {
+    wakeDay = day;
+    wakeDayCount = 0;
+  }
+  if (wakeDayCount >= WAKE_DAILY) {
+    const tomorrow = Date.parse(`${day}T00:00:00Z`) + 86_400_000;
+    return { allowed: false, retryAfterSeconds: Math.ceil((tomorrow - now) / 1000) };
+  }
   const recent = (wakeHits.get(ip) ?? []).filter((t) => now - t < WAKE_WINDOW_MS);
   if (recent.length >= WAKE_PER_IP) {
     wakeHits.set(ip, recent);
@@ -262,6 +280,7 @@ export function checkWakeLimit(ip: string, now = Date.now()): { allowed: true } 
   }
   recent.push(now);
   wakeHits.set(ip, recent);
+  wakeDayCount += 1;
   if (wakeHits.size > 5_000) wakeHits.clear(); // keep memory bounded on a long-lived instance
   return { allowed: true };
 }

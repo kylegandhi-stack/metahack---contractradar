@@ -147,3 +147,36 @@ test("wake checks have their own per-IP window", () => {
   assert.equal(blocked.allowed, false);
   assert.equal(checkWakeLimit(ip, t0 + 11 * 60_000).allowed, true, "window slides");
 });
+
+test("wake mode is refused before any work unless VOICE_WAKE=on", async () => {
+  const saved = { wake: process.env.VOICE_WAKE, key: process.env.MODEL_API_KEY };
+  delete process.env.MODEL_API_KEY;
+  try {
+    const { POST } = await import("../app/api/voice-profile/route");
+    const wav = encodeWav(tone(2));
+    delete process.env.VOICE_WAKE;
+    const off = await POST(new Request("http://x/api/voice-profile?mode=wake", { method: "POST", body: wav as BlobPart }));
+    assert.equal(off.status, 404);
+    assert.match((await off.json()).error.message, /turned off/);
+
+    process.env.VOICE_WAKE = "on";
+    const on = await POST(new Request("http://x/api/voice-profile?mode=wake", { method: "POST", body: wav as BlobPart, headers: { "x-forwarded-for": "203.0.113.77" } }));
+    assert.equal(on.status, 502, "with the switch on it proceeds to transcription (no key here, so 502)");
+
+    delete process.env.VOICE_WAKE;
+    const command = await POST(new Request("http://x/api/voice-profile", { method: "POST", body: wav as BlobPart, headers: { "x-forwarded-for": "203.0.113.78" } }));
+    assert.equal(command.status, 502, "push-to-talk command mode is unaffected by the switch");
+  } finally {
+    if (saved.wake === undefined) delete process.env.VOICE_WAKE;
+    else process.env.VOICE_WAKE = saved.wake;
+    if (saved.key !== undefined) process.env.MODEL_API_KEY = saved.key;
+  }
+});
+
+test("wake checks stop at the daily ceiling across addresses", () => {
+  const day = Date.parse("2031-01-01T12:00:00Z");
+  let allowed = 0;
+  for (let i = 0; i < 400; i++) if (checkWakeLimit(`ceiling-${i}`, day + i).allowed) allowed++;
+  assert.equal(allowed, 300);
+  assert.equal(checkWakeLimit("ceiling-next-day", day + 86_400_000).allowed, true, "resets the next UTC day");
+});

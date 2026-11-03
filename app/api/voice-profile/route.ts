@@ -1,7 +1,7 @@
 import { MetaError, RunBudget } from "@/lib/meta";
 import { checkVoiceRateLimit, clientIp } from "@/lib/rate-limit";
 import type { ResearchError, ResearchErrorCode } from "@/lib/types";
-import { checkWakeLimit, extractVoiceProfile, hasCommand, inspectWav, MAX_VOICE_BYTES, splitWakePhrase, transcribe, VoiceInputError } from "@/lib/voice";
+import { checkWakeLimit, wakeEnabled, extractVoiceProfile, hasCommand, inspectWav, MAX_VOICE_BYTES, splitWakePhrase, transcribe, VoiceInputError } from "@/lib/voice";
 
 // POST /api/voice-profile[?mode=command|wake]: body is a mono 16-bit PCM WAV (16 or 24 kHz, at most 25 s).
 // command (default): Muse Voice Transcribe -> transcript, then Muse Spark -> CompanyProfile fields.
@@ -20,6 +20,10 @@ function errorResponse(status: number, code: ResearchErrorCode, message: string,
 }
 
 export async function POST(request: Request) {
+  // Wake mode is off unless VOICE_WAKE=on: refuse before reading the body, so it costs nothing.
+  if (new URL(request.url).searchParams.get("mode") === "wake" && !wakeEnabled()) {
+    return errorResponse(404, "BAD_REQUEST", "The wake word is turned off on this deployment.");
+  }
   const declared = Number(request.headers.get("content-length") ?? "0");
   if (declared > MAX_VOICE_BYTES) return errorResponse(413, "BAD_REQUEST", "Recording is too large. Keep it under 20 seconds.");
 
