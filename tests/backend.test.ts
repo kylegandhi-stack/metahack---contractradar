@@ -13,6 +13,7 @@ import { clearScoutMemo, MAX_TOOL_TURNS, runScout } from "../lib/agents/scout";
 import { loadVerifiedRecords } from "../lib/data/cache";
 import { loadSamSnapshot } from "../lib/data/snapshot";
 import { verifyRecords } from "../lib/data/verify";
+import { findPriorAwards, subtierFromPath, titleTerms } from "../lib/data/buyer-history";
 import {
   classifyNotice,
   clearDescriptionMemo,
@@ -123,6 +124,7 @@ function fakeDeps(records: SourceRecord[], overrides: Partial<PipelineDeps> = {}
     describe: async () => ({ texts: new Map(), unavailable: [], shortened: [] }),
     loadSnapshot: () => null,
     verify: async () => new Map(),
+    history: async () => new Map(),
     descriptionsEnabled: () => true,
     samConfigured: () => true,
     now: () => NOW,
@@ -1273,4 +1275,91 @@ test("identity: only shortlisted records are checked, and a mismatch means HOLD"
   });
   assert.deepEqual(checked, ["PICKED"]);
   assert.equal(response.results.find((result) => result.record.id === "PICKED")?.reviewStatus, "HOLD");
+});
+
+const buyerNotice = (overrides: Partial<SourceRecord> = {}) =>
+  notice({
+    title: "58--HYDROPHONE ASSEMBLY- AND SIMILAR REPLACEMENT PARTS",
+    agency: "DEPT OF DEFENSE.DEPT OF THE NAVY.NAVSUP",
+    excerpts: [{ field: "classificationCode", text: "5845" }],
+    ...overrides,
+  });
+const pastAward = (id: string, Description: string, overrides: Record<string, unknown> = {}) => ({
+  generated_internal_id: id,
+  Description,
+  "Recipient Name": "[TEST] Supplier",
+  "Award Amount": 1000,
+  "Start Date": "2026-01-01",
+  ...overrides,
+});
+
+test("buyer history: agency paths and title words become search terms", () => {
+  assert.equal(subtierFromPath("DEPT OF DEFENSE.DEPT OF THE NAVY.NAVSUP"), "Department of the Navy");
+  assert.equal(subtierFromPath("DEPT OF DEFENSE.DEFENSE LOGISTICS AGENCY.DLA MARITIME"), "Defense Logistics Agency");
+  assert.equal(subtierFromPath("DEPT OF DEFENSE"), null);
+  assert.deepEqual(titleTerms("58--HYDROPHONE ASSEMBLY- AND SIMILAR REPLACEMENT PARTS"), ["HYDROPHONE"]);
+  assert.deepEqual(titleTerms("DT-511C and DT-592D Hydrophones and Spare Parts"), ["DT-511C", "DT-592D", "Hydrophones"]);
+});
+
+test("buyer history: filters by buyer, PSC and words, and keeps only comparable past awards", async () => {
+  let filters: Record<string, unknown> = {};
+  globalThis.fetch = (async (_url: string, init: RequestInit) => {
+    filters = (JSON.parse(String(init.body)) as { filters: Record<string, unknown> }).filters;
+    return Response.json({
+      results: [
+        pastAward("MATCH", "DT-574 HYDROPHONES, 25 FT"),
+        pastAward("LOOSE", "MICROHYDROPHONE SYSTEM"),
+        pastAward("FUTURE", "HYDROPHONE ORDER", { "Start Date": "2027-06-30" }),
+        pastAward("TOO-OLD", "HYDROPHONE ORDER", { "Start Date": "2017-07-17" }),
+        pastAward("NO-ID", "HYDROPHONE ORDER", { generated_internal_id: null }),
+      ],
+    });
+  }) as typeof fetch;
+  const awards = await findPriorAwards(buyerNotice(), NOW);
+  assert.deepEqual(filters.psc_codes, ["5845"]);
+  assert.deepEqual(filters.agencies, [{ type: "awarding", tier: "subtier", name: "Department of the Navy" }]);
+  assert.deepEqual(awards, [
+    {
+      id: "MATCH",
+      title: "DT-574 HYDROPHONES, 25 FT",
+      recipient: "[TEST] Supplier",
+      amount: 1000,
+      date: "2026-01-01",
+      url: "https://www.usaspending.gov/award/MATCH",
+    },
+  ]);
+});
+
+test("buyer history: missing inputs or any failure returns nothing, without a call when inputs are missing", async () => {
+  globalThis.fetch = async () => {
+    throw new Error("must not be called");
+  };
+  assert.deepEqual(await findPriorAwards(buyerNotice({ excerpts: [] }), NOW), []);
+  assert.deepEqual(await findPriorAwards(buyerNotice({ agency: "DEPT OF DEFENSE" }), NOW), []);
+  assert.deepEqual(await findPriorAwards(buyerNotice({ title: "SPARE PARTS" }), NOW), []);
+  assert.deepEqual(await findPriorAwards(buyerNotice(), NOW), []);
+  globalThis.fetch = async () => new Response("{}", { status: 500 });
+  assert.deepEqual(await findPriorAwards(buyerNotice(), NOW), []);
+  globalThis.fetch = async () => Response.json({ results: "bad" });
+  assert.deepEqual(await findPriorAwards(buyerNotice(), NOW), []);
+});
+
+test("buyer history: shortlisted notices get priorAwards, others have no field and status is unchanged", async () => {
+  const prior = { id: "P", title: "[TEST] Past", recipient: null, amount: null, date: null, url: "https://www.usaspending.gov/award/P" };
+  const response = await runResearch(PROFILE, {
+    deps: fakeDeps([notice({ id: "PICKED" }), notice({ id: "OTHER" })], {
+      strategize: async () => [{ sourceId: "PICKED", rationale: "Fits", nextSteps: ["Verify"] }],
+      history: async () => new Map([["PICKED", [prior]], ["OTHER", [prior]]]),
+    }),
+  });
+  const picked = response.results.find((result) => result.record.id === "PICKED");
+  const other = response.results.find((result) => result.record.id === "OTHER");
+  assert.deepEqual(picked?.priorAwards, [prior]);
+  assert.equal(picked?.reviewStatus, "APPROVED");
+  assert.ok(!(other && "priorAwards" in other));
+});
+
+test("awards record who won", () => {
+  const record = normalizeAward({ generated_internal_id: "X", "Recipient Name": "[TEST] Supplier" }, "2026-11-03T00:00:00.000Z");
+  assert.equal(record?.recipient, "[TEST] Supplier");
 });

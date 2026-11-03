@@ -130,6 +130,7 @@ export function normalizeAward(raw: RawAward, retrievedAt: string): SourceRecord
     setAside: null, // not in the search response; see enrichWithAwardDetail
     naics: present(naicsCode) ? naicsCode : null,
     excerpts,
+    recipient: present(raw["Recipient Name"]) ? raw["Recipient Name"] : null,
   };
 }
 
