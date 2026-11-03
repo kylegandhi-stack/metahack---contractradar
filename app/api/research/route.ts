@@ -31,6 +31,8 @@ export async function POST(request: Request) {
     return Response.json(response);
   } catch (error) {
     if (error instanceof MetaError) {
+      // Safe to log: these messages hold an HTTP status or a fixed string, never the key or the profile.
+      console.error("research route: Meta error:", error.code, error.message);
       if (error.code === "RATE_LIMITED") {
         return errorResponse(429, "RATE_LIMITED", "The AI service is busy. Please try again shortly.");
       }
