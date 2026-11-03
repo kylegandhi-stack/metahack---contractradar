@@ -2,7 +2,7 @@
 
 Rauros Systems helps a small defense supplier decide which federal opportunities are worth its time. A company profile goes in, and ranked federal records come out, each with evidence, an adversarial review and a status of `APPROVED`, `REVIEW_REQUIRED` or `HOLD`. The repo and internal comments still use the working name ContractRadar.
 
-**Status, 2026-11-02:** this describes the system once PRs #19-#27 are merged. Those PRs were open when this was written. Features they add are marked **(open PR)**.
+**Status, 2026-11-02:** this describes the system once PRs #19-#27 and the cost PR are merged. Those PRs were open when this was written. Features they add are marked **(open PR)**.
 
 ## How a request flows
 
@@ -37,7 +37,7 @@ Every model call uses `muse-spark-1.3` through the OpenAI SDK, with base URL `ht
 | Pursuit Strategist | Picks the shortlist and next steps; can revise once | 1-2 | minimal | 5,000 |
 | Devil's Advocate | Reviews each shortlisted record independently, returning a verdict and findings | up to 5, in parallel | low | 4,000 |
 
-The Planner, Analyst, Strategist and Devil's Advocate return JSON checked against a schema. Invalid output gets exactly one retry, then fails instead of passing unvalidated data on. Measured runs use about 35,000 tokens in total.
+The Planner, Analyst, Strategist and Devil's Advocate return JSON checked against a schema. Invalid output gets exactly one retry, then fails instead of passing unvalidated data on. Measured runs use about 35,000-45,000 tokens in total, which is about $0.11 for one 44,000-token run at third-party listed rates that aren't confirmed against Meta's rate sheet.
 
 Record text is passed to the model as data, and each prompt says not to treat it as instructions.
 
@@ -63,6 +63,7 @@ Record text is passed to the model as data, and each prompt says not to treat it
 | SAM.gov searches | 2 |
 | SAM.gov descriptions **(open PR)** | up to 5 |
 | Tokens | 150,000 |
+| Estimated cost **(open PR)** | $0.50 |
 | Run time | 105 s in code, 120 s function limit |
 
 **Timing:** production took 52-82 s before the open PRs. Local runs of those PRs took 40-53 s with SAM.gov blocked. **A full run with live SAM.gov and descriptions has not been measured yet.** The target is under 90 s.
@@ -108,7 +109,7 @@ Please don't present these as general accuracy.
 
 ### Operations
 - **Single function:** a run is one long request with no streaming, so a dropped connection loses it.
-- **Cost:** token use is capped and logged per run. There's no dollar cap yet, and per-stage token logging isn't built.
+- **Cost:** tokens are capped per run. Per-stage logging and a $0.50 estimated cost cap are in an **(open PR)**. Costs are estimates until compared with Meta billing.
 - **Cached path:** the fallback logic has unit tests, but the end-to-end cached banner hasn't been tested in a browser.
 
 ## Data sources and acknowledgments
