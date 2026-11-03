@@ -6,7 +6,7 @@ import type { FitBreakdown, RankedResult } from "@/lib/types";
 import { ConfidencePill, EligibilityBadge, ExpiredBadge, ReviewStatusBadge, SourceKindBadge } from "./badges";
 import { FindingItem, sortFindings } from "./FindingsPanel";
 import { FitScore } from "./OpportunityCard";
-import { cn, fmtDate, fmtDateTime, fmtMoney, isExpired, isHistorical, KIND_LABEL, orUnknown, sourceName } from "./format";
+import { cn, fitMaxOf, fmtDate, fmtDateTime, fmtMoney, isExpired, isHistorical, KIND_LABEL, orUnknown, sourceName } from "./format";
 
 function Section({ n, title, children, tone }: { n: string; title: string; children: React.ReactNode; tone?: string }) {
   return (
@@ -28,36 +28,66 @@ function Bullets({ items, empty, marker = "—" }: { items: string[]; empty: str
   );
 }
 
-const BREAKDOWN: { key: keyof FitBreakdown; label: string; max: number }[] = [
+const BREAKDOWN: { key: keyof FitBreakdown; label: string; max: number; notForAwards?: boolean }[] = [
   { key: "technical", label: "Technical fit", max: 40 },
-  { key: "category", label: "Category alignment", max: 20 },
-  { key: "eligibility", label: "Known eligibility", max: 20 },
+  { key: "category", label: "Product, buyer & recency", max: 20 },
+  { key: "eligibility", label: "Known eligibility", max: 20, notForAwards: true },
   { key: "execution", label: "Execution scope", max: 10 },
-  { key: "timing", label: "Timing", max: 10 },
+  { key: "timing", label: "Timing", max: 10, notForAwards: true },
 ];
 
-function FitBreakdownTable({ b, historical }: { b: FitBreakdown; historical: boolean }) {
+function FitBreakdownTable({ r }: { r: RankedResult }) {
+  const b = r.fitBreakdown!;
+  const historical = isHistorical(r);
+  const max = fitMaxOf(r);
+  const score = Math.max(0, Math.min(max, Math.round(r.fitScore)));
   return (
     <Section n={"//"} title={historical ? "Historical relevance breakdown" : "Fit breakdown"}>
+      <p className="mb-4 text-sm">
+        <span className="font-mono tabular-nums">{score}</span>
+        <span className="text-dim"> of {max} available points</span>
+        {historical && score >= max && <span className="text-muted"> · strong historical match</span>}
+      </p>
       <ul className="space-y-3">
-        {BREAKDOWN.map(({ key, label, max }) => {
+        {BREAKDOWN.map(({ key, label, max: m, notForAwards }) => {
+          const na = historical && notForAwards;
           const v = b[key];
-          const pct = v === null ? 0 : Math.max(0, Math.min(100, (v / max) * 100));
+          const pct = na || v === null ? 0 : Math.max(0, Math.min(100, (v / m) * 100));
           return (
-            <li key={key} className="grid grid-cols-[8.5rem_1fr_4rem] items-center gap-3">
+            <li key={key} className={cn("grid grid-cols-[8.5rem_1fr_4.5rem] items-center gap-3", na && "opacity-50")}>
               <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-muted">{label}</span>
               <span className="relative h-[6px] bg-line" aria-hidden>
                 <span className="absolute inset-y-0 left-0 bg-foreground" style={{ width: `${pct}%` }} />
-                {Array.from({ length: max / 2 - 1 }).map((_, i) => (
-                  <span key={i} className="absolute inset-y-0 w-px bg-background" style={{ left: `${((i + 1) * 2 * 100) / max}%` }} />
+                {Array.from({ length: m / 2 - 1 }).map((_, i) => (
+                  <span key={i} className="absolute inset-y-0 w-px bg-background" style={{ left: `${((i + 1) * 2 * 100) / m}%` }} />
                 ))}
               </span>
-              <span className="text-right font-mono text-xs tabular-nums">{v === null ? <span className="text-dim">UNKNOWN</span> : <>{v}<span className="text-dim">/{max}</span></>}</span>
+              <span className="text-right font-mono text-xs tabular-nums">
+                {na ? <span className="text-dim">N/A</span> : v === null ? <span className="text-dim">UNKNOWN</span> : <>{v}<span className="text-dim">/{m}</span></>}
+              </span>
             </li>
           );
         })}
       </ul>
-      <p className="mt-3 text-xs text-dim">Relevance score. Not a probability of winning.</p>
+      <p className="mt-3 text-xs text-dim">
+        {historical
+          ? `Past awards can't earn eligibility or timing points, so they're scored out of ${max}. This is relevance, not an open opportunity or a probability of winning.`
+          : "Relevance points, not a probability of winning."}
+      </p>
+      {!!r.fitSignals?.length && (
+        <div className="mt-5">
+          <p className="label mb-2">Scoring signals</p>
+          <ul className="divide-y divide-line border-y border-line">
+            {r.fitSignals.map((s, i) => (
+              <li key={i} className="flex items-baseline justify-between gap-4 py-2 text-sm">
+                <span className="min-w-0">{s.detail}</span>
+                <span className="shrink-0 font-mono text-xs tabular-nums">{s.points}<span className="text-dim">/{s.max}</span></span>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2 text-xs text-dim">Points before the weak-match limit, so they can add up to more than the bar above. Award-size points are estimates.</p>
+        </div>
+      )}
     </Section>
   );
 }
@@ -127,7 +157,7 @@ export function OpportunityDetail({ result, onClose }: { result: RankedResult | 
                 )}
               </div>
 
-              {r.fitBreakdown && <FitBreakdownTable b={r.fitBreakdown} historical={isHistorical(r)} />}
+              {r.fitBreakdown && <FitBreakdownTable r={r} />}
 
               <Section n="A" title="Why it fits" tone="text-clear">
                 <Bullets items={r.whyMatched} empty="No fit reasons provided." marker="+" />
