@@ -37,7 +37,14 @@ export type RawNotice = {
   classificationCode?: string | null;
 };
 
-export type NoticeSearch = { title?: string; naicsCode?: string; pscCode?: string; daysBack?: number; limit?: number };
+export type NoticeSearch = {
+  title?: string;
+  naicsCode?: string;
+  pscCode?: string;
+  noticeId?: string;
+  daysBack?: number;
+  limit?: number;
+};
 
 const KIND_BY_TYPE: Record<string, SourceKind> = {
   solicitation: "open_notice",
@@ -178,6 +185,7 @@ export async function searchNotices(search: NoticeSearch): Promise<SourceRecord[
   if (present(search.title)) params.set("title", search.title.trim());
   if (present(search.naicsCode)) params.set("ncode", search.naicsCode.trim());
   if (present(search.pscCode)) params.set("ccode", search.pscCode.trim());
+  if (present(search.noticeId)) params.set("noticeid", search.noticeId.trim());
 
   let response: Response;
   try {

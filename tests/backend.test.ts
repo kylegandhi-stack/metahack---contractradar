@@ -12,6 +12,7 @@ import type { ScoutResult } from "../lib/agents/scout";
 import { clearScoutMemo, MAX_TOOL_TURNS, runScout } from "../lib/agents/scout";
 import { loadVerifiedRecords } from "../lib/data/cache";
 import { loadSamSnapshot } from "../lib/data/snapshot";
+import { verifyRecords } from "../lib/data/verify";
 import {
   classifyNotice,
   clearDescriptionMemo,
@@ -121,6 +122,7 @@ function fakeDeps(records: SourceRecord[], overrides: Partial<PipelineDeps> = {}
     enrich: async (record) => record,
     describe: async () => ({ texts: new Map(), unavailable: [], shortened: [] }),
     loadSnapshot: () => null,
+    verify: async () => new Map(),
     descriptionsEnabled: () => true,
     samConfigured: () => true,
     now: () => NOW,
@@ -1176,4 +1178,99 @@ test("eval: the committed label files are valid", () => {
   const file = EvalFileSchema.parse(JSON.parse(readFileSync(new URL("../data/eval/aquavector.json", import.meta.url), "utf8")));
   assert.equal(file.labels?.length, 20);
   assert.equal(file.labels?.filter((entry) => entry.label === "relevant").length, 8);
+});
+
+const awardDetail = (overrides: Record<string, unknown> = {}) =>
+  Response.json({
+    generated_unique_award_id: "CONT_AWD_TEST_1",
+    description: "[TEST] Hydrophone delivery order",
+    awarding_agency: { toptier_agency: { name: "[TEST] Department of the Navy" } },
+    ...overrides,
+  });
+const describedAward = () => award({ description: "[TEST] Hydrophone delivery order" });
+
+test("identity: a matching award passes, ignoring case and spacing", async () => {
+  globalThis.fetch = async () => awardDetail({ description: "  [test]  HYDROPHONE delivery order" });
+  const findings = await verifyRecords([describedAward()]);
+  assert.deepEqual(findings.get(describedAward().id), []);
+});
+
+test("identity: a different title, agency, id or a 404 is a BLOCKER", async () => {
+  for (const [answer, expected] of [
+    [() => awardDetail({ description: "[TEST] Janitorial services" }), /title/],
+    [() => awardDetail({ awarding_agency: { toptier_agency: { name: "[TEST] Department of Labor" } } }), /agency/],
+    [() => awardDetail({ generated_unique_award_id: "CONT_AWD_OTHER" }), /different award id/],
+    [() => new Response("{}", { status: 404 }), /does not know/],
+  ] as const) {
+    globalThis.fetch = async () => answer();
+    const [finding] = (await verifyRecords([describedAward()])).get(describedAward().id) ?? [];
+    assert.equal(finding?.severity, "BLOCKER");
+    assert.match(finding?.issue ?? "", expected);
+  }
+});
+
+test("identity: a failed check is only a NOTE", async () => {
+  for (const answer of [
+    async () => new Response("{}", { status: 500 }),
+    async () => {
+      throw new TypeError("network down");
+    },
+    async () => new Response("not json"),
+  ]) {
+    globalThis.fetch = answer;
+    const [finding] = (await verifyRecords([describedAward()])).get(describedAward().id) ?? [];
+    assert.equal(finding?.severity, "NOTE");
+  }
+});
+
+test("identity: SAM notices use no quota by default and a wrong link is a BLOCKER", async () => {
+  delete process.env.SAM_IDENTITY_LOOKUPS;
+  globalThis.fetch = async () => {
+    throw new Error("must not call SAM.gov");
+  };
+  const good = notice({ id: "NOTICE-1", url: "https://sam.gov/workspace/contract/opp/NOTICE-1/view" });
+  assert.deepEqual((await verifyRecords([good])).get("NOTICE-1"), []);
+  const wrong = notice({ id: "NOTICE-2", url: "https://sam.gov/workspace/contract/opp/OTHER/view" });
+  assert.equal((await verifyRecords([wrong])).get("NOTICE-2")?.[0].severity, "BLOCKER");
+});
+
+test("identity: with lookups on, SAM title differences are a BLOCKER", async () => {
+  process.env.SAM_IDENTITY_LOOKUPS = "on";
+  process.env.SAM_API_KEY = "secret-test-key";
+  try {
+    const id = "NOTICE-3";
+    const uiLink = `https://sam.gov/workspace/contract/opp/${id}/view`;
+    let requested = "";
+    globalThis.fetch = (async (url: string) => {
+      requested = String(url);
+      return Response.json({ opportunitiesData: [{ noticeId: id, title: "[TEST] Other", type: "Solicitation", active: "Yes", uiLink }] });
+    }) as typeof fetch;
+    const findings = await verifyRecords([notice({ id, url: uiLink })]);
+    assert.match(requested, /noticeid=NOTICE-3/);
+    assert.match(findings.get(id)?.[0].issue ?? "", /title/);
+  } finally {
+    delete process.env.SAM_IDENTITY_LOOKUPS;
+  }
+});
+
+test("identity: only shortlisted records are checked, and a mismatch means HOLD", async () => {
+  let checked: string[] = [];
+  const response = await runResearch(PROFILE, {
+    deps: fakeDeps([notice({ id: "PICKED" }), notice({ id: "OTHER" })], {
+      strategize: async () => [{ sourceId: "PICKED", rationale: "Fits", nextSteps: ["Verify"] }],
+      verify: async (records) => {
+        checked = records.map((record) => record.id);
+        return new Map(records.map((record) => [record.id, [{
+          severity: "BLOCKER" as const,
+          issue: "Record identity mismatch: test",
+          whyItMatters: "Test",
+          evidenceSourceId: record.id,
+          evidenceExcerpt: null,
+          correctiveAction: "Test",
+        }]]));
+      },
+    }),
+  });
+  assert.deepEqual(checked, ["PICKED"]);
+  assert.equal(response.results.find((result) => result.record.id === "PICKED")?.reviewStatus, "HOLD");
 });
