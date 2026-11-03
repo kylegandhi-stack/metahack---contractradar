@@ -9,7 +9,8 @@
     "lint": "eslint",
     "test": "tsx --test tests/*.test.ts",
     "test:live": "tsx --env-file=.env.local tests/live-seeded.mts",
-    "eval": "tsx --env-file=.env.local scripts/eval.mts"
+    "eval": "tsx --env-file=.env.local scripts/eval.mts",
+    "eval:sheet": "tsx scripts/score-sheet.mts"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.3.1",

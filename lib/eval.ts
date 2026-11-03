@@ -62,3 +62,90 @@ export function computeMetrics(file: EvalFile, results: RankedResult[], now: num
     expiredHoldRate: expired.length > 0 ? expiredOnHold / expired.length : null,
   };
 }
+
+// Reads the labeling sheet: quoted CSV, as a spreadsheet saves it. Blank answers stay unlabeled.
+export function parseCsv(text: string): string[][] {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let cell = "";
+  let quoted = false;
+  for (let i = 0; i < text.length; i += 1) {
+    const char = text[i];
+    if (quoted) {
+      if (char === '"' && text[i + 1] === '"') {
+        cell += '"';
+        i += 1;
+      } else if (char === '"') quoted = false;
+      else cell += char;
+    } else if (char === '"') quoted = true;
+    else if (char === ",") {
+      row.push(cell);
+      cell = "";
+    } else if (char === "\n" || char === "\r") {
+      if (char === "\r" && text[i + 1] === "\n") i += 1;
+      row.push(cell);
+      if (row.some((value) => value !== "")) rows.push(row);
+      row = [];
+      cell = "";
+    } else cell += char;
+  }
+  row.push(cell);
+  if (row.some((value) => value !== "")) rows.push(row);
+  return rows;
+}
+
+export type SheetScore = {
+  profile: string;
+  top5Labeled: number;
+  top5Relevant: number;
+  precisionAt5: number | null;
+  labeled: number;
+  relevant: number;
+  precisionAll: number | null;
+  blank: number;
+  invalid: number;
+};
+
+export function scoreSheet(csv: string): SheetScore[] {
+  const [header, ...rows] = parseCsv(csv.replace(/^\uFEFF/, ""));
+  const column = (name: string) => header.findIndex((cell) => cell.trim().toLowerCase().startsWith(name));
+  const [profileAt, rankAt, answerAt] = [column("profile"), column("rank"), column("relevant")];
+  if (profileAt < 0 || rankAt < 0 || answerAt < 0) throw new Error("The sheet needs profile, rank and relevant columns");
+  const scores = new Map<string, SheetScore>();
+  for (const row of rows) {
+    const profile = row[profileAt];
+    const score = scores.get(profile) ?? {
+      profile,
+      top5Labeled: 0,
+      top5Relevant: 0,
+      precisionAt5: null,
+      labeled: 0,
+      relevant: 0,
+      precisionAll: null,
+      blank: 0,
+      invalid: 0,
+    };
+    scores.set(profile, score);
+    const answer = (row[answerAt] ?? "").trim().toLowerCase();
+    if (!answer) {
+      score.blank += 1;
+      continue;
+    }
+    const yes = answer === "y" || answer === "yes";
+    if (!yes && answer !== "n" && answer !== "no") {
+      score.invalid += 1;
+      continue;
+    }
+    score.labeled += 1;
+    if (yes) score.relevant += 1;
+    if (Number(row[rankAt]) <= 5) {
+      score.top5Labeled += 1;
+      if (yes) score.top5Relevant += 1;
+    }
+  }
+  for (const score of scores.values()) {
+    score.precisionAt5 = score.top5Labeled > 0 ? score.top5Relevant / score.top5Labeled : null;
+    score.precisionAll = score.labeled > 0 ? score.relevant / score.labeled : null;
+  }
+  return [...scores.values()];
+}

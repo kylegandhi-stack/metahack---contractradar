@@ -23,7 +23,7 @@ import {
   searchNotices,
 } from "../lib/data/sam";
 import { cleanKeywords, dedupeRecords, normalizeAward, searchAwards } from "../lib/data/usaspending";
-import { computeMetrics, EvalFileSchema } from "../lib/eval";
+import { computeMetrics, EvalFileSchema, parseCsv, scoreSheet } from "../lib/eval";
 import { chatJson, MetaError, parseJsonOutput, RunBudget } from "../lib/meta";
 import { applyGates, capCriticWarnings, isVerbatim, statusFromFindings, verifyCriticFinding } from "../lib/review";
 import { ResearchResponseSchema, SourceRecordSchema } from "../lib/schemas";
@@ -1406,4 +1406,28 @@ test("buyer history: shortlisted notices get priorAwards, others have no field a
 test("awards record who won", () => {
   const record = normalizeAward({ generated_internal_id: "X", "Recipient Name": "[TEST] Supplier" }, "2026-11-03T00:00:00.000Z");
   assert.equal(record?.recipient, "[TEST] Supplier");
+});
+
+test("labeling sheet: quoted cells parse, and only y or n in the top 5 count toward precision@5", () => {
+  assert.deepEqual(parseCsv('a,"b, ""c"""\r\n1,2\n'), [["a", 'b, "c"'], ["1", "2"]]);
+  const csv = [
+    "profile,rank,relevant (y/n),title",
+    'P,1,y,"Title, with comma"',
+    "P,2,N,x",
+    "P,3,YES,x",
+    "P,4,,x",
+    "P,5,maybe,x",
+    "P,6,y,x",
+    "Q,1,,x",
+  ].join("\n");
+  const [p, q] = scoreSheet(csv);
+  assert.equal(p.precisionAt5, 2 / 3);
+  assert.deepEqual([p.top5Relevant, p.top5Labeled, p.relevant, p.labeled, p.blank, p.invalid], [2, 3, 3, 4, 1, 1]);
+  assert.equal(q.precisionAt5, null);
+});
+
+test("labeling sheet: the committed sheet is valid, with real records and blank answers", () => {
+  const scores = scoreSheet(readFileSync(new URL("../data/eval/labeling-sheet.csv", import.meta.url), "utf8"));
+  assert.equal(scores.length, 2);
+  assert.ok(scores.every((score) => score.labeled === 0 && score.blank > 0));
 });
