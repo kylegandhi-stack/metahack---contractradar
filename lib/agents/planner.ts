@@ -16,7 +16,7 @@ export type ResearchPlan = z.infer<typeof PlanSchema>;
 const SYSTEM = `You are ContractRadar's Research Planner for U.S. federal procurement searches.
 From the company profile, return:
 - capabilities: the concrete things this company makes or does.
-- productPhrases: each product or service the profile names, copied word for word from its capabilities text. Don't shorten, reword or change singular and plural.
+- productPhrases: each product or service the company itself makes or sells, copied word for word from its capabilities text. Don't shorten, reword or change singular and plural. Leave out the customers, vehicles or uses those products are for: in "battery packs for drones", the phrase is "battery packs".
 - searchTerms: 3-6 short variations of those phrases (1-3 words, at least 3 characters) likely to appear in federal contract descriptions. Include synonyms and singular forms. Put the most product-specific terms first.
 - categories: 1-3 candidate NAICS or PSC codes. These are provisional suggestions to verify, not facts about the company.
 - rationale: one sentence on the search approach.
