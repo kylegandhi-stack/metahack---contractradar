@@ -11,7 +11,13 @@ import { encodeWav, resampleTo } from "./wav";
 const REQUEST_TIMEOUT_MS = 60_000;
 const MIN_PHRASE_SECONDS = 0.5;
 
-const noopSubscribe = () => () => {};
+// Support can only be known in the browser. Subscribing fires one callback right after hydration, so React
+// re-reads the snapshot and shows the controls. A no-op subscribe left the server's `false` in place on the
+// prerendered page.
+const subscribeOnce = (onChange: () => void) => {
+  const id = window.setTimeout(onChange, 0);
+  return () => window.clearTimeout(id);
+};
 function detectSupport() {
   return (
     typeof window !== "undefined" &&
@@ -67,7 +73,7 @@ type Props = {
  *   Transcribe, and only phrases starting with "Hey Rauros" reach Muse Spark. Audio is never sent while it's quiet.
  */
 export function VoiceInput({ disabled, onResult }: Props) {
-  const supported = useSyncExternalStore(noopSubscribe, detectSupport, () => false);
+  const supported = useSyncExternalStore(subscribeOnce, detectSupport, () => false);
   const [wakeOn, setWakeOn] = useState(false);
   const [orb, setOrb] = useState<OrbState | null>(null);
   const [orbText, setOrbText] = useState<string | null>(null);
