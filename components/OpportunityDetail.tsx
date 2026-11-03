@@ -6,7 +6,7 @@ import type { FitBreakdown, RankedResult } from "@/lib/types";
 import { ConfidencePill, EligibilityBadge, ExpiredBadge, ReviewStatusBadge, SourceKindBadge } from "./badges";
 import { FindingItem, sortFindings } from "./FindingsPanel";
 import { FitScore } from "./OpportunityCard";
-import { cn, fitMaxOf, fmtDate, fmtDateTime, fmtMoney, isExpired, isHistorical, KIND_LABEL, orUnknown, sourceName } from "./format";
+import { cn, fitMaxOf, fmtDate, fmtDateTime, fmtMoney, isExpired, isHistorical, isStrongHistorical, KIND_LABEL, orUnknown, sourceName } from "./format";
 
 function Section({ n, title, children, tone }: { n: string; title: string; children: React.ReactNode; tone?: string }) {
   return (
@@ -46,7 +46,7 @@ function FitBreakdownTable({ r }: { r: RankedResult }) {
       <p className="mb-4 text-sm">
         <span className="font-mono tabular-nums">{score}</span>
         <span className="text-dim"> of {max} available points</span>
-        {historical && score >= max && <span className="text-muted"> · strong historical match</span>}
+        {isStrongHistorical(r) && <span className="text-muted"> · strong historical match</span>}
       </p>
       <ul className="space-y-3">
         {BREAKDOWN.map(({ key, label, max: m, notForAwards }) => {
