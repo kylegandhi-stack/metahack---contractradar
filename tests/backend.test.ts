@@ -893,3 +893,99 @@ test("the scout says so when the model made no tool call, and offers no SAM tool
   assert.equal(result.modelDirected, false);
   assert.equal(result.turns, 0);
 });
+
+const startFakeModel = useFakeModel; // Not a React hook, so this name keeps the hooks lint rule out of it.
+
+type AwardFilters = { keywords: string[]; naics_codes?: string[]; psc_codes?: string[] };
+
+// One scout round with a fake model, recording the USAspending filters it sends.
+async function scoutWithCodes(
+  categories: ResearchPlan["categories"],
+  awardsFor: (filters: AwardFilters) => unknown[] | Response,
+) {
+  clearScoutMemo();
+  delete process.env.SAM_API_KEY;
+  let round = 0;
+  startFakeModel(() => {
+    round += 1;
+    if (round > 1) return completion({ content: "done" });
+    return completion({
+      content: null,
+      tool_calls: [
+        { id: "call-1", type: "function", function: { name: "search_awards", arguments: JSON.stringify({ keywords: ["hydrophone"] }) } },
+      ],
+    });
+  });
+  const seen: AwardFilters[] = [];
+  const model = globalThis.fetch;
+  globalThis.fetch = async (url, init) => {
+    if (!String(url).includes("usaspending")) return model(url, init);
+    const filters = (JSON.parse(String(init?.body)) as { filters: AwardFilters }).filters;
+    seen.push(filters);
+    const answer = awardsFor(filters);
+    return answer instanceof Response ? answer : Response.json({ results: answer });
+  };
+  const result = await runScout({ ...PLAN, categories }, new RunBudget());
+  return { result, seen };
+}
+const rawAward = (id: string) => ({ generated_internal_id: id, Description: `[TEST] ${id}` });
+const NAICS = { scheme: "NAICS" as const, code: "334511", label: "test" };
+const PSC = { scheme: "PSC" as const, code: "5845", label: "test" };
+
+test("codes: each code gets its own search, plus one small keyword backup", async () => {
+  const { result, seen } = await scoutWithCodes([NAICS, PSC], (filters) => {
+    if (filters.naics_codes) return [rawAward("BY-NAICS")];
+    if (filters.psc_codes) return [rawAward("BY-PSC")];
+    return [rawAward("BY-KEYWORD")];
+  });
+  assert.ok(!seen.some((filters) => filters.naics_codes && filters.psc_codes), "both codes in one search returns almost nothing");
+  assert.deepEqual(seen.map((filters) => filters.naics_codes ?? filters.psc_codes ?? "none"), [["334511"], ["5845"], "none"]);
+  assert.deepEqual(result.records.map((record) => record.id), ["BY-NAICS", "BY-PSC", "BY-KEYWORD"]);
+  assert.ok(result.toolCalls.some((call) => call.includes("keyword backup")));
+});
+
+test("codes: if they find nothing, the same keywords run without them", async () => {
+  const { result } = await scoutWithCodes([NAICS], (filters) =>
+    filters.naics_codes ? [] : [rawAward("FALLBACK")],
+  );
+  assert.deepEqual(result.records.map((record) => record.id), ["FALLBACK"]);
+});
+
+test("codes: one failed code search still keeps the other's results", async () => {
+  const { result } = await scoutWithCodes([NAICS, PSC], (filters) =>
+    filters.naics_codes ? new Response("{}", { status: 500 }) : [rawAward("KEPT")],
+  );
+  assert.ok(result.records.some((record) => record.id === "KEPT"));
+  assert.equal(result.usaspendingSucceeded, true);
+});
+
+test("codes: malformed planner codes are ignored and no codes means no backup search", async () => {
+  const { seen, result } = await scoutWithCodes(
+    [{ scheme: "NAICS", code: "not a code", label: "test" }, { scheme: "PSC", code: "TOO-LONG", label: "test" }],
+    () => [rawAward("PLAIN")],
+  );
+  assert.equal(seen.length, 1);
+  assert.equal(seen[0].naics_codes, undefined);
+  assert.equal(seen[0].psc_codes, undefined);
+  assert.ok(!result.toolCalls.some((call) => call.includes("keyword backup")));
+});
+
+test("codes: a SAM PSC search sends ccode and keeps only exact matches", async () => {
+  process.env.SAM_API_KEY = "secret-test-key";
+  let requested = "";
+  const raw = (noticeId: string, classificationCode: string) => ({
+    noticeId,
+    title: `[TEST] ${noticeId}`,
+    type: "Solicitation",
+    active: "Yes",
+    uiLink: `https://sam.gov/workspace/contract/opp/${noticeId}/view`,
+    classificationCode,
+  });
+  globalThis.fetch = (async (url: string) => {
+    requested = String(url);
+    return Response.json({ opportunitiesData: [raw("MATCH", "5845"), raw("OTHER", "9999")] });
+  }) as typeof fetch;
+  const records = await searchNotices({ pscCode: "5845" });
+  assert.match(requested, /ccode=5845/);
+  assert.deepEqual(records.map((record) => record.id), ["MATCH"]);
+});
