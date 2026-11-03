@@ -18,7 +18,7 @@ Describe your company, and five agents search real U.S. federal procurement reco
 
 ## How the five agents work
 
-All five run on Meta's Muse Spark 1.3, with no other model or agent framework at runtime.
+All five agents run on Meta's Muse Spark 1.3. Optional voice input adds Muse Voice Transcribe 1.0.
 
 1. **Research Planner** keeps the company's product phrases word for word, then adds search variations and candidate NAICS and PSC codes.
 2. **Opportunity Scout** uses tool calling to choose and run real searches.
