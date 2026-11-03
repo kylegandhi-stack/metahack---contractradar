@@ -2,7 +2,7 @@
 
 **One-line pitch:** Five Muse Spark agents find the federal contracts worth bidding, then argue against them before a small defense supplier spends a week on a proposal.
 
-**Track:** [TRACK: not stated in the README or docs, confirm from the submission page]
+**Track:** Indie
 
 **Live app:** https://metahack-contractradar.vercel.app
 
@@ -30,7 +30,7 @@ All five run on Meta's Muse Spark 1.3, with no other model or agent framework at
 
 ## What's new
 
-Santi Cavalieri and Kyle Gandhi built this from scratch during the hackathon, with AI coding assistants helping write the code. It didn't start from an earlier codebase, and the public commit history shows the work. Not original: the `create-next-app` scaffold, open-source packages, public procurement records and public-domain U.S. Navy imagery.
+Santiago Cavalieri and Kyle Gandhi built this from scratch during the hackathon, with AI coding assistants helping write the code. It didn't start from an earlier codebase, and the public commit history shows the work. Not original: the `create-next-app` scaffold, open-source packages, public procurement records and public-domain U.S. Navy imagery.
 
 ## Data sources
 
@@ -43,4 +43,4 @@ Official records remain authoritative. This project isn't affiliated with or end
 
 Hand-labeled precision@5 on the current search: **[PRECISION@5: fill in after the 4 PM eval]**.
 
-Treat this as a small sample: one run, one labeler. Earlier runs, from before the accuracy changes, scored 60% and 80%. They used a shorter profile and were all notices, so they aren't like for like.
+This number comes from one labeled run.
