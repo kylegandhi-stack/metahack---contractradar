@@ -81,19 +81,47 @@ const defaultDeps: PipelineDeps = {
 
 export class NoUsableDataError extends Error {}
 
-// Deterministic: same input and same records give the same analysis set between runs.
+const MIN_ANALYSES = 5;
+const MAX_SAME_ITEM = 2;
+
+// Long repeat orders use the same title, sometimes behind a DLA number such as "8509698046!".
+const itemKey = (record: SourceRecord) =>
+  record.title.replace(/^\d+!/, "").replace(/\s+/g, " ").trim().toUpperCase();
+
+// Deterministic: same input and same records give the same analysis set between runs. Source searches
+// also match fields a person can't see, and return the largest awards first, so a record must show a
+// search term in its own text. The Planner lists its most specific terms first, so those count more.
 export function selectForAnalysis(records: SourceRecord[], terms: string[]): SourceRecord[] {
-  const lowered = terms.map((term) => term.toLowerCase());
+  // A singular stem also finds the plural, and the Planner may choose either form.
+  const lowered = terms.map((term) =>
+    term.toLowerCase().replace(/ies$/, "y").replace(/y$/, "").replace(/([^s])s$/, "$1"),
+  );
   const score = (record: SourceRecord) => {
     const text = `${record.title} ${record.description ?? ""}`.toLowerCase();
-    const matches = lowered.filter((term) => text.includes(term)).length;
-    return matches * 3 + (record.kind === "historical_award" ? 0 : 2);
+    return lowered.reduce((total, term, index) => {
+      if (text.includes(term)) return total + 3 + (lowered.length - index);
+      const words = term.split(/\s+/).filter((word) => word.length >= 4);
+      return total + (words.some((word) => text.includes(word)) ? 1 : 0);
+    }, 0);
   };
-  return records
-    .map((record, index) => ({ record, index, value: score(record) }))
-    .sort((a, b) => b.value - a.value || a.index - b.index)
-    .slice(0, MAX_ANALYSES)
-    .map((entry) => entry.record);
+  const ranked = records
+    .map((record, index) => {
+      const match = score(record);
+      return { record, index, match, value: match + (record.kind === "historical_award" ? 0 : 2) };
+    })
+    .sort((a, b) => b.value - a.value || a.index - b.index);
+
+  const seen = new Map<string, number>();
+  const picked = ranked.filter(({ record, match }) => {
+    if (match === 0) return false;
+    const key = itemKey(record);
+    const count = seen.get(key) ?? 0;
+    seen.set(key, count + 1);
+    return count < MAX_SAME_ITEM;
+  });
+  // Too few visible matches: fill up, so a thinly described field still gets results to review.
+  const fill = picked.length < MIN_ANALYSES ? ranked.filter((entry) => !picked.includes(entry)) : [];
+  return [...picked, ...fill.slice(0, MIN_ANALYSES - picked.length)].slice(0, MAX_ANALYSES).map((entry) => entry.record);
 }
 
 function cleanNextSteps(record: SourceRecord, steps: string[]): string[] {

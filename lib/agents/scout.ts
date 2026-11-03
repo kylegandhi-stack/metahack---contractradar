@@ -223,11 +223,13 @@ export async function runScout(plan: ResearchPlan, budget: RunBudget): Promise<S
   }
   // Recall backup: code filters miss good records filed under another code. One small keyword search
   // on the most specific term catches some of them without bringing back the noise of the broad terms.
-  if ((naicsCodes.length || pscCodes.length) && collected.length < MAX_CANDIDATES) {
+  if (naicsCodes.length || pscCodes.length) {
     const term = plan.searchTerms[0];
     toolCalls.push(`search_awards(${term}, keyword backup)`);
     try {
-      add(await remember(`awards:backup:${term}`, () => searchAwards({ keywords: [term], limit: BACKUP_LIMIT })));
+      const backup = await remember(`awards:backup:${term}`, () => searchAwards({ keywords: [term], limit: BACKUP_LIMIT }));
+      // Ahead of the rest, so a full candidate list can't squeeze it out.
+      collected = collapseNotices(dedupeRecords([...backup, ...collected])).slice(0, MAX_CANDIDATES);
       usaspendingSucceeded = true;
     } catch (error) {
       if (!(error instanceof UsaSpendingError)) throw error;
