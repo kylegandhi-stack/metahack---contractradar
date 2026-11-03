@@ -16,7 +16,7 @@ Company profile
        Code: pick up to 12 records for analysis
   -> 3. Qualification Analyst scores each record against the profile
   -> 4. Pursuit Strategist    picks the top 5, with next steps
-       Code: SAM descriptions, source identity checks, buyer history for the top 5
+       Code: SAM descriptions (when turned on), source identity checks, buyer history for the top 5
   -> 5. Devil's Advocate      one independent review per shortlisted record
        Strategist revises once, only if a verified BLOCKER appears and time remains
        Code: deterministic gates, fit score, warning cap, final status
@@ -61,7 +61,7 @@ Record text is passed to the model as data, and each prompt says not to treat it
 | Critic reviews | 5 |
 | Strategist revisions | 1 |
 | SAM.gov searches | 2 |
-| SAM.gov descriptions **(open PR)** | up to 5 |
+| SAM.gov descriptions **(open PR)** | off by default; up to 5 with `SAM_DESCRIPTIONS=on` |
 | Tokens | 150,000 |
 | Estimated cost **(open PR)** | $0.50 |
 | Run time | 105 s in code, 120 s function limit |
@@ -71,7 +71,7 @@ Record text is passed to the model as data, and each prompt says not to treat it
 ## Accuracy features (open PRs)
 
 - **Repeat postings:** a presolicitation and solicitation of one buy become one result. Different solicitation numbers never merge.
-- **SAM descriptions:** the critic reads the real notice text for shortlisted notices. The Analyst doesn't, so fit scores can miss requirements found only in that text.
+- **SAM descriptions:** off by default because of the SAM.gov quota, and turned on with `SAM_DESCRIPTIONS=on`. When on, or when saved text exists, the critic reads the real notice text for shortlisted notices. The Analyst doesn't, so fit scores can miss requirements found only in that text.
 - **Code search:** each Planner code gets its own USAspending search, with a small keyword backup. SAM.gov uses one title search and one PSC search. There's no NAICS filter on SAM.gov, because that would have dropped the top real result in testing.
 - **Identity checks:** shortlisted awards are compared with USAspending's award record by id, title and agency. By default, SAM.gov notices only check that their official link contains the id.
 - **Buyer history:** past awards where buyer, PSC and title words all agree. These are similar past buys, not proof of an incumbent.
@@ -98,7 +98,7 @@ Please don't present these as general accuracy.
 ### Model
 - **Non-determinism:** the same profile can produce different shortlists and findings between runs.
 - **Limited review:** only the top 5 get a critic review. Other results stay `REVIEW_REQUIRED` for that reason.
-- **Partial notice text:** the critic reads at most 8,000 characters of a description and doesn't read attachments, so requirements elsewhere can be missed.
+- **Partial notice text:** with descriptions off and no saved text, the critic sees only a notice's title and summary fields, and each such notice carries a NOTE saying so. Otherwise it reads at most 8,000 characters and no attachments, so requirements elsewhere can be missed.
 
 ### What the output means
 - **Not advice:** this is decision support, not a bid decision or legal, compliance or eligibility advice. People must check every requirement at the source.
