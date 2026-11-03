@@ -1,0 +1,1037 @@
+{
+  "source": "usaspending",
+  "retrievedAt": "2026-11-03T05:11:45.204Z",
+  "searchTerms": [
+    "hydrophone",
+    "underwater acoustic",
+    "acoustic sensor",
+    "autonomous underwater vehicle",
+    "environmental monitoring instrument"
+  ],
+  "records": [
+    {
+      "id": "CONT_AWD_N6660424FF910_9700_N6660419DF900_9700",
+      "source": "usaspending",
+      "kind": "historical_award",
+      "title": "DT-574 HYDROPHONE, 25 FT. BLOCK BUY",
+      "agency": "Department of Defense / Department of the Navy",
+      "description": "DT-574 HYDROPHONE, 25 FT. BLOCK BUY",
+      "url": "https://www.usaspending.gov/award/CONT_AWD_N6660424FF910_9700_N6660419DF900_9700",
+      "retrievedAt": "2026-11-03T05:11:45.204Z",
+      "postedAt": "2024-06-07",
+      "deadlineAt": null,
+      "awardAmount": 5614216.74,
+      "setAside": null,
+      "naics": "334511",
+      "excerpts": [
+        {
+          "field": "Description",
+          "text": "DT-574 HYDROPHONE, 25 FT. BLOCK BUY"
+        },
+        {
+          "field": "Award ID",
+          "text": "N6660424FF910"
+        },
+        {
+          "field": "Recipient Name",
+          "text": "MASSA PRODUCTS CORPORATION"
+        },
+        {
+          "field": "Contract Award Type",
+          "text": "DELIVERY ORDER"
+        },
+        {
+          "field": "NAICS.description",
+          "text": "SEARCH, DETECTION, NAVIGATION, GUIDANCE, AERONAUTICAL, AND NAUTICAL SYSTEM AND INSTRUMENT MANUFACTURING"
+        },
+        {
+          "field": "PSC.description",
+          "text": "UNDERWATER SOUND EQUIPMENT"
+        },
+        {
+          "field": "Start Date",
+          "text": "2024-05-31"
+        },
+        {
+          "field": "End Date",
+          "text": "2026-03-01"
+        }
+      ]
+    },
+    {
+      "id": "CONT_AWD_W912EK26CA021_9700_-NONE-_-NONE-",
+      "source": "usaspending",
+      "kind": "historical_award",
+      "title": "THE U.S. ARMY CORPS OF ENGINEERS, ROCK ISLAND DISTRICT HAS A REQUIREMENT FOR MILITARY GRADE TRANSDUCERS FOR UNDERWATER ACOUSTIC FISH DETERRE...",
+      "agency": "Department of Defense / Department of the Army",
+      "description": "THE U.S. ARMY CORPS OF ENGINEERS, ROCK ISLAND DISTRICT HAS A REQUIREMENT FOR MILITARY GRADE TRANSDUCERS FOR UNDERWATER ACOUSTIC FISH DETERRENT SYSTEMS DESIGNED FOR NAVIGATION LOCK APPROACH CHANNELS",
+      "url": "https://www.usaspending.gov/award/CONT_AWD_W912EK26CA021_9700_-NONE-_-NONE-",
+      "retrievedAt": "2026-11-03T05:11:45.393Z",
+      "postedAt": "2026-06-08",
+      "deadlineAt": null,
+      "awardAmount": 4106813.2,
+      "setAside": "SMALL BUSINESS SET ASIDE - TOTAL",
+      "naics": "334310",
+      "excerpts": [
+        {
+          "field": "Description",
+          "text": "THE U.S. ARMY CORPS OF ENGINEERS, ROCK ISLAND DISTRICT HAS A REQUIREMENT FOR MILITARY GRADE TRANSDUCERS FOR UNDERWATER ACOUSTIC FISH DETERRENT SYSTEMS DESIGNED FOR NAVIGATION LOCK APPROACH CHANNELS"
+        },
+        {
+          "field": "Award ID",
+          "text": "W912EK26CA021"
+        },
+        {
+          "field": "Recipient Name",
+          "text": "HANDYMENCH LLC"
+        },
+        {
+          "field": "Contract Award Type",
+          "text": "DEFINITIVE CONTRACT"
+        },
+        {
+          "field": "NAICS.description",
+          "text": "AUDIO AND VIDEO EQUIPMENT MANUFACTURING"
+        },
+        {
+          "field": "PSC.description",
+          "text": "UNDERWATER SOUND EQUIPMENT"
+        },
+        {
+          "field": "Start Date",
+          "text": "2026-06-08"
+        },
+        {
+          "field": "End Date",
+          "text": "2028-06-08"
+        },
+        {
+          "field": "latest_transaction_contract_data.type_set_aside_description",
+          "text": "SMALL BUSINESS SET ASIDE - TOTAL"
+        }
+      ]
+    },
+    {
+      "id": "CONT_AWD_N6426719F3006_9700_N0017814D7932_9700",
+      "source": "usaspending",
+      "kind": "historical_award",
+      "title": "ACOUSTIC SENSORS ENGINEERING SUPPORT SERVICES",
+      "agency": "Department of Defense / Department of the Navy",
+      "description": "ACOUSTIC SENSORS ENGINEERING SUPPORT SERVICES",
+      "url": "https://www.usaspending.gov/award/CONT_AWD_N6426719F3006_9700_N0017814D7932_9700",
+      "retrievedAt": "2026-11-03T05:11:45.456Z",
+      "postedAt": "2019-06-18",
+      "deadlineAt": null,
+      "awardAmount": 16547415.66,
+      "setAside": null,
+      "naics": "541330",
+      "excerpts": [
+        {
+          "field": "Description",
+          "text": "ACOUSTIC SENSORS ENGINEERING SUPPORT SERVICES"
+        },
+        {
+          "field": "Award ID",
+          "text": "N6426719F3006"
+        },
+        {
+          "field": "Recipient Name",
+          "text": "DELPHINUS ENGINEERING LLC"
+        },
+        {
+          "field": "Contract Award Type",
+          "text": "DELIVERY ORDER"
+        },
+        {
+          "field": "NAICS.description",
+          "text": "ENGINEERING SERVICES"
+        },
+        {
+          "field": "PSC.description",
+          "text": "SUPPORT- PROFESSIONAL: ENGINEERING/TECHNICAL"
+        },
+        {
+          "field": "Start Date",
+          "text": "2019-06-30"
+        },
+        {
+          "field": "End Date",
+          "text": "2027-02-23"
+        }
+      ]
+    },
+    {
+      "id": "CONT_AWD_W58RGZ19F0500_9700_W58RGZ18D0001_9700",
+      "source": "usaspending",
+      "kind": "historical_award",
+      "title": "BUILD&INTEGRATE AUTONOMOUS UNDERWATER VEHICLE SYSTEM COMPONENTS FOR THE NEXT GENERATION MARK 18 FAMILY REMUS 600 AUV.",
+      "agency": "Department of Defense / Department of the Army",
+      "description": "BUILD&INTEGRATE AUTONOMOUS UNDERWATER VEHICLE SYSTEM COMPONENTS FOR THE NEXT GENERATION MARK 18 FAMILY REMUS 600 AUV.",
+      "url": "https://www.usaspending.gov/award/CONT_AWD_W58RGZ19F0500_9700_W58RGZ18D0001_9700",
+      "retrievedAt": "2026-11-03T05:11:45.517Z",
+      "postedAt": "2019-09-17",
+      "deadlineAt": null,
+      "awardAmount": 22587951.92,
+      "setAside": null,
+      "naics": "336413",
+      "excerpts": [
+        {
+          "field": "Description",
+          "text": "BUILD&INTEGRATE AUTONOMOUS UNDERWATER VEHICLE SYSTEM COMPONENTS FOR THE NEXT GENERATION MARK 18 FAMILY REMUS 600 AUV."
+        },
+        {
+          "field": "Award ID",
+          "text": "W58RGZ19F0500"
+        },
+        {
+          "field": "Recipient Name",
+          "text": "DEFENSE SYSTEMS AND SOLUTIONS"
+        },
+        {
+          "field": "Contract Award Type",
+          "text": "DELIVERY ORDER"
+        },
+        {
+          "field": "NAICS.description",
+          "text": "OTHER AIRCRAFT PARTS AND AUXILIARY EQUIPMENT MANUFACTURING"
+        },
+        {
+          "field": "PSC.description",
+          "text": "COMBAT SHIPS AND LANDING VESSELS"
+        },
+        {
+          "field": "Start Date",
+          "text": "2019-09-17"
+        },
+        {
+          "field": "End Date",
+          "text": "2024-07-15"
+        }
+      ]
+    },
+    {
+      "id": "CONT_AWD_1605C120P00008_1605_-NONE-_-NONE-",
+      "source": "usaspending",
+      "kind": "historical_award",
+      "title": "US DEPARTMENT OF LABOR IS TAX EXEMPT: E9970-4358-06  PURCHASE ORDER 1605C1-20-P-00008 IS FOR VARIOUS PUMPS AND ACCESSORIES FOR OSHA CTC. THE...",
+      "agency": "Department of Labor / Office of the Assistant Secretary for Administration and Management",
+      "description": "US DEPARTMENT OF LABOR IS TAX EXEMPT: E9970-4358-06  PURCHASE ORDER 1605C1-20-P-00008 IS FOR VARIOUS PUMPS AND ACCESSORIES FOR OSHA CTC. THE AWARDEE IS INDUSTRIAL ENVIRONMENTAL MONITORING INSTRUMENTS, INC. THE TOTAL AMOUNT OF THE AWARD IS $184,233.",
+      "url": "https://www.usaspending.gov/award/CONT_AWD_1605C120P00008_1605_-NONE-_-NONE-",
+      "retrievedAt": "2026-11-03T05:11:45.574Z",
+      "postedAt": "2020-07-09",
+      "deadlineAt": null,
+      "awardAmount": 184233.91,
+      "setAside": "SMALL BUSINESS SET ASIDE - TOTAL",
+      "naics": "334519",
+      "excerpts": [
+        {
+          "field": "Description",
+          "text": "US DEPARTMENT OF LABOR IS TAX EXEMPT: E9970-4358-06  PURCHASE ORDER 1605C1-20-P-00008 IS FOR VARIOUS PUMPS AND ACCESSORIES FOR OSHA CTC. THE AWARDEE IS INDUSTRIAL ENVIRONMENTAL MONITORING INSTRUMENTS, INC. THE TOTAL AMOUNT OF THE AWARD IS $184,233."
+        },
+        {
+          "field": "Award ID",
+          "text": "1605C120P00008"
+        },
+        {
+          "field": "Recipient Name",
+          "text": "INDUSTRIAL ENVIRONMENTAL MONITORING INSTRUMENTS, INC."
+        },
+        {
+          "field": "Contract Award Type",
+          "text": "PURCHASE ORDER"
+        },
+        {
+          "field": "NAICS.description",
+          "text": "OTHER MEASURING AND CONTROLLING DEVICE MANUFACTURING"
+        },
+        {
+          "field": "PSC.description",
+          "text": "LABORATORY EQUIPMENT AND SUPPLIES"
+        },
+        {
+          "field": "Start Date",
+          "text": "2020-07-09"
+        },
+        {
+          "field": "End Date",
+          "text": "2020-08-08"
+        },
+        {
+          "field": "latest_transaction_contract_data.type_set_aside_description",
+          "text": "SMALL BUSINESS SET ASIDE - TOTAL"
+        }
+      ]
+    },
+    {
+      "id": "CONT_AWD_N6660423FF909_9700_N6660419DF900_9700",
+      "source": "usaspending",
+      "kind": "historical_award",
+      "title": "DT-574 HYDROPHONE, 25 FT.",
+      "agency": "Department of Defense / Defense Contract Management Agency",
+      "description": "DT-574 HYDROPHONE, 25 FT.",
+      "url": "https://www.usaspending.gov/award/CONT_AWD_N6660423FF909_9700_N6660419DF900_9700",
+      "retrievedAt": "2026-11-03T05:11:45.204Z",
+      "postedAt": "2023-05-22",
+      "deadlineAt": null,
+      "awardAmount": 3934551.88,
+      "setAside": null,
+      "naics": "334511",
+      "excerpts": [
+        {
+          "field": "Description",
+          "text": "DT-574 HYDROPHONE, 25 FT."
+        },
+        {
+          "field": "Award ID",
+          "text": "N6660423FF909"
+        },
+        {
+          "field": "Recipient Name",
+          "text": "MASSA PRODUCTS CORPORATION"
+        },
+        {
+          "field": "Contract Award Type",
+          "text": "DELIVERY ORDER"
+        },
+        {
+          "field": "NAICS.description",
+          "text": "SEARCH, DETECTION, NAVIGATION, GUIDANCE, AERONAUTICAL, AND NAUTICAL SYSTEM AND INSTRUMENT MANUFACTURING"
+        },
+        {
+          "field": "PSC.description",
+          "text": "UNDERWATER SOUND EQUIPMENT"
+        },
+        {
+          "field": "Start Date",
+          "text": "2023-05-19"
+        },
+        {
+          "field": "End Date",
+          "text": "2026-03-31"
+        }
+      ]
+    },
+    {
+      "id": "CONT_AWD_SPE8EL24FJ1VR_9700_SPE8EJ21D0025_9700",
+      "source": "usaspending",
+      "kind": "historical_award",
+      "title": "4564956853!UNDERWATER ACOUSTIC SONAR UNIT",
+      "agency": "Department of Defense / Defense Logistics Agency",
+      "description": "4564956853!UNDERWATER ACOUSTIC SONAR UNIT",
+      "url": "https://www.usaspending.gov/award/CONT_AWD_SPE8EL24FJ1VR_9700_SPE8EJ21D0025_9700",
+      "retrievedAt": "2026-11-03T05:11:45.393Z",
+      "postedAt": "2024-06-17",
+      "deadlineAt": null,
+      "awardAmount": 1348421.06,
+      "setAside": null,
+      "naics": "339999",
+      "excerpts": [
+        {
+          "field": "Description",
+          "text": "4564956853!UNDERWATER ACOUSTIC SONAR UNIT"
+        },
+        {
+          "field": "Award ID",
+          "text": "SPE8EL24FJ1VR"
+        },
+        {
+          "field": "Recipient Name",
+          "text": "W S DARLEY & CO"
+        },
+        {
+          "field": "Contract Award Type",
+          "text": "DELIVERY ORDER"
+        },
+        {
+          "field": "NAICS.description",
+          "text": "ALL OTHER MISCELLANEOUS MANUFACTURING"
+        },
+        {
+          "field": "PSC.description",
+          "text": "MARINE LIFESAVING AND DIVING EQUIPMENT"
+        },
+        {
+          "field": "Start Date",
+          "text": "2024-06-17"
+        },
+        {
+          "field": "End Date",
+          "text": "2025-03-14"
+        }
+      ]
+    },
+    {
+      "id": "CONT_AWD_J101_9700_N0017814D7932_9700",
+      "source": "usaspending",
+      "kind": "historical_award",
+      "title": "IGF::OT::IGF ACOUSTIC SENSORS ENGINEERING SUPPORT SERVICES",
+      "agency": "Department of Defense / Defense Contract Management Agency",
+      "description": "IGF::OT::IGF ACOUSTIC SENSORS ENGINEERING SUPPORT SERVICES",
+      "url": "https://www.usaspending.gov/award/CONT_AWD_J101_9700_N0017814D7932_9700",
+      "retrievedAt": "2026-11-03T05:11:45.456Z",
+      "postedAt": "2016-01-19",
+      "deadlineAt": null,
+      "awardAmount": 10740678.92,
+      "setAside": null,
+      "naics": "541330",
+      "excerpts": [
+        {
+          "field": "Description",
+          "text": "IGF::OT::IGF ACOUSTIC SENSORS ENGINEERING SUPPORT SERVICES"
+        },
+        {
+          "field": "Award ID",
+          "text": "J101"
+        },
+        {
+          "field": "Recipient Name",
+          "text": "DELPHINUS ENGINEERING, INC."
+        },
+        {
+          "field": "Contract Award Type",
+          "text": "DELIVERY ORDER"
+        },
+        {
+          "field": "NAICS.description",
+          "text": "ENGINEERING SERVICES"
+        },
+        {
+          "field": "PSC.description",
+          "text": "SUPPORT- PROFESSIONAL: ENGINEERING/TECHNICAL"
+        },
+        {
+          "field": "Start Date",
+          "text": "2016-01-19"
+        },
+        {
+          "field": "End Date",
+          "text": "2019-07-18"
+        }
+      ]
+    },
+    {
+      "id": "CONT_AWD_N4008519F7158_9700_N4008516D3041_9700",
+      "source": "usaspending",
+      "kind": "historical_award",
+      "title": "X099 DESIGN-BUILD BUILDING 1371, AUTONOMOUS UNDERWATER VEHICLE AD",
+      "agency": "Department of Defense / Department of the Navy",
+      "description": "X099 DESIGN-BUILD BUILDING 1371, AUTONOMOUS UNDERWATER VEHICLE AD",
+      "url": "https://www.usaspending.gov/award/CONT_AWD_N4008519F7158_9700_N4008516D3041_9700",
+      "retrievedAt": "2026-11-03T05:11:45.517Z",
+      "postedAt": "2019-09-28",
+      "deadlineAt": null,
+      "awardAmount": 8756246,
+      "setAside": "8A COMPETED",
+      "naics": "236220",
+      "excerpts": [
+        {
+          "field": "Description",
+          "text": "X099 DESIGN-BUILD BUILDING 1371, AUTONOMOUS UNDERWATER VEHICLE AD"
+        },
+        {
+          "field": "Award ID",
+          "text": "N4008519F7158"
+        },
+        {
+          "field": "Recipient Name",
+          "text": "ASTURIAN GROUP, INC."
+        },
+        {
+          "field": "Contract Award Type",
+          "text": "DELIVERY ORDER"
+        },
+        {
+          "field": "NAICS.description",
+          "text": "COMMERCIAL AND INSTITUTIONAL BUILDING CONSTRUCTION"
+        },
+        {
+          "field": "PSC.description",
+          "text": "CONSTRUCTION OF OFFICE BUILDINGS"
+        },
+        {
+          "field": "Start Date",
+          "text": "2019-09-28"
+        },
+        {
+          "field": "End Date",
+          "text": "2026-11-30"
+        },
+        {
+          "field": "latest_transaction_contract_data.type_set_aside_description",
+          "text": "8A COMPETED"
+        }
+      ]
+    },
+    {
+      "id": "CONT_AWD_1605C121P00019_1605_-NONE-_-NONE-",
+      "source": "usaspending",
+      "kind": "historical_award",
+      "title": "GILAIR PUMPS & ACCESSORIES",
+      "agency": "Department of Labor / Office of the Assistant Secretary for Administration and Management",
+      "description": "GILAIR PUMPS & ACCESSORIES",
+      "url": "https://www.usaspending.gov/award/CONT_AWD_1605C121P00019_1605_-NONE-_-NONE-",
+      "retrievedAt": "2026-11-03T05:11:45.574Z",
+      "postedAt": "2021-08-17",
+      "deadlineAt": null,
+      "awardAmount": 142870.13,
+      "setAside": "SMALL BUSINESS SET ASIDE - TOTAL",
+      "naics": "334519",
+      "excerpts": [
+        {
+          "field": "Description",
+          "text": "GILAIR PUMPS & ACCESSORIES"
+        },
+        {
+          "field": "Award ID",
+          "text": "1605C121P00019"
+        },
+        {
+          "field": "Recipient Name",
+          "text": "INDUSTRIAL ENVIRONMENTAL MONITORING INSTRUMENTS, INC."
+        },
+        {
+          "field": "Contract Award Type",
+          "text": "PURCHASE ORDER"
+        },
+        {
+          "field": "NAICS.description",
+          "text": "OTHER MEASURING AND CONTROLLING DEVICE MANUFACTURING"
+        },
+        {
+          "field": "PSC.description",
+          "text": "LABORATORY EQUIPMENT AND SUPPLIES"
+        },
+        {
+          "field": "Start Date",
+          "text": "2021-08-17"
+        },
+        {
+          "field": "End Date",
+          "text": "2021-10-31"
+        },
+        {
+          "field": "latest_transaction_contract_data.type_set_aside_description",
+          "text": "SMALL BUSINESS SET ASIDE - TOTAL"
+        }
+      ]
+    },
+    {
+      "id": "CONT_AWD_N6660418F0407_9700_N6660411D0179_9700",
+      "source": "usaspending",
+      "kind": "historical_award",
+      "title": "IGF::OT::IGF TB-23 HYDROPHONE DEPOT REPAIR AND ENGINEERING SERVICES",
+      "agency": "Department of Defense / Department of the Navy",
+      "description": "IGF::OT::IGF TB-23 HYDROPHONE DEPOT REPAIR AND ENGINEERING SERVICES",
+      "url": "https://www.usaspending.gov/award/CONT_AWD_N6660418F0407_9700_N6660411D0179_9700",
+      "retrievedAt": "2026-11-03T05:11:45.204Z",
+      "postedAt": "2017-11-16",
+      "deadlineAt": null,
+      "awardAmount": 3582437.64,
+      "setAside": null,
+      "naics": "541330",
+      "excerpts": [
+        {
+          "field": "Description",
+          "text": "IGF::OT::IGF TB-23 HYDROPHONE DEPOT REPAIR AND ENGINEERING SERVICES"
+        },
+        {
+          "field": "Award ID",
+          "text": "N6660418F0407"
+        },
+        {
+          "field": "Recipient Name",
+          "text": "L3 TECHNOLOGIES, INC."
+        },
+        {
+          "field": "Contract Award Type",
+          "text": "DELIVERY ORDER"
+        },
+        {
+          "field": "NAICS.description",
+          "text": "ENGINEERING SERVICES"
+        },
+        {
+          "field": "PSC.description",
+          "text": "RADIO NAVIGATION EQUIPMENT, EXCEPT AIRBORNE"
+        },
+        {
+          "field": "Start Date",
+          "text": "2017-11-20"
+        },
+        {
+          "field": "End Date",
+          "text": "2018-09-30"
+        }
+      ]
+    },
+    {
+      "id": "CONT_AWD_N0001415C5118_9700_-NONE-_-NONE-",
+      "source": "usaspending",
+      "kind": "historical_award",
+      "title": "IGF::CT::IGF  UNDERWATER ACOUSTIC TRACKING&COMMUNICATIONS FOR NEXTGEN UNMANNED UNDERWATER VEHICLES",
+      "agency": "Department of Defense / Department of the Navy",
+      "description": "IGF::CT::IGF  UNDERWATER ACOUSTIC TRACKING&COMMUNICATIONS FOR NEXTGEN UNMANNED UNDERWATER VEHICLES",
+      "url": "https://www.usaspending.gov/award/CONT_AWD_N0001415C5118_9700_-NONE-_-NONE-",
+      "retrievedAt": "2026-11-03T05:11:45.393Z",
+      "postedAt": "2015-09-30",
+      "deadlineAt": null,
+      "awardAmount": 1156152.94,
+      "setAside": "NO SET ASIDE USED.",
+      "naics": "541712",
+      "excerpts": [
+        {
+          "field": "Description",
+          "text": "IGF::CT::IGF  UNDERWATER ACOUSTIC TRACKING&COMMUNICATIONS FOR NEXTGEN UNMANNED UNDERWATER VEHICLES"
+        },
+        {
+          "field": "Award ID",
+          "text": "N0001415C5118"
+        },
+        {
+          "field": "Recipient Name",
+          "text": "APPLIED PHYSICAL SCIENCES CORP"
+        },
+        {
+          "field": "Contract Award Type",
+          "text": "DEFINITIVE CONTRACT"
+        },
+        {
+          "field": "NAICS.description",
+          "text": "RESEARCH AND DEVELOPMENT IN THE PHYSICAL, ENGINEERING, AND LIFE SCIENCES (EXCEPT BIOTECHNOLOGY)"
+        },
+        {
+          "field": "PSC.description",
+          "text": "R&D- DEFENSE OTHER: OTHER (APPLIED RESEARCH/EXPLORATORY DEVELOPMENT)"
+        },
+        {
+          "field": "Start Date",
+          "text": "2015-09-30"
+        },
+        {
+          "field": "End Date",
+          "text": "2024-03-21"
+        },
+        {
+          "field": "latest_transaction_contract_data.type_set_aside_description",
+          "text": "NO SET ASIDE USED."
+        }
+      ]
+    },
+    {
+      "id": "CONT_AWD_W911W617C0010_9700_-NONE-_-NONE-",
+      "source": "usaspending",
+      "kind": "historical_award",
+      "title": "IGF::OT::IGF SBIR PHASE II TO DEVELOP AN IN-FLIGHT ACOUSTIC SENSOR FOR ACCURATE, REAL-TIME MEASUREMENT AND MONITORING OF THE NOISE RADIATED ...",
+      "agency": "Department of Defense / Defense Contract Management Agency",
+      "description": "IGF::OT::IGF SBIR PHASE II TO DEVELOP AN IN-FLIGHT ACOUSTIC SENSOR FOR ACCURATE, REAL-TIME MEASUREMENT AND MONITORING OF THE NOISE RADIATED BY A HELICOPTER.",
+      "url": "https://www.usaspending.gov/award/CONT_AWD_W911W617C0010_9700_-NONE-_-NONE-",
+      "retrievedAt": "2026-11-03T05:11:45.456Z",
+      "postedAt": "2017-03-21",
+      "deadlineAt": null,
+      "awardAmount": 1537166.68,
+      "setAside": "SMALL BUSINESS SET ASIDE - TOTAL",
+      "naics": "541712",
+      "excerpts": [
+        {
+          "field": "Description",
+          "text": "IGF::OT::IGF SBIR PHASE II TO DEVELOP AN IN-FLIGHT ACOUSTIC SENSOR FOR ACCURATE, REAL-TIME MEASUREMENT AND MONITORING OF THE NOISE RADIATED BY A HELICOPTER."
+        },
+        {
+          "field": "Award ID",
+          "text": "W911W617C0010"
+        },
+        {
+          "field": "Recipient Name",
+          "text": "PHASE COHERENCE INC"
+        },
+        {
+          "field": "Contract Award Type",
+          "text": "DEFINITIVE CONTRACT"
+        },
+        {
+          "field": "NAICS.description",
+          "text": "RESEARCH AND DEVELOPMENT IN THE PHYSICAL, ENGINEERING, AND LIFE SCIENCES (EXCEPT BIOTECHNOLOGY)"
+        },
+        {
+          "field": "PSC.description",
+          "text": "NATIONAL DEFENSE R&D SERVICES; DEPARTMENT OF DEFENSE - MILITARY; APPLIED RESEARCH"
+        },
+        {
+          "field": "Start Date",
+          "text": "2017-03-15"
+        },
+        {
+          "field": "End Date",
+          "text": "2022-12-31"
+        },
+        {
+          "field": "latest_transaction_contract_data.type_set_aside_description",
+          "text": "SMALL BUSINESS SET ASIDE - TOTAL"
+        }
+      ]
+    },
+    {
+      "id": "CONT_AWD_N0017320C2007_9700_-NONE-_-NONE-",
+      "source": "usaspending",
+      "kind": "historical_award",
+      "title": "MODIFICATION, PRODUCTION, MAINTENANCE AND AT SEA OPERATIONAL SUPPORT OF NAVAL RESEARCH LABORATORY'S AUTONOMOUS UNDERWATER VEHICLES.",
+      "agency": "Department of Defense / Department of the Navy",
+      "description": "MODIFICATION, PRODUCTION, MAINTENANCE AND AT SEA OPERATIONAL SUPPORT OF NAVAL RESEARCH LABORATORY'S AUTONOMOUS UNDERWATER VEHICLES.",
+      "url": "https://www.usaspending.gov/award/CONT_AWD_N0017320C2007_9700_-NONE-_-NONE-",
+      "retrievedAt": "2026-11-03T05:11:45.517Z",
+      "postedAt": "2020-01-28",
+      "deadlineAt": null,
+      "awardAmount": 8337452.2,
+      "setAside": "NO SET ASIDE USED.",
+      "naics": "541715",
+      "excerpts": [
+        {
+          "field": "Description",
+          "text": "MODIFICATION, PRODUCTION, MAINTENANCE AND AT SEA OPERATIONAL SUPPORT OF NAVAL RESEARCH LABORATORY'S AUTONOMOUS UNDERWATER VEHICLES."
+        },
+        {
+          "field": "Award ID",
+          "text": "N0017320C2007"
+        },
+        {
+          "field": "Recipient Name",
+          "text": "GENERAL DYNAMICS MISSION SYSTEMS, INC."
+        },
+        {
+          "field": "Contract Award Type",
+          "text": "DEFINITIVE CONTRACT"
+        },
+        {
+          "field": "NAICS.description",
+          "text": "RESEARCH AND DEVELOPMENT IN THE PHYSICAL, ENGINEERING, AND LIFE SCIENCES (EXCEPT NANOTECHNOLOGY AND BIOTECHNOLOGY)"
+        },
+        {
+          "field": "PSC.description",
+          "text": "GENERAL SCIENCE & TECHNOLOGY R&D SVCS; GENERAL SCIENCE & TECHNOLOGY; EXPERIMENTAL DEVELOPMENT"
+        },
+        {
+          "field": "Start Date",
+          "text": "2020-01-28"
+        },
+        {
+          "field": "End Date",
+          "text": "2025-06-30"
+        },
+        {
+          "field": "latest_transaction_contract_data.type_set_aside_description",
+          "text": "NO SET ASIDE USED."
+        }
+      ]
+    },
+    {
+      "id": "CONT_AWD_1605CH19P00009_1605_-NONE-_-NONE-",
+      "source": "usaspending",
+      "kind": "historical_award",
+      "title": "PURCHASE ORDER 1605CH-19-P-00009 IS FOR GILAIR PUMP SUPPLIES FOR OSHA CTC. THE AWARDEE IS INDUSTRIAL ENVIRONMENTAL MONITORING INSTRUMENTS, I...",
+      "agency": "Department of Labor / Office of the Assistant Secretary for Administration and Management",
+      "description": "PURCHASE ORDER 1605CH-19-P-00009 IS FOR GILAIR PUMP SUPPLIES FOR OSHA CTC. THE AWARDEE IS INDUSTRIAL ENVIRONMENTAL MONITORING INSTRUMENTS, INC. THE TOTAL AMOUNT OF THE AWARD IS $129,266.19. THE DELIVERY DATE IS 30 DAYS AFTER AWARD.",
+      "url": "https://www.usaspending.gov/award/CONT_AWD_1605CH19P00009_1605_-NONE-_-NONE-",
+      "retrievedAt": "2026-11-03T05:11:45.574Z",
+      "postedAt": "2019-07-26",
+      "deadlineAt": null,
+      "awardAmount": 129266.19,
+      "setAside": "SMALL BUSINESS SET ASIDE - TOTAL",
+      "naics": "811219",
+      "excerpts": [
+        {
+          "field": "Description",
+          "text": "PURCHASE ORDER 1605CH-19-P-00009 IS FOR GILAIR PUMP SUPPLIES FOR OSHA CTC. THE AWARDEE IS INDUSTRIAL ENVIRONMENTAL MONITORING INSTRUMENTS, INC. THE TOTAL AMOUNT OF THE AWARD IS $129,266.19. THE DELIVERY DATE IS 30 DAYS AFTER AWARD."
+        },
+        {
+          "field": "Award ID",
+          "text": "1605CH19P00009"
+        },
+        {
+          "field": "Recipient Name",
+          "text": "INDUSTRIAL ENVIRONMENTAL MONITORING INSTRUMENTS, INC."
+        },
+        {
+          "field": "Contract Award Type",
+          "text": "PURCHASE ORDER"
+        },
+        {
+          "field": "NAICS.description",
+          "text": "OTHER ELECTRONIC AND PRECISION EQUIPMENT REPAIR AND MAINTENANCE"
+        },
+        {
+          "field": "PSC.description",
+          "text": "LABORATORY EQUIPMENT AND SUPPLIES"
+        },
+        {
+          "field": "Start Date",
+          "text": "2019-07-26"
+        },
+        {
+          "field": "End Date",
+          "text": "2019-08-25"
+        },
+        {
+          "field": "latest_transaction_contract_data.type_set_aside_description",
+          "text": "SMALL BUSINESS SET ASIDE - TOTAL"
+        }
+      ]
+    },
+    {
+      "id": "CONT_AWD_N6660420F8096_9700_N6660419DF900_9700",
+      "source": "usaspending",
+      "kind": "historical_award",
+      "title": "DT-574 HYDROPHONE, 25 FT.",
+      "agency": "Department of Defense / Department of the Navy",
+      "description": "DT-574 HYDROPHONE, 25 FT.",
+      "url": "https://www.usaspending.gov/award/CONT_AWD_N6660420F8096_9700_N6660419DF900_9700",
+      "retrievedAt": "2026-11-03T05:11:45.204Z",
+      "postedAt": "2020-03-18",
+      "deadlineAt": null,
+      "awardAmount": 3507860.04,
+      "setAside": null,
+      "naics": "334511",
+      "excerpts": [
+        {
+          "field": "Description",
+          "text": "DT-574 HYDROPHONE, 25 FT."
+        },
+        {
+          "field": "Award ID",
+          "text": "N6660420F8096"
+        },
+        {
+          "field": "Recipient Name",
+          "text": "MASSA PRODUCTS CORPORATION"
+        },
+        {
+          "field": "Contract Award Type",
+          "text": "DELIVERY ORDER"
+        },
+        {
+          "field": "NAICS.description",
+          "text": "SEARCH, DETECTION, NAVIGATION, GUIDANCE, AERONAUTICAL, AND NAUTICAL SYSTEM AND INSTRUMENT MANUFACTURING"
+        },
+        {
+          "field": "PSC.description",
+          "text": "UNDERWATER SOUND EQUIPMENT"
+        },
+        {
+          "field": "Start Date",
+          "text": "2020-03-20"
+        },
+        {
+          "field": "End Date",
+          "text": "2023-03-12"
+        }
+      ]
+    },
+    {
+      "id": "CONT_AWD_W912EK24C0030_9700_-NONE-_-NONE-",
+      "source": "usaspending",
+      "kind": "historical_award",
+      "title": "UNDERWATER ACOUSTIC TRANSDUCERS IN SUPPORT OF THE BRANDON ROAD INTERBASIN PROJECT",
+      "agency": "Department of Defense / Department of the Army",
+      "description": "UNDERWATER ACOUSTIC TRANSDUCERS IN SUPPORT OF THE BRANDON ROAD INTERBASIN PROJECT",
+      "url": "https://www.usaspending.gov/award/CONT_AWD_W912EK24C0030_9700_-NONE-_-NONE-",
+      "retrievedAt": "2026-11-03T05:11:45.393Z",
+      "postedAt": "2024-08-30",
+      "deadlineAt": null,
+      "awardAmount": 837018.02,
+      "setAside": "NO SET ASIDE USED.",
+      "naics": "334310",
+      "excerpts": [
+        {
+          "field": "Description",
+          "text": "UNDERWATER ACOUSTIC TRANSDUCERS IN SUPPORT OF THE BRANDON ROAD INTERBASIN PROJECT"
+        },
+        {
+          "field": "Award ID",
+          "text": "W912EK24C0030"
+        },
+        {
+          "field": "Recipient Name",
+          "text": "LUBELL LABS, INC."
+        },
+        {
+          "field": "Contract Award Type",
+          "text": "DEFINITIVE CONTRACT"
+        },
+        {
+          "field": "NAICS.description",
+          "text": "AUDIO AND VIDEO EQUIPMENT MANUFACTURING"
+        },
+        {
+          "field": "PSC.description",
+          "text": "HEADSETS, HANDSETS, MICROPHONES AND SPEAKERS"
+        },
+        {
+          "field": "Start Date",
+          "text": "2024-08-30"
+        },
+        {
+          "field": "End Date",
+          "text": "2026-03-02"
+        },
+        {
+          "field": "latest_transaction_contract_data.type_set_aside_description",
+          "text": "NO SET ASIDE USED."
+        }
+      ]
+    },
+    {
+      "id": "CONT_AWD_N0002420F8706_9700_N0002410D6318_9700",
+      "source": "usaspending",
+      "kind": "historical_award",
+      "title": "MIXED CAPABILITY ACOUSTIC SENSOR FUSION ALGORITHMS AND TOOLS",
+      "agency": "Department of Defense / Department of the Navy",
+      "description": "MIXED CAPABILITY ACOUSTIC SENSOR FUSION ALGORITHMS AND TOOLS",
+      "url": "https://www.usaspending.gov/award/CONT_AWD_N0002420F8706_9700_N0002410D6318_9700",
+      "retrievedAt": "2026-11-03T05:11:45.456Z",
+      "postedAt": "2020-04-21",
+      "deadlineAt": null,
+      "awardAmount": 1153156.47,
+      "setAside": null,
+      "naics": "541720",
+      "excerpts": [
+        {
+          "field": "Description",
+          "text": "MIXED CAPABILITY ACOUSTIC SENSOR FUSION ALGORITHMS AND TOOLS"
+        },
+        {
+          "field": "Award ID",
+          "text": "N0002420F8706"
+        },
+        {
+          "field": "Recipient Name",
+          "text": "UNIVERSITY OF WASHINGTON"
+        },
+        {
+          "field": "Contract Award Type",
+          "text": "DELIVERY ORDER"
+        },
+        {
+          "field": "NAICS.description",
+          "text": "RESEARCH AND DEVELOPMENT IN THE SOCIAL SCIENCES AND HUMANITIES"
+        },
+        {
+          "field": "PSC.description",
+          "text": "R&D- DEFENSE OTHER: SERVICES (ENGINEERING DEVELOPMENT)"
+        },
+        {
+          "field": "Start Date",
+          "text": "2020-04-21"
+        },
+        {
+          "field": "End Date",
+          "text": "2022-04-12"
+        }
+      ]
+    },
+    {
+      "id": "CONT_AWD_N0017314C6002_9700_-NONE-_-NONE-",
+      "source": "usaspending",
+      "kind": "historical_award",
+      "title": "IGF::OT::IGF  71-3021-13 BLACK PEARL AUTONOMOUS UNDERWATER VEHICLE",
+      "agency": "Department of Defense / Defense Contract Management Agency",
+      "description": "IGF::OT::IGF  71-3021-13 BLACK PEARL AUTONOMOUS UNDERWATER VEHICLE",
+      "url": "https://www.usaspending.gov/award/CONT_AWD_N0017314C6002_9700_-NONE-_-NONE-",
+      "retrievedAt": "2026-11-03T05:11:45.517Z",
+      "postedAt": "2014-01-22",
+      "deadlineAt": null,
+      "awardAmount": 8287633.35,
+      "setAside": "NO SET ASIDE USED.",
+      "naics": "541712",
+      "excerpts": [
+        {
+          "field": "Description",
+          "text": "IGF::OT::IGF  71-3021-13 BLACK PEARL AUTONOMOUS UNDERWATER VEHICLE"
+        },
+        {
+          "field": "Award ID",
+          "text": "N0017314C6002"
+        },
+        {
+          "field": "Recipient Name",
+          "text": "GENERAL DYNAMICS MISSION SYSTEMS, INC."
+        },
+        {
+          "field": "Contract Award Type",
+          "text": "DEFINITIVE CONTRACT"
+        },
+        {
+          "field": "NAICS.description",
+          "text": "RESEARCH AND DEVELOPMENT IN THE PHYSICAL, ENGINEERING, AND LIFE SCIENCES (EXCEPT BIOTECHNOLOGY)"
+        },
+        {
+          "field": "PSC.description",
+          "text": "R&D- GENERAL SCIENCE/TECHNOLOGY: ENGINEERING (ADVANCED DEVELOPMENT)"
+        },
+        {
+          "field": "Start Date",
+          "text": "2014-01-22"
+        },
+        {
+          "field": "End Date",
+          "text": "2019-01-21"
+        },
+        {
+          "field": "latest_transaction_contract_data.type_set_aside_description",
+          "text": "NO SET ASIDE USED."
+        }
+      ]
+    },
+    {
+      "id": "CONT_AWD_1605C121P00024_1605_-NONE-_-NONE-",
+      "source": "usaspending",
+      "kind": "historical_award",
+      "title": "SENSIDYNE GILIAN GILAIR PLUS STP SAMPLING PUMPS",
+      "agency": "Department of Labor / Office of the Assistant Secretary for Administration and Management",
+      "description": "SENSIDYNE GILIAN GILAIR PLUS STP SAMPLING PUMPS",
+      "url": "https://www.usaspending.gov/award/CONT_AWD_1605C121P00024_1605_-NONE-_-NONE-",
+      "retrievedAt": "2026-11-03T05:11:45.574Z",
+      "postedAt": "2021-09-24",
+      "deadlineAt": null,
+      "awardAmount": 64041.22,
+      "setAside": "NO SET ASIDE USED.",
+      "naics": "334519",
+      "excerpts": [
+        {
+          "field": "Description",
+          "text": "SENSIDYNE GILIAN GILAIR PLUS STP SAMPLING PUMPS"
+        },
+        {
+          "field": "Award ID",
+          "text": "1605C121P00024"
+        },
+        {
+          "field": "Recipient Name",
+          "text": "INDUSTRIAL ENVIRONMENTAL MONITORING INSTRUMENTS, INC."
+        },
+        {
+          "field": "Contract Award Type",
+          "text": "PURCHASE ORDER"
+        },
+        {
+          "field": "NAICS.description",
+          "text": "OTHER MEASURING AND CONTROLLING DEVICE MANUFACTURING"
+        },
+        {
+          "field": "PSC.description",
+          "text": "LABORATORY EQUIPMENT AND SUPPLIES"
+        },
+        {
+          "field": "Start Date",
+          "text": "2021-09-24"
+        },
+        {
+          "field": "End Date",
+          "text": "2021-10-31"
+        },
+        {
+          "field": "latest_transaction_contract_data.type_set_aside_description",
+          "text": "NO SET ASIDE USED."
+        }
+      ]
+    }
+  ]
+}
