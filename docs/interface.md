@@ -27,7 +27,7 @@ Errors: JSON `ResearchError` = `{ "error": { "code", "message" } }`
 | HTTP | code | When |
 |---|---|---|
 | 400 | `BAD_REQUEST` | Profile fails validation |
-| 429 | `RATE_LIMITED` | Meta API rate limit or per-run budget exhausted |
+| 429 | `RATE_LIMITED` | Meta API rate limit, per-run budget exhausted, or this API's per-IP or daily run limit. The last two include a `Retry-After` header |
 | 502 | `UPSTREAM_ERROR` | USAspending / SAM / Meta failed and no cache is usable |
 | 504 | `TIMEOUT` | Run exceeded the server time cap (target 60 s) |
 | 500 | `INTERNAL` | Anything else |
@@ -58,7 +58,7 @@ If live sources fail but saved real records are usable, the route returns 200 wi
 - `findings` is never hidden: every BLOCKER and WARNING must be visible on the card and in the drawer.
 - `agentEvents` is the real log of the five stages in order: planner, scout, analyst, strategist, devils_advocate. P0 returns it after completion (no streaming).
 - `dataMode: "cached"` means at least one shown record comes from saved public data, and the UI must show a non-dismissable banner: `Cached public records - retrieved <date>`.
-  - `cachedSources` lists which sources are saved in this run. Other sources were live. If it's absent, treat every source as saved.
+  - `cachedSources` lists which sources are saved in this run. Other sources were not served from saved data, which doesn't mean they ran: a source with no key returns nothing. Only call a source live if the results include its records. If it's absent, treat every source as saved.
   - The banner must name what is saved, for example `Cached SAM.gov notices - retrieved <date>`, and must not say live sources were not queried: they were queried and failed, or are not configured.
   - `<date>` is the oldest `retrievedAt` among records from `cachedSources`.
 
