@@ -488,6 +488,50 @@ test("T11: an expired run budget stops with TIMEOUT instead of spinning", async 
   );
 });
 
+test("usage: tokens and calls are tracked per stage with an estimated cost", () => {
+  const budget = new RunBudget();
+  budget.record("planner", { prompt_tokens: 1_000, completion_tokens: 200, total_tokens: 1_200 });
+  budget.record("planner", { prompt_tokens: 500, completion_tokens: 100, total_tokens: 600 });
+  budget.record("scout", undefined);
+  assert.equal(budget.tokens, 1_800);
+  assert.deepEqual(budget.stages.planner, { calls: 2, inputTokens: 1_500, outputTokens: 300 });
+  assert.equal(budget.stages.scout.calls, 1);
+  assert.ok(Math.abs(budget.estimatedCostUsd - (1_500 * 1.25 + 300 * 4.25) / 1_000_000) < 1e-12);
+});
+
+test("usage: reaching the cost cap stops further model calls as RATE_LIMITED", () => {
+  const budget = new RunBudget(undefined, 10_000_000, 0.01);
+  budget.assertAvailable();
+  budget.record("analyst", { prompt_tokens: 10_000, completion_tokens: 0, total_tokens: 10_000 });
+  assert.throws(
+    () => budget.assertAvailable(),
+    (error: unknown) => error instanceof MetaError && error.code === "RATE_LIMITED" && /cost cap/.test(error.message),
+  );
+});
+
+test("usage: the run log holds counts only and is written for failed runs too", async () => {
+  const logged: string[] = [];
+  const realInfo = console.info;
+  console.info = (...args: unknown[]) => void logged.push(args.join(" "));
+  try {
+    await assert.rejects(
+      runResearch(PROFILE, {
+        deps: fakeDeps([notice()], {
+          plan: async () => {
+            throw new MetaError("UPSTREAM_ERROR", "test");
+          },
+        }),
+      }),
+    );
+  } finally {
+    console.info = realInfo;
+  }
+  assert.equal(logged.length, 1);
+  assert.match(logged[0], /"outcome":"failed"/);
+  assert.ok(!logged[0].includes(PROFILE.name));
+  assert.ok(!logged[0].includes(PROFILE.capabilities));
+});
+
 test("T12: two runs give stable ids and no duplicates", async () => {
   const records = [notice(), notice(), award(), notice({ id: "TEST-NOTICE-2" })];
   const run = () =>
@@ -716,48 +760,4 @@ test("the scout says so when the model made no tool call, and offers no SAM tool
   const result = await runScout(PLAN, new RunBudget());
   assert.equal(result.modelDirected, false);
   assert.equal(result.turns, 0);
-});
-
-test("usage: tokens and calls are tracked per stage with an estimated cost", () => {
-  const budget = new RunBudget();
-  budget.record("planner", { prompt_tokens: 1_000, completion_tokens: 200, total_tokens: 1_200 });
-  budget.record("planner", { prompt_tokens: 500, completion_tokens: 100, total_tokens: 600 });
-  budget.record("scout", undefined);
-  assert.equal(budget.tokens, 1_800);
-  assert.deepEqual(budget.stages.planner, { calls: 2, inputTokens: 1_500, outputTokens: 300 });
-  assert.equal(budget.stages.scout.calls, 1);
-  assert.ok(Math.abs(budget.estimatedCostUsd - (1_500 * 1.25 + 300 * 4.25) / 1_000_000) < 1e-12);
-});
-
-test("usage: reaching the cost cap stops further model calls as RATE_LIMITED", () => {
-  const budget = new RunBudget(undefined, 10_000_000, 0.01);
-  budget.assertAvailable();
-  budget.record("analyst", { prompt_tokens: 10_000, completion_tokens: 0, total_tokens: 10_000 });
-  assert.throws(
-    () => budget.assertAvailable(),
-    (error: unknown) => error instanceof MetaError && error.code === "RATE_LIMITED" && /cost cap/.test(error.message),
-  );
-});
-
-test("usage: the run log holds counts only and is written for failed runs too", async () => {
-  const logged: string[] = [];
-  const realInfo = console.info;
-  console.info = (...args: unknown[]) => void logged.push(args.join(" "));
-  try {
-    await assert.rejects(
-      runResearch(PROFILE, {
-        deps: fakeDeps([notice()], {
-          plan: async () => {
-            throw new MetaError("UPSTREAM_ERROR", "test");
-          },
-        }),
-      }),
-    );
-  } finally {
-    console.info = realInfo;
-  }
-  assert.equal(logged.length, 1);
-  assert.match(logged[0], /"outcome":"failed"/);
-  assert.ok(!logged[0].includes(PROFILE.name));
-  assert.ok(!logged[0].includes(PROFILE.capabilities));
 });
