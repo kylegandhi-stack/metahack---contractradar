@@ -25,9 +25,11 @@ Company profile
 
 The model writes findings and scores. **Code decides the final status.** That split is the core design choice: a persuasive model output can't approve a record that fails a gate.
 
-## How Muse Spark 1.3 is used
+## How Meta's models are used
 
-Every model call uses `muse-spark-1.3` through the OpenAI SDK, with base URL `https://api.meta.ai/v1` (`lib/meta.ts`). The key stays on the server. There's no other model or agent framework.
+Every agent call uses `muse-spark-1.3` through the OpenAI SDK, with base URL `https://api.meta.ai/v1` (`lib/meta.ts`). The key stays on the server. There's no other agent framework.
+
+**Voice input ("Hey Rauros"), optional:** the browser records up to 20 s of push-to-talk audio, resamples it to 16 kHz mono 16-bit WAV, and posts it to `POST /api/voice-profile`. The server sends it to **Muse Voice Transcribe 1.0** (`muse-voice-transcribe-1.0`, `POST https://api.meta.ai/v1/asr/transcribe`, `PUSH_TO_TALK` mode, keyword-biased toward procurement terms). One `muse-spark-1.3` JSON call then turns the transcript into `CompanyProfile` fields, using only what the speaker said (`lib/voice.ts`). The user reviews the filled form before running research. No audio or transcript is stored or logged.
 
 | Agent | What the model does | Calls per run | Reasoning effort | Max output tokens |
 |---|---|---|---|---|
@@ -128,6 +130,7 @@ Please don't present these as general accuracy.
 - This project isn't affiliated with or endorsed by either agency, the U.S. Navy, or the Department of Defense.
 - Hero imagery is public-domain U.S. Navy photography, credited in the UI. See `components/HeroBackdrop.tsx`.
 - Language model: Muse Spark 1.3 from Meta.
+- Speech-to-text: Muse Voice Transcribe 1.0 from Meta (voice input only).
 
 ## Where things live
 

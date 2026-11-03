@@ -62,7 +62,7 @@ About 290 spoken words, with room for clicks. Time a full read before recording.
 From runbook section 10, updated to match what shipped.
 
 **Why Meta?**
-Muse Spark 1.3 drives all five agent stages: tool use, evidence-grounded qualification, structured scoring explanations and an independent adversarial critique. The core product logic, not just the UI, depends on Meta's model.
+Muse Spark 1.3 drives all five agent stages: tool use, evidence-grounded qualification, structured scoring explanations and an independent adversarial critique. The core product logic, not just the UI, depends on Meta's model. Voice input adds a second Meta model: Muse Voice Transcribe 1.0 turns a spoken company description into text, and Muse Spark structures it into the form.
 
 **Why agentic?**
 The Scout chooses and invokes real retrieval tools, qualification is conditioned on evidence, and a separate critic can overturn an earlier recommendation. A deterministic server enforces record-type and safety checks, so a persuasive model output can't approve a record that fails them.

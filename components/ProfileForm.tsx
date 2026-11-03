@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { ArrowRight, Loader2 } from "lucide-react";
 import type { CompanyProfile } from "@/lib/types";
+import type { VoiceProfile } from "@/lib/voice";
+import { VoiceInput } from "./VoiceInput";
 
 export const AQUAVECTOR_PRESET: CompanyProfile = {
   name: "AquaVector Systems",
@@ -37,6 +39,7 @@ export function ProfileForm({ onSubmit, loading }: Props) {
   const [certs, setCerts] = useState("");
   const [agencies, setAgencies] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [heard, setHeard] = useState<string | null>(null);
 
   const usePreset = () => {
     setName(AQUAVECTOR_PRESET.name);
@@ -44,6 +47,18 @@ export function ProfileForm({ onSubmit, loading }: Props) {
     setSmall("yes");
     setCerts("");
     setAgencies((AQUAVECTOR_PRESET.targetAgencies ?? []).join(", "));
+    setError(null);
+    setHeard(null);
+  };
+
+  // Voice fills only what the speaker actually said; everything else keeps what's already in the form.
+  const applyVoice = (p: VoiceProfile, transcript: string) => {
+    if (p.name) setName(p.name);
+    if (p.capabilities) setCapabilities(p.capabilities);
+    if (p.smallBusiness === true || p.smallBusiness === false) setSmall(p.smallBusiness ? "yes" : "no");
+    if (p.certifications?.length) setCerts(p.certifications.join(", "));
+    if (p.targetAgencies?.length) setAgencies(p.targetAgencies.join(", "));
+    setHeard(transcript || null);
     setError(null);
   };
 
@@ -67,14 +82,24 @@ export function ProfileForm({ onSubmit, loading }: Props) {
         <h2 id="profile-heading" className="label text-foreground">
           <span className="text-dim">[01]</span> Mission input — company profile
         </h2>
-        <button
-          type="button"
-          onClick={usePreset}
-          className="border border-line-strong px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.12em] text-foreground transition hover:border-foreground"
-        >
-          Load demo: AquaVector Systems
-        </button>
+        <div className="flex flex-wrap items-start justify-end gap-2">
+          <VoiceInput disabled={loading} onResult={applyVoice} />
+          <button
+            type="button"
+            onClick={usePreset}
+            className="border border-line-strong px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.12em] text-foreground transition hover:border-foreground"
+          >
+            Load demo: AquaVector Systems
+          </button>
+        </div>
       </div>
+
+      {heard && (
+        <figure className="mb-6 border-l-2 border-signal/60 bg-signal/[0.04] py-2 pl-4 pr-3">
+          <blockquote className="font-mono text-[12px] leading-relaxed text-foreground/85">“{heard}”</blockquote>
+          <figcaption className="label mt-1.5 text-dim">Transcribed by Muse Voice · structured by Muse Spark · check the fields before running</figcaption>
+        </figure>
+      )}
 
       <div className="grid gap-x-8 gap-y-6 md:grid-cols-2">
         <Field id="cr-name" n="A" label="Company name">

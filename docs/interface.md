@@ -71,3 +71,23 @@ If live sources fail but saved real records are usable, the route returns 200 wi
 ## Run budget (server enforced)
 
 Max 3 Scout tool turns, 30 candidate records, 12 deep analyses, 5 critic reviews, 1 strategist revision. Model for every stage: `muse-spark-1.3`.
+
+## `POST /api/voice-profile` (optional voice input)
+
+Body: a WAV recording, `Content-Type: audio/wav`. RIFF/WAVE, mono, 16-bit PCM, 16 or 24 kHz, between 0.5 and 25 seconds, at most 1.5 MB. The browser records up to 20 s.
+
+Pipeline: `muse-voice-transcribe-1.0` (`POST /v1/asr/transcribe`, `PUSH_TO_TALK`) produces the transcript, then one `muse-spark-1.3` JSON call produces profile fields. Uses no SAM.gov or USAspending calls.
+
+Success: `200`
+
+```json
+{
+  "transcript": "AquaVector Systems. We're twelve people making hydrophones and underwater acoustic sensors, and we sell to the Navy.",
+  "profile": { "name": "AquaVector Systems", "capabilities": "...", "smallBusiness": true, "targetAgencies": ["Department of the Navy"] },
+  "models": { "transcription": "muse-voice-transcribe-1.0", "extraction": "muse-spark-1.3" }
+}
+```
+
+`profile` is `Partial<CompanyProfile>`: a field is present only if the speaker said it, within `CompanyProfileSchema` bounds. It never contains invented names, certifications or agencies. The UI fills only the present fields and never runs research automatically.
+
+Errors use `ResearchError`: 400 `BAD_REQUEST` (not a supported WAV, too short or too long), 413 `BAD_REQUEST` (too large), 422 `BAD_REQUEST` (no speech recognized), 429 `RATE_LIMITED` (per-IP voice bucket `voice:<ip>`, separate from research runs; the daily cap is shared), 502 `UPSTREAM_ERROR`, 504 `TIMEOUT`, 500 `INTERNAL`. Logs hold only durations, field names and token counts: never audio, transcript or the key.
