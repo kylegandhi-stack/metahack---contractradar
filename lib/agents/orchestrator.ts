@@ -1,7 +1,7 @@
 // The five logical agents run in order inside one server-side function. Every AgentEvent wraps a
 // real call. Dependencies are injectable so the tests can drive the gates without the network.
 import { loadVerifiedRecords, type CachedRecords } from "../data/cache";
-import { collapseNotices, describeNotices, isSamConfigured } from "../data/sam";
+import { collapseNotices, describeNotices, isSamConfigured, withSamUsage, type SamUsage } from "../data/sam";
 import { dedupeRecords, enrichWithAwardDetail, UsaSpendingError } from "../data/usaspending";
 import { MetaError, RunBudget } from "../meta";
 import {
@@ -256,13 +256,14 @@ export async function runResearch(
   const deps = { ...defaultDeps, ...options.deps };
   const startedAt = deps.now();
   const budget = new RunBudget(options.signal ?? AbortSignal.timeout(RUN_CAP_MS));
+  const sam: SamUsage = { requests: 0, throttled: false };
   let outcome = "failed";
   try {
-    const response = await executeRun(profile, deps, budget, startedAt);
+    const response = await withSamUsage(sam, () => executeRun(profile, deps, budget, startedAt));
     outcome = "completed";
     return response;
   } finally {
-    console.info("research run", JSON.stringify({ outcome, ms: deps.now() - startedAt, ...budget.summary() }));
+    console.info("research run", JSON.stringify({ outcome, ms: deps.now() - startedAt, sam, ...budget.summary() }));
   }
 }
 
