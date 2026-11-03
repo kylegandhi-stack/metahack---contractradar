@@ -2,7 +2,7 @@
 
 For Builder 2, who records the video.
 
-**Length:** the submission needs a **3-minute** video, per Santiago. The runbook still plans 90 seconds (sections 0, 8 and 9), and this file replaces that plan. The official rules aren't in this repo, so please confirm the limit on the submission page before recording.
+**Length:** the submission needs a **3-minute** video, per Santiago. The runbook still plans 90 seconds in several places, and this file replaces that plan. The official rules aren't in this repo, so please confirm the limit on the submission page before recording.
 
 ## Before you record
 
@@ -25,7 +25,7 @@ The preferred record has also been one of the highest fit scores, 74-84 across r
 
 ## The 3-minute script
 
-About 350 words at a calm pace.
+About 325 spoken words, which fits at a calm pace.
 
 | Time | On screen and what to click | What to say |
 |---|---|---|
