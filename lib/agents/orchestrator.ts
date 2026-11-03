@@ -36,6 +36,7 @@ import { reviseShortlist, runStrategist, SHORTLIST_SIZE, type Pick } from "./str
 export const RUN_CAP_MS = 105_000;
 const MAX_ANALYSES = 12;
 const MAX_RESULTS = 10;
+const STRATEGIST_POOL = 8;
 const REVISION_CUTOFF_MS = 50_000;
 const BID_LANGUAGE = /\b(apply|bid|submit|respond|response|proposal|quote)\b/i;
 const HISTORICAL_DEFAULT_STEP =
@@ -401,10 +402,21 @@ async function executeRun(
     assessments.some((assessment) => assessment.sourceId === record.id),
   );
 
+  // The Strategist chooses from the best-scoring records, in score order, so scores decide who can
+  // be shortlisted. It adds judgment within that pool.
+  const assessmentFor = new Map(assessments.map((assessment) => [assessment.sourceId, assessment]));
+  const pool = assessed
+    .map((record) => ({
+      record,
+      ...scoreRecord({ record, profile, terms: plan.searchTerms, assessment: assessmentFor.get(record.id) ?? {}, now: deps.now() }),
+    }))
+    .sort(compareByFit)
+    .slice(0, STRATEGIST_POOL)
+    .map((entry) => entry.record);
   let shortlist = await stage(
     "strategist",
     "Choosing the shortlist and next steps",
-    () => deps.strategize(profile, assessed, assessments, budget),
+    () => deps.strategize(profile, pool, assessments, budget),
     (value) => `Shortlisted ${value.length} records.`,
   );
 

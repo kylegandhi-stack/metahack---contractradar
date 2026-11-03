@@ -42,10 +42,21 @@ const YEAR_MS = 365.25 * 86_400_000;
 const CAPACITY_PER_EMPLOYEE_USD = 250_000;
 const EXACT_PRODUCT_MIN = 34;
 const UNCITED_TECHNICAL_CAP = 19;
+// Below this, a record isn't really the company's product, so buyer, date and size can't lift it.
+const WEAK_TECHNICAL = 20;
 
 const escapeForRegExp = (text: string) => text.replace(/[.*+?^${}()|[\]\\-]/g, "\\$&");
-const hasTerm = (text: string, term: string) =>
-  new RegExp(`(^|[^a-z0-9])${escapeForRegExp(term)}(s|es)?([^a-z0-9]|$)`, "i").test(text);
+// Accepts singular and plural either way, since the Planner may choose either form.
+function singular(term: string): string {
+  if (/ies$/i.test(term)) return `${term.slice(0, -3)}y`;
+  if (/(ch|sh|x|ss)es$/i.test(term)) return term.slice(0, -2);
+  return /[^s]s$/i.test(term) ? term.slice(0, -1) : term;
+}
+function hasTerm(text: string, term: string): boolean {
+  const base = singular(term.trim());
+  const stem = /y$/i.test(base) ? `${base.slice(0, -1)}(?:y|ies)` : `${escapeForRegExp(base)}(?:s|es)?`;
+  return new RegExp(`(^|[^a-z0-9])${stem}([^a-z0-9]|$)`, "i").test(text);
+}
 
 export function productSignal(record: SourceRecord, terms: string[]): FitSignal {
   const title = record.title;
@@ -139,12 +150,16 @@ export function scoreRecord({ record, profile, terms, assessment, now }: ScoreIn
   const exactNamed = product.points >= PRODUCT_POINTS.description;
   if (technical !== null && !exactNamed) technical = Math.min(technical, EXACT_PRODUCT_MIN - 1);
 
+  const support = (points: number | null | undefined) =>
+    points != null && technical !== null && technical < WEAK_TECHNICAL
+      ? Math.min(points, Math.floor(technical / 4))
+      : points;
   const { fitBreakdown, fitScore } = computeFit(
     {
       technical,
-      category: product.points + (agency?.points ?? 0) + recency.points,
+      category: support(product.points + (agency?.points ?? 0) + recency.points),
       eligibility: assessment.eligibility,
-      execution: size?.points ?? assessment.execution,
+      execution: support(size?.points ?? assessment.execution),
       timing: assessment.timing,
     },
     record.kind,

@@ -650,6 +650,17 @@ test("fit signals: an exact term in the title beats a description match, one wor
   assert.equal(points({ title: "[TEST] Microhydrophone mount" }), 0);
 });
 
+test("fit signals: singular and plural match either way, without matching inside other words", () => {
+  const points = (title: string, term: string) => productSignal(scoring({ title, description: null }), [term]).points;
+  assert.equal(points("[TEST] DT-574 HYDROPHONE", "hydrophones"), 8);
+  assert.equal(points("[TEST] DT-574 HYDROPHONES", "hydrophone"), 8);
+  assert.equal(points("[TEST] Lithium batteries", "lithium battery"), 8);
+  assert.equal(points("[TEST] Lithium battery", "lithium batteries"), 8);
+  assert.equal(points("[TEST] Wire harness", "harness"), 8);
+  assert.equal(points("[TEST] Wire harnesses", "harness"), 8);
+  assert.equal(points("[TEST] Sensorium", "sensors"), 0);
+});
+
 test("fit signals: target agency, including SAM.gov paths, and no targets means no points available", () => {
   assert.equal(agencySignal(scoring(), NAVY_PROFILE)?.points, 7);
   assert.equal(agencySignal(scoring({ agency: "DEPT OF DEFENSE.DEPT OF THE NAVY.NAVSUP" }), NAVY_PROFILE)?.points, 7);
@@ -690,6 +701,31 @@ test("fit score: code caps a technical score with no citation or no named produc
   assert.equal(score({ technical: 36, technicalExcerpt: null }), 19);
   assert.equal(score({ technical: 40, technicalExcerpt: "[TEST] Velocity logger" }, "[TEST] Velocity logger"), 33);
   assert.equal(score({ technical: null }), null);
+});
+
+test("fit score: buyer, date and size can't lift a weak technical match", () => {
+  const score = (technical: number) =>
+    scoreRecord({ record: scoring(), profile: NAVY_PROFILE, terms: ["hydrophone"], assessment: { technical, technicalExcerpt: "x" }, now: NOW });
+  assert.deepEqual(score(18).fitBreakdown, { technical: 18, category: 4, eligibility: null, execution: 4, timing: null });
+  assert.equal(score(18).fitScore, 26);
+  assert.equal(score(20).fitBreakdown.category, 20);
+  assert.equal(score(0).fitScore, 0);
+  assert.ok(score(18).fitSignals.some((signal) => signal.signal === "target_agency" && signal.points === 7));
+});
+
+test("strategist: chooses only from the top 8 by score, best first", async () => {
+  const records = Array.from({ length: 10 }, (_, index) => scoring({ id: `R${index}`, title: `[TEST] Hydrophone ${index}` }));
+  let offered: string[] = [];
+  await runResearch(NAVY_PROFILE, {
+    deps: fakeDeps(records, {
+      analyze: async (_profile, list) => list.map((record) => assessment(record.id, { technical: 20 + Number(record.id.slice(1)) })),
+      strategize: async (_profile, list) => {
+        offered = list.map((record) => record.id);
+        return [{ sourceId: list[0].id, rationale: "Fits", nextSteps: ["Research"] }];
+      },
+    }),
+  });
+  assert.deepEqual(offered, ["R9", "R8", "R7", "R6", "R5", "R4", "R3", "R2"]);
 });
 
 test("analyst: a citation that isn't in the record is dropped, which caps the score", () => {
