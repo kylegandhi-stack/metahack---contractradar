@@ -140,3 +140,15 @@ export type ContractChecks = [
   Assignable<z.infer<typeof AgentEventSchema>, AgentEvent>,
   Assignable<z.infer<typeof ResearchResponseSchema>, ResearchResponse>,
 ];
+
+export const SamSnapshotSchema = z.object({
+  profiles: z.record(
+    z.string(),
+    z.object({
+      retrievedAt: z.iso.datetime(),
+      records: z.array(SourceRecordSchema),
+      descriptions: z.record(z.string(), z.string()),
+      shortened: z.array(z.string()),
+    }),
+  ),
+});

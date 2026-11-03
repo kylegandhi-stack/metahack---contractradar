@@ -1,8 +1,8 @@
 // The five logical agents run in order inside one server-side function. Every AgentEvent wraps a
 // real call. Dependencies are injectable so the tests can drive the gates without the network.
 import { loadVerifiedRecords, type CachedRecords } from "../data/cache";
-import { describeNotices, isSamConfigured } from "../data/sam";
-import { enrichWithAwardDetail, UsaSpendingError } from "../data/usaspending";
+import { collapseNotices, describeNotices, isSamConfigured } from "../data/sam";
+import { dedupeRecords, enrichWithAwardDetail, UsaSpendingError } from "../data/usaspending";
 import { MetaError, RunBudget } from "../meta";
 import {
   applyGates,
@@ -23,10 +23,11 @@ import type {
   ResearchResponse,
   SourceRecord,
 } from "../types";
+import { loadSamSnapshot, type ProfileSnapshot } from "../data/snapshot";
 import { runAnalyst, type Assessment } from "./analyst";
 import { runDevilsAdvocate, type CriticVerdict } from "./devils-advocate";
 import { runPlanner, type ResearchPlan } from "./planner";
-import { runScout, type ScoutResult } from "./scout";
+import { MAX_CANDIDATES, runScout, type ScoutResult } from "./scout";
 import { reviseShortlist, runStrategist, SHORTLIST_SIZE, type Pick } from "./strategist";
 
 export const RUN_CAP_MS = 105_000;
@@ -46,6 +47,8 @@ export type PipelineDeps = {
   critique: typeof runDevilsAdvocate;
   enrich: typeof enrichWithAwardDetail;
   describe: typeof describeNotices;
+  loadSnapshot: typeof loadSamSnapshot;
+  descriptionsEnabled: () => boolean;
   loadCache: () => CachedRecords | null;
   samConfigured: () => boolean;
   now: () => number;
@@ -60,6 +63,9 @@ const defaultDeps: PipelineDeps = {
   critique: runDevilsAdvocate,
   enrich: enrichWithAwardDetail,
   describe: describeNotices,
+  loadSnapshot: loadSamSnapshot,
+  // Up to 5 extra SAM.gov calls per run, against a small daily quota, so this is opt-in.
+  descriptionsEnabled: () => process.env.SAM_DESCRIPTIONS === "on",
   loadCache: loadVerifiedRecords,
   samConfigured: isSamConfigured,
   now: Date.now,
@@ -156,6 +162,11 @@ export function buildResult(args: {
   };
 }
 
+// Only a spent quota or a missing key falls back. Other SAM.gov errors keep their existing warning.
+function loadSnapshotIfSamUnavailable(profile: CompanyProfile, scout: ScoutResult, deps: PipelineDeps) {
+  return !deps.samConfigured() || scout.samThrottled ? deps.loadSnapshot(profile.name) : null;
+}
+
 function descriptionNote(record: SourceRecord, issue: string, whyItMatters: string): AuditFinding {
   return {
     severity: "NOTE",
@@ -167,27 +178,43 @@ function descriptionNote(record: SourceRecord, issue: string, whyItMatters: stri
   };
 }
 
-// Adds source text to shortlisted SAM notices. A failed fetch leaves the description null and adds a
-// NOTE: it never blocks a run. Skipped when SAM.gov already failed, to avoid spending more quota.
+// Adds source text to shortlisted SAM notices when SAM_DESCRIPTIONS is "on". A failed or skipped fetch
+// leaves the description null and adds a NOTE: it never blocks a run. Also skipped when SAM.gov already
+// failed, to avoid spending more quota.
 async function addNoticeDescriptions(
   records: SourceRecord[],
   shortlist: Pick[],
   deps: PipelineDeps,
   samFailure: string | null,
+  saved: ProfileSnapshot | null,
 ) {
   const ids = new Set(shortlist.map((pick) => pick.sourceId));
   const targets = records.filter((record) => record.source === "sam" && ids.has(record.id));
   const notes = new Map<string, AuditFinding[]>();
-  if (targets.length === 0 || !deps.samConfigured()) return { records, notes, count: 0 };
-  const { texts, unavailable, shortened } = samFailure
-    ? { texts: new Map<string, string>(), unavailable: targets.map((record) => record.id), shortened: [] as string[] }
-    : await deps.describe(targets);
+  if (targets.length === 0) return { records, notes, count: 0 };
+  const fetched =
+    samFailure || !deps.samConfigured() || !deps.descriptionsEnabled()
+      ? { texts: new Map<string, string>(), unavailable: targets.map((record) => record.id), shortened: [] as string[] }
+      : await deps.describe(targets);
+  // Saved text fills in only what could not be fetched live.
+  const texts = new Map(fetched.texts);
+  const shortened = [...fetched.shortened];
+  const unavailable: string[] = [];
+  for (const id of fetched.unavailable) {
+    const text = saved?.descriptions[id];
+    if (!text) {
+      unavailable.push(id);
+      continue;
+    }
+    texts.set(id, text);
+    if (saved?.shortened.includes(id)) shortened.push(id);
+  }
   for (const record of targets) {
     if (unavailable.includes(record.id)) {
       notes.set(record.id, [
         descriptionNote(
           record,
-          "SAM.gov description could not be retrieved",
+          "SAM.gov description was not retrieved",
           "This review used the notice's title and summary fields only, so requirements in its full text were not checked.",
         ),
       ]);
@@ -255,12 +282,12 @@ export async function runResearch(
       }. ${value.records.length} unique records.`,
   );
 
-  let dataMode: "live" | "cached" = "live";
+  const cachedSources = new Set<"sam" | "usaspending">();
   let candidates = scout.records;
   if (candidates.length === 0 && !scout.usaspendingSucceeded) {
     const cache = deps.loadCache();
     if (!cache) throw new NoUsableDataError("Live sources failed and no cache is usable");
-    dataMode = "cached";
+    cachedSources.add("usaspending");
     candidates = cache.records;
     warnings.push(
       `Live search failed (${scout.usaspendingFailure ?? "no source responded"}). Showing cached public records retrieved ${cache.retrievedAt}, saved for the AquaVector demo profile, so they may not fit other profiles.`,
@@ -268,7 +295,17 @@ export async function runResearch(
   } else if (scout.usaspendingFailure) {
     warnings.push(`A USAspending search failed (${scout.usaspendingFailure}); results may be incomplete.`);
   }
-  if (!deps.samConfigured()) {
+  const snapshot = loadSnapshotIfSamUnavailable(profile, scout, deps);
+  if (snapshot) {
+    cachedSources.add("sam");
+    // Live notices come first, so they win over a saved copy of the same notice.
+    const liveNotices = candidates.filter((record) => record.source === "sam");
+    const others = candidates.filter((record) => record.source !== "sam");
+    candidates = collapseNotices(dedupeRecords([...liveNotices, ...snapshot.records, ...others])).slice(0, MAX_CANDIDATES);
+    warnings.push(
+      `SAM.gov is unavailable (${scout.samFailure ?? "not configured"}). Showing saved SAM.gov notices retrieved ${snapshot.retrievedAt}: check the source for updates.`,
+    );
+  } else if (!deps.samConfigured()) {
     warnings.push("SAM.gov is not configured: showing historical awards only, no open notices.");
   } else if (scout.samFailure) {
     warnings.push(`SAM.gov search failed (${scout.samFailure}): open notices may be missing.`);
@@ -277,7 +314,8 @@ export async function runResearch(
   const base = (results: RankedResult[]): ResearchResponse =>
     ResearchResponseSchema.parse({
       profile,
-      dataMode,
+      dataMode: cachedSources.size > 0 ? "cached" : "live",
+      ...(cachedSources.size > 0 ? { cachedSources: [...cachedSources] } : {}),
       recordsUsed: candidates.length,
       results,
       agentEvents,
@@ -293,7 +331,7 @@ export async function runResearch(
   // Confirm each USAspending record at the source and add its set-aside. Cached ones already have this.
   const selected = selectForAnalysis(candidates, plan.searchTerms);
   let analyzed = selected;
-  if (dataMode === "live") {
+  if (!cachedSources.has("usaspending")) {
     let lookupFailed = false;
     const checked = await Promise.all(
       selected.map(async (record) => {
@@ -335,7 +373,13 @@ export async function runResearch(
   );
 
   // The critic should judge the real scope, so shortlisted SAM notices get their text first.
-  const described = await addNoticeDescriptions(assessed, shortlist.slice(0, SHORTLIST_SIZE), deps, scout.samFailure);
+  const described = await addNoticeDescriptions(
+    assessed,
+    shortlist.slice(0, SHORTLIST_SIZE),
+    deps,
+    scout.samFailure,
+    deps.loadSnapshot(profile.name),
+  );
   const verdicts = await stage(
     "devils_advocate",
     `Independently challenging ${shortlist.length} shortlisted records`,
