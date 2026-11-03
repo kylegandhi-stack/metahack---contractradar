@@ -68,3 +68,14 @@ export const isHistorical = (r: RankedResult) => r.record.kind === "historical_a
 export function sourceName(source: "sam" | "usaspending") {
   return source === "sam" ? "SAM.gov" : "USAspending.gov";
 }
+
+/**
+ * A notice whose response deadline has passed. Date-only deadlines count through the end of that UTC day.
+ * Historical awards never expire (they have no deadline).
+ */
+export function isExpired(r: RankedResult, now: Date = new Date()): boolean {
+  const d = r.record.deadlineAt;
+  if (r.record.kind === "historical_award" || !d) return false;
+  const t = new Date(/^\d{4}-\d{2}-\d{2}$/.test(d) ? `${d}T23:59:59Z` : d).getTime();
+  return !Number.isNaN(t) && t < now.getTime();
+}

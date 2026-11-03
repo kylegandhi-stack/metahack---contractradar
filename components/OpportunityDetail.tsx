@@ -3,10 +3,10 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { ArrowUpRight, X } from "lucide-react";
 import type { FitBreakdown, RankedResult } from "@/lib/types";
-import { ConfidencePill, EligibilityBadge, ReviewStatusBadge, SourceKindBadge } from "./badges";
+import { ConfidencePill, EligibilityBadge, ExpiredBadge, ReviewStatusBadge, SourceKindBadge } from "./badges";
 import { FindingItem, sortFindings } from "./FindingsPanel";
 import { FitScore } from "./OpportunityCard";
-import { cn, fmtDate, fmtDateTime, fmtMoney, isHistorical, orUnknown, sourceName } from "./format";
+import { cn, fmtDate, fmtDateTime, fmtMoney, isExpired, isHistorical, orUnknown, sourceName } from "./format";
 
 function Section({ n, title, children, tone }: { n: string; title: string; children: React.ReactNode; tone?: string }) {
   return (
@@ -90,6 +90,7 @@ export function OpportunityDetail({ result, onClose }: { result: RankedResult | 
               <div className="px-5 py-6 sm:px-7">
                 <div className="flex flex-wrap gap-2">
                   <SourceKindBadge kind={r.record.kind} />
+                  {isExpired(r) && <ExpiredBadge />}
                   <ReviewStatusBadge status={r.reviewStatus} />
                 </div>
                 <div className="mt-5 flex items-start justify-between gap-6">
@@ -104,7 +105,14 @@ export function OpportunityDetail({ result, onClose }: { result: RankedResult | 
                   <ConfidencePill value={r.confidence} />
                 </div>
 
-                {r.reviewStatus === "HOLD" && (
+                {isExpired(r) && (
+                  <div role="alert" className="relative mt-5 border border-hold/60 bg-hold/10 py-3 pl-4 pr-3 text-sm">
+                    <span aria-hidden className="absolute inset-y-0 left-0 w-[2px] bg-hold" />
+                    <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-hold">Expired — response deadline passed {fmtDate(r.record.deadlineAt)}</p>
+                    <p className="mt-1 text-foreground/85">This notice can no longer be answered as posted. It may still help you identify the buyer and a possible re-solicitation.</p>
+                  </div>
+                )}
+                {r.reviewStatus === "HOLD" && !isExpired(r) && (
                   <div role="alert" className="relative mt-5 border border-hold/60 bg-hold/10 py-3 pl-4 pr-3 text-sm">
                     <span aria-hidden className="absolute inset-y-0 left-0 w-[2px] bg-hold" />
                     <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-hold">Hold — do not pursue as presented</p>
@@ -157,7 +165,7 @@ export function OpportunityDetail({ result, onClose }: { result: RankedResult | 
                   <Row k="Source">{sourceName(r.record.source)}</Row>
                   <Row k="Record ID">{r.record.id}</Row>
                   <Row k={isHistorical(r) ? "Award date" : "Posted"}>{fmtDate(r.record.postedAt)}</Row>
-                  {!isHistorical(r) && <Row k="Response due">{fmtDate(r.record.deadlineAt)}</Row>}
+                  {!isHistorical(r) && <Row k="Response due">{isExpired(r) ? <span className="text-hold">{fmtDate(r.record.deadlineAt)} · expired</span> : fmtDate(r.record.deadlineAt)}</Row>}
                   {isHistorical(r) && <Row k="Award amount">{fmtMoney(r.record.awardAmount)} <span className="text-dim">(past obligation, not available budget)</span></Row>}
                   <Row k="Set-aside">{orUnknown(r.record.setAside)}</Row>
                   <Row k="NAICS">{orUnknown(r.record.naics)}</Row>

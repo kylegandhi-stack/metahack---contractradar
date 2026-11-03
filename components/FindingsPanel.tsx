@@ -31,7 +31,13 @@ export function FindingItem({ f }: { f: AuditFinding }) {
 export function FindingsPanel({ results, onOpen }: { results: RankedResult[]; onOpen: (r: RankedResult) => void }) {
   const counts = { BLOCKER: 0, WARNING: 0, NOTE: 0 };
   results.forEach((r) => r.findings.forEach((f) => counts[f.severity]++));
-  const flagged = results.filter((r) => r.findings.some((f) => f.severity !== "NOTE") || r.reviewStatus !== "APPROVED");
+  const RANK = { HOLD: 0, REVIEW_REQUIRED: 1, APPROVED: 2 } as const;
+  const flaggedAll = results
+    .filter((r) => r.findings.some((f) => f.severity !== "NOTE") || r.reviewStatus !== "APPROVED")
+    .sort((a, b) => RANK[a.reviewStatus] - RANK[b.reviewStatus]);
+  const MAX = 5;
+  const flagged = flaggedAll.slice(0, MAX);
+  const more = flaggedAll.length - flagged.length;
 
   return (
     <section aria-labelledby="da-heading" className="hud border-hold/30 p-5">
@@ -49,7 +55,7 @@ export function FindingsPanel({ results, onOpen }: { results: RankedResult[]; on
         ))}
       </dl>
 
-      {flagged.length === 0 ? (
+      {flaggedAll.length === 0 ? (
         <p className="mt-4 text-sm text-muted">No blockers or warnings found after checking.</p>
       ) : (
         <ul className="mt-4 space-y-2">
@@ -65,6 +71,7 @@ export function FindingsPanel({ results, onOpen }: { results: RankedResult[]; on
               </li>
             );
           })}
+          {more > 0 && <li className="label pt-1 text-dim">+{more} more flagged. Open any target to see its findings.</li>}
         </ul>
       )}
     </section>

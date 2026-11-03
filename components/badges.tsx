@@ -79,3 +79,11 @@ export function ConfidencePill({ value }: { value: RankedResult["confidence"] })
     </span>
   );
 }
+
+export function ExpiredBadge({ className }: { className?: string }) {
+  return (
+    <span className={cn(base, "border-hold/70 bg-hold text-background", className)}>
+      Expired
+    </span>
+  );
+}
