@@ -7,6 +7,11 @@ const BASE_URL = "https://api.meta.ai/v1";
 // The limit covers reasoning plus visible output, so small values return empty content.
 const DEFAULT_MAX_COMPLETION_TOKENS = 8_000;
 const RUN_TOKEN_BUDGET = 150_000;
+// Rates listed by third-party price trackers, not confirmed against Meta's rate sheet, so costs are
+// estimates. Measured runs use about 35,000-45,000 tokens. The cap only stops runaway runs.
+const USD_PER_MILLION_INPUT = 1.25;
+const USD_PER_MILLION_OUTPUT = 4.25;
+const RUN_COST_CAP_USD = 0.5;
 // Measured on a small JSON call: default about 15s, low about 6s, minimal about 4s.
 const DEFAULT_REASONING_EFFORT = "low";
 
@@ -36,10 +41,13 @@ function getClient(): OpenAI {
 export class RunBudget {
   tokens = 0;
   calls: Record<string, number> = {};
+  stages: Record<string, { calls: number; inputTokens: number; outputTokens: number }> = {};
+  estimatedCostUsd = 0;
 
   constructor(
     readonly signal?: AbortSignal,
     readonly tokenLimit = RUN_TOKEN_BUDGET,
+    readonly costLimitUsd = RUN_COST_CAP_USD,
   ) {}
 
   assertAvailable() {
@@ -47,11 +55,30 @@ export class RunBudget {
     if (this.tokens >= this.tokenLimit) {
       throw new MetaError("RATE_LIMITED", "Per-run token budget exhausted");
     }
+    if (this.estimatedCostUsd >= this.costLimitUsd) {
+      throw new MetaError("RATE_LIMITED", "Per-run cost cap reached");
+    }
   }
 
-  record(stage: string, totalTokens: number | undefined) {
-    this.tokens += totalTokens ?? 0;
+  record(stage: string, usage: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number } | undefined) {
+    const inputTokens = usage?.prompt_tokens ?? 0;
+    const outputTokens = usage?.completion_tokens ?? 0;
+    this.tokens += usage?.total_tokens ?? inputTokens + outputTokens;
     this.calls[stage] = (this.calls[stage] ?? 0) + 1;
+    const totals = (this.stages[stage] ??= { calls: 0, inputTokens: 0, outputTokens: 0 });
+    totals.calls += 1;
+    totals.inputTokens += inputTokens;
+    totals.outputTokens += outputTokens;
+    this.estimatedCostUsd += (inputTokens * USD_PER_MILLION_INPUT + outputTokens * USD_PER_MILLION_OUTPUT) / 1_000_000;
+  }
+
+  // Counts only, safe for production logs: never profile text or the key.
+  summary() {
+    return {
+      tokens: this.tokens,
+      estimatedCostUsd: Number(this.estimatedCostUsd.toFixed(4)),
+      stages: this.stages,
+    };
   }
 }
 
@@ -83,7 +110,7 @@ export async function createCompletion(
       },
       { signal: budget.signal },
     );
-    budget.record(stage, completion.usage?.total_tokens);
+    budget.record(stage, completion.usage);
     return completion;
   } catch (error) {
     throw toMetaError(error, budget);
