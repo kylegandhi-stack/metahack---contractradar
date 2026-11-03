@@ -35,6 +35,18 @@ export const SourceRecordSchema = z
     setAside: z.string().nullable().optional(),
     naics: z.string().nullable().optional(),
     excerpts: z.array(z.object({ text: z.string().min(1), field: z.string().min(1) })),
+    solicitationNumber: z.string().nullable().optional(),
+    relatedNotices: z
+      .array(
+        z.object({
+          id: z.string().min(1),
+          kind: z.enum(["open_notice", "early_stage_notice", "historical_award"]),
+          postedAt: z.string().nullable().optional(),
+          url: z.url({ protocol: /^https$/ }),
+        }),
+      )
+      .optional(),
+    recipient: z.string().nullable().optional(),
   })
   .superRefine((record, ctx) => {
     if (record.kind === "historical_award") {
@@ -79,6 +91,18 @@ export const RankedResultSchema = z.object({
   nextSteps: z.array(z.string()),
   findings: z.array(AuditFindingSchema),
   reviewStatus: z.enum(["APPROVED", "REVIEW_REQUIRED", "HOLD"]),
+  priorAwards: z
+    .array(
+      z.object({
+        id: z.string().min(1),
+        title: z.string().min(1),
+        recipient: z.string().nullable(),
+        amount: z.number().nullable(),
+        date: z.string().nullable(),
+        url: z.url({ protocol: /^https$/ }),
+      }),
+    )
+    .optional(),
 });
 
 export const AgentEventSchema = z.object({

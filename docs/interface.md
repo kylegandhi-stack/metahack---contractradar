@@ -42,6 +42,11 @@ If live sources fail but `data/verified-records.json` is usable, the route retur
   - `early_stage_notice`: SAM.gov sources sought / presolicitation (ptype `r`/`p`).
 - `record.url` is always an official source URL. `record.excerpts[].text` is verbatim from the source field named in `field`.
 - `awardAmount` is the historical obligation, never "available budget".
+- Optional fields, which may be absent. The UI must work without them:
+  - `record.solicitationNumber`: the SAM solicitation number.
+  - `record.relatedNotices`: other SAM postings of the same buy, collapsed into this record, such as a presolicitation behind a solicitation.
+  - `record.recipient`: who won a USAspending award.
+  - `result.priorAwards`: past USAspending awards from the same buyer, for open and early-stage notices. Each comes from a source record and is never inferred. `amount` is a historical obligation, never "available budget".
 - Missing facts are `null`. The UI shows "Unknown" or "Not provided".
 - `fitScore` is 0-100 relevance, not a win probability. `fitBreakdown` components are `null` when unknown.
 - `reviewStatus` is set by deterministic code after the Devil's Advocate runs:

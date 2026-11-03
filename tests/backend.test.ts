@@ -593,6 +593,28 @@ test("the warning cap never changes the review status", () => {
   }
 });
 
+test("schemas keep the optional accuracy fields and still accept records without them", () => {
+  const notice = {
+    id: "TEST-NOTICE",
+    source: "sam",
+    kind: "open_notice",
+    title: "[TEST] Notice",
+    url: "https://sam.gov/workspace/contract/opp/TEST-NOTICE/view",
+    retrievedAt: "2026-11-03T00:00:00.000Z",
+    excerpts: [],
+  };
+  assert.ok(SourceRecordSchema.safeParse(notice).success);
+  const fields = {
+    solicitationNumber: "TEST-SOL",
+    relatedNotices: [
+      { id: "TEST-PRE", kind: "early_stage_notice", postedAt: "2026-10-01", url: "https://sam.gov/workspace/contract/opp/TEST-PRE/view" },
+    ],
+    recipient: null,
+  };
+  assert.deepEqual(SourceRecordSchema.parse({ ...notice, ...fields }), { ...notice, ...fields });
+  assert.ok(!SourceRecordSchema.safeParse({ ...notice, relatedNotices: [{ ...fields.relatedNotices[0], url: "http://sam.gov/x" }] }).success);
+});
+
 test("the saved cache is valid, verbatim-shaped and only real-source historical records", () => {
   const cache = loadVerifiedRecords();
   assert.ok(cache);
