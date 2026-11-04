@@ -109,4 +109,4 @@ export function fitLabel(r: RankedResult): string {
  * Display-only: some SAM.gov titles arrive with long runs of U+FFFD (as received; SAM.gov's own page shows the same).
  * Show a plain marker instead of a wall of replacement characters. The record itself stays verbatim.
  */
-export const displayTitle = (title: string) => title.replace(/�{2,}/g, " [Unreadable characters] ").replace(/\s{2,}/g, " ").trim();
+export const displayTitle = (title: string) => title.replace(/�{2,}/g, " [title unreadable in source, see SAM link] ").replace(/\s{2,}/g, " ").trim();
