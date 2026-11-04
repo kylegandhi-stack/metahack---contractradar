@@ -46,7 +46,7 @@ About 290 spoken words, with room for clicks, plus about 5 s for the optional St
 - "Every open contract" or "complete coverage". No search is complete.
 - "The critic checks everything". It reviews the top 5, and other results say so.
 - That it reads a notice's full text, unless descriptions were on for that run. They're off by default.
-- A run time with live SAM.gov until one has been measured. With SAM.gov off, it's 45-48 s locally.
+- A production run time until the final check measures one. Locally, with live SAM.gov, it's about 62 s.
 
 ## Accuracy, with its caveat
 

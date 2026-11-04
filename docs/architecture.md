@@ -2,7 +2,7 @@
 
 Rauros Systems helps a small defense supplier decide which federal opportunities are worth its time. A company profile goes in, and ranked federal records come out, each with evidence, an adversarial review and a status of `APPROVED`, `REVIEW_REQUIRED` or `HOLD`. The repo and internal comments still use the working name ContractRadar.
 
-**Status, 2026-11-02:** this describes `main`. Everything here is merged. Items that need a working SAM.gov key have not been tested against live SAM.gov, as noted below.
+**Status, 2026-11-03:** this describes `main`. Everything here is merged. SAM.gov search and descriptions have run live locally. Production hasn't been timed with live SAM.gov yet.
 
 ## How a request flows
 
@@ -70,7 +70,7 @@ Record text is passed to the model as data, and each prompt says not to treat it
 | Estimated cost | $0.50 |
 | Run time | 105 s in code, 120 s function limit |
 
-**Timing:** with SAM.gov off and USAspending live, three local runs of `main` took 45.1, 47.5 and 48.1 s, with the critic stage slowest at 14-21 s. **A full run with live SAM.gov and descriptions has not been measured.** The target is under 90 s.
+**Timing:** a full local run with live SAM.gov takes about 62 s: 62.0 s with descriptions off and 63.0 s with 2 descriptions. One earlier run took 75.3 s. The target is under 90 s.
 
 ## Accuracy features
 
@@ -85,11 +85,10 @@ Record text is passed to the model as data, and each prompt says not to treat it
 
 All of these are small samples.
 
-- **Hand-labeled production results:** precision@5 of 60% for AquaVector Systems (3 of 5) and 80% for a second test profile (4 of 5). These are 2 saved production runs from before the accuracy changes, labeled by one team member (`data/eval/labeling-sheet.csv`), so they don't measure the current search.
+- **Hand-labeled live run:** 5 of 5 top results were relevant by scope on one labeled live run, with ranks 1-5 labeled by one team member (`data/eval/labeling-sheet-after.csv`). That measures relevance, not winnability: 3 were past awards shown as market signals, and 1 was an expired notice the system correctly put on HOLD.
 
 From `npm run eval`, using 20 AquaVector records labeled by a person:
 
-- **Ranking, on fixed saved records:** precision@5 of 80% (4 of 5) in both of 2 runs, and recall@10 of 50%.
 - **Live retrieval: no usable number yet.** Most live results aren't among the 20 labeled records, and results vary between runs.
 - **Seeded flaws:** the Devil's Advocate caught 4 of 4 synthetic flaws in `npm run test:live`.
 
@@ -119,7 +118,7 @@ Please don't present these as general accuracy.
 - **Single function:** a run is one long request with no streaming, so a dropped connection loses it.
 - **Cost:** per-stage usage is logged, with limits of 150,000 tokens and $0.50 estimated per run. Measured runs cost about $0.09-$0.11 at third-party listed rates that aren't confirmed against Meta's rate sheet.
 - **Cached path:** a Playwright run with federal sources blocked confirmed the USAspending cached banner and labels in the browser. The SAM.gov banner was only tested with a mocked response, because the snapshot is empty until a capture runs after the quota resets.
-- **Live SAM.gov behaviour:** `ccode`, `classificationCode` and the `noticedesc` URL match the official docs, but the description response shape isn't documented and hasn't been seen live.
+- **Live SAM.gov behaviour:** search by product code and `noticedesc` both worked in live local runs, and the description text arrives in the `description` field the code reads.
 
 ## Data sources and acknowledgments
 
