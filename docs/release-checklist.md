@@ -13,8 +13,8 @@ Treat each key as **10 calls for this whole period**. Quotas reset at 4 PM PT, s
 | Key | Step | Calls |
 |---|---|---|
 | Santiago's (local) | "After" eval | 2 |
-| Santiago's (local) | Snapshot capture | up to 7 |
-| Santiago's (local) | **Spare** | **1** |
+| Santiago's (local) | Snapshot capture | up to 6 |
+| Santiago's (local) | **Spare** | **2** |
 | Kyle's (production) | Final check, 2 runs | 4 |
 | Kyle's (production) | Rehearsal and recording, up to 3 runs | 6 |
 
@@ -40,7 +40,7 @@ Treat each key as **10 calls for this whole period**. Quotas reset at 4 PM PT, s
 
 **Kyle needs to be available after the capture** to merge the snapshot PR, because step 4 runs on the deployed snapshot.
 
-**Run the "after" eval before the capture.** It costs 2 calls and is the first real test of `ccode`, so a problem shows up before the 7-call capture spends the rest.
+**Run the "after" eval before the capture.** It costs 2 calls and is the first real test of `ccode`, so a problem shows up before the 6-call capture spends the rest.
 
 ### 1. Merges and fresh pull (Kyle, then Santiago, no SAM.gov calls)
 
@@ -65,7 +65,7 @@ npx tsx --env-file=.env.local scripts/labeling-sheet-after.mts
 - [ ] Add the number to `README.md`, `docs/architecture.md` and `docs/pitch-notes.md`, keeping the caveat: one run, one labeler, and it isn't like for like with the "before" runs, which used a shorter profile and were all notices.
 - [ ] If the number is worse than before, report it honestly and decide together. Don't rerun until it looks better.
 
-### 3. Snapshot capture (Santiago, up to 7 calls)
+### 3. Snapshot capture (Santiago, up to 6 calls)
 
 Saved real notices let the demo keep working if production runs out of quota.
 

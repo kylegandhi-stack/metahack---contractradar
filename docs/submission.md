@@ -41,6 +41,6 @@ Official records remain authoritative. This project isn't affiliated with or end
 
 ## Accuracy
 
-Hand-labeled precision@5 on the current search: **[PRECISION@5: fill in after the 4 PM eval]**.
+Hand-labeled precision@5 on the current search: **100% (5 of 5)**.
 
 This number comes from one labeled run.
