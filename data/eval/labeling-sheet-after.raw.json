@@ -1,0 +1,1511 @@
+{
+  "samCalls": 2,
+  "seconds": 62,
+  "response": {
+    "profile": {
+      "name": "AquaVector Systems",
+      "capabilities": "12-person U.S. maker of hydrophones, underwater acoustic sensors, environmental monitoring instruments, and ruggedized components for autonomous underwater vehicles.",
+      "smallBusiness": true,
+      "certifications": [],
+      "targetAgencies": [
+        "Department of the Navy"
+      ]
+    },
+    "dataMode": "live",
+    "recordsUsed": 28,
+    "results": [
+      {
+        "record": {
+          "id": "4c6008dacce041bfb292583e63e133be",
+          "source": "sam",
+          "kind": "open_notice",
+          "title": "58--HYDROPHONE ASSEMBLY- AND SIMILAR REPLACEMENT PARTS",
+          "agency": "DEPT OF DEFENSE.DEPT OF THE NAVY.NAVSUP.NAVSUP WEAPON SYSTEMS SUPPORT.NAVSUP WSS MECHANICSBURG.NAVSUP WEAPON SYSTEMS SUPPORT MECH",
+          "description": null,
+          "url": "https://sam.gov/workspace/contract/opp/4c6008dacce041bfb292583e63e133be/view",
+          "retrievedAt": "2026-11-04T00:20:35.803Z",
+          "postedAt": "2026-11-02",
+          "deadlineAt": "2026-11-30T16:30:00-04:00",
+          "awardAmount": null,
+          "setAside": null,
+          "naics": "334290",
+          "excerpts": [
+            {
+              "text": "58--HYDROPHONE ASSEMBLY- AND SIMILAR REPLACEMENT PARTS",
+              "field": "title"
+            },
+            {
+              "text": "Solicitation",
+              "field": "type"
+            },
+            {
+              "text": "N0010427QNA22",
+              "field": "solicitationNumber"
+            },
+            {
+              "text": "2026-11-30T16:30:00-04:00",
+              "field": "responseDeadLine"
+            },
+            {
+              "text": "334290",
+              "field": "naicsCode"
+            },
+            {
+              "text": "5845",
+              "field": "classificationCode"
+            },
+            {
+              "text": "DEPT OF DEFENSE.DEPT OF THE NAVY.NAVSUP.NAVSUP WEAPON SYSTEMS SUPPORT.NAVSUP WSS MECHANICSBURG.NAVSUP WEAPON SYSTEMS SUPPORT MECH",
+              "field": "fullParentPathName"
+            }
+          ],
+          "solicitationNumber": "N0010427QNA22",
+          "relatedNotices": [
+            {
+              "id": "c30a58f3c19347e9ae50a8045d8e181e",
+              "kind": "early_stage_notice",
+              "postedAt": "2026-10-15",
+              "url": "https://sam.gov/workspace/contract/opp/c30a58f3c19347e9ae50a8045d8e181e/view"
+            }
+          ]
+        },
+        "fitScore": 73,
+        "fitBreakdown": {
+          "technical": 37,
+          "category": 20,
+          "eligibility": null,
+          "execution": 7,
+          "timing": 9
+        },
+        "fitMax": 100,
+        "fitSignals": [
+          {
+            "signal": "product_term",
+            "points": 8,
+            "max": 8,
+            "detail": "\"hydrophones\" in the title"
+          },
+          {
+            "signal": "target_agency",
+            "points": 7,
+            "max": 7,
+            "detail": "Matches target agency Department of the Navy"
+          },
+          {
+            "signal": "recency",
+            "points": 5,
+            "max": 5,
+            "detail": "Dated 2026-11-02"
+          }
+        ],
+        "confidence": "medium",
+        "eligibility": "needs_verification",
+        "whyMatched": [
+          "Open notice for hydrophone assembly and replacement parts from Department of the Navy, matching company products and target agency.",
+          "The record buys a hydrophone assembly and replacement parts, which is the exact product the company makes",
+          "The buyer is Department of the Navy, matching the company's target agency"
+        ],
+        "blockers": [],
+        "nextSteps": [
+          "Verify specifications and requirements for Hydrophone Assembly and replacement parts",
+          "Verify submission requirements for deadline 2026-11-30T16:30:00-04:00 with NAVSUP Weapon Systems Support Mechanicsburg",
+          "Prepare response materials aligned to hydrophone assembly scope"
+        ],
+        "findings": [
+          {
+            "severity": "WARNING",
+            "issue": "Technical fit asserted from title alone; full specifications, drawings, and requirements not in record and description is missing",
+            "whyItMatters": "Title match suggests relevance but without specs the company cannot confirm it can build to requirement, which determines whether to pursue",
+            "evidenceSourceId": "4c6008dacce041bfb292583e63e133be",
+            "evidenceExcerpt": "58--HYDROPHONE ASSEMBLY- AND SIMILAR REPLACEMENT PARTS",
+            "correctiveAction": "Downgrade to 'Needs verification' and require review of full solicitation N0010427QNA22 specifications before confirming fit"
+          },
+          {
+            "severity": "NOTE",
+            "issue": "SAM.gov description was not retrieved",
+            "whyItMatters": "This review used the notice's title and summary fields only, so requirements in its full text were not checked.",
+            "evidenceSourceId": "4c6008dacce041bfb292583e63e133be",
+            "evidenceExcerpt": null,
+            "correctiveAction": "Read the full notice on the source record."
+          },
+          {
+            "severity": "NOTE",
+            "issue": "Set-aside status and full specifications could not be confirmed from the record text provided",
+            "whyItMatters": "The analyst could not confirm this from the source record.",
+            "evidenceSourceId": null,
+            "evidenceExcerpt": null,
+            "correctiveAction": "Check the source record."
+          }
+        ],
+        "reviewStatus": "REVIEW_REQUIRED",
+        "priorAwards": [
+          {
+            "id": "CONT_AWD_N6660426FF918_9700_N6660419DF900_9700",
+            "title": "THE PURCHASE OF DT-574 25FT, 50FT, AND 100FT HYDROPHONES.",
+            "recipient": "MASSA PRODUCTS CORPORATION",
+            "amount": 2798160.17,
+            "date": "2026-07-02",
+            "url": "https://www.usaspending.gov/award/CONT_AWD_N6660426FF918_9700_N6660419DF900_9700"
+          },
+          {
+            "id": "CONT_AWD_N0016426PG044_9700_-NONE-_-NONE-",
+            "title": "HYDROPHONE SWAGE BANDS P/N: 6029159-001",
+            "recipient": "RUSSELL' S TUBE FORMING INC",
+            "amount": 80852,
+            "date": "2026-06-11",
+            "url": "https://www.usaspending.gov/award/CONT_AWD_N0016426PG044_9700_-NONE-_-NONE-"
+          },
+          {
+            "id": "CONT_AWD_N6660426FD112_9700_N6660421DD100_9700",
+            "title": "DT-513 SERIES HYDROPHONES",
+            "recipient": "SYQWEST LLC",
+            "amount": 1250904,
+            "date": "2026-04-22",
+            "url": "https://www.usaspending.gov/award/CONT_AWD_N6660426FD112_9700_N6660421DD100_9700"
+          },
+          {
+            "id": "CONT_AWD_N0016426FG019_9700_N0016425DGP85_9700",
+            "title": "HYDROPHONE WINDOWS",
+            "recipient": "DUCOMMUN LABARGE TECHNOLOGIES, INC.",
+            "amount": 153200,
+            "date": "2026-01-21",
+            "url": "https://www.usaspending.gov/award/CONT_AWD_N0016426FG019_9700_N0016425DGP85_9700"
+          },
+          {
+            "id": "CONT_AWD_N6660426FF917_9700_N6660419DF900_9700",
+            "title": "THE PURCHASE OF DT-574 50FT AND 100FT HYDROPHONES.",
+            "recipient": "MASSA PRODUCTS CORPORATION",
+            "amount": 513067.05,
+            "date": "2026-01-20",
+            "url": "https://www.usaspending.gov/award/CONT_AWD_N6660426FF917_9700_N6660419DF900_9700"
+          }
+        ]
+      },
+      {
+        "record": {
+          "id": "CONT_AWD_N6660426FF918_9700_N6660419DF900_9700",
+          "source": "usaspending",
+          "kind": "historical_award",
+          "title": "THE PURCHASE OF DT-574 25FT, 50FT, AND 100FT HYDROPHONES.",
+          "agency": "Department of Defense / Department of the Navy",
+          "description": "THE PURCHASE OF DT-574 25FT, 50FT, AND 100FT HYDROPHONES.",
+          "url": "https://www.usaspending.gov/award/CONT_AWD_N6660426FF918_9700_N6660419DF900_9700",
+          "retrievedAt": "2026-11-04T00:20:37.892Z",
+          "postedAt": "2026-07-02",
+          "deadlineAt": null,
+          "awardAmount": 2798160.17,
+          "setAside": null,
+          "naics": "334511",
+          "excerpts": [
+            {
+              "text": "THE PURCHASE OF DT-574 25FT, 50FT, AND 100FT HYDROPHONES.",
+              "field": "Description"
+            },
+            {
+              "text": "N6660426FF918",
+              "field": "Award ID"
+            },
+            {
+              "text": "MASSA PRODUCTS CORPORATION",
+              "field": "Recipient Name"
+            },
+            {
+              "text": "DELIVERY ORDER",
+              "field": "Contract Award Type"
+            },
+            {
+              "text": "SEARCH, DETECTION, NAVIGATION, GUIDANCE, AERONAUTICAL, AND NAUTICAL SYSTEM AND INSTRUMENT MANUFACTURING",
+              "field": "NAICS.description"
+            },
+            {
+              "text": "UNDERWATER SOUND EQUIPMENT",
+              "field": "PSC.description"
+            },
+            {
+              "text": "2026-07-02",
+              "field": "Start Date"
+            },
+            {
+              "text": "2029-08-18",
+              "field": "End Date"
+            }
+          ],
+          "recipient": "MASSA PRODUCTS CORPORATION"
+        },
+        "fitScore": 69,
+        "fitBreakdown": {
+          "technical": 39,
+          "category": 20,
+          "eligibility": null,
+          "execution": 10,
+          "timing": null
+        },
+        "fitMax": 70,
+        "fitSignals": [
+          {
+            "signal": "product_term",
+            "points": 8,
+            "max": 8,
+            "detail": "\"hydrophones\" in the title"
+          },
+          {
+            "signal": "target_agency",
+            "points": 7,
+            "max": 7,
+            "detail": "Matches target agency Department of the Navy"
+          },
+          {
+            "signal": "recency",
+            "points": 5,
+            "max": 5,
+            "detail": "Dated 2026-07-02"
+          },
+          {
+            "signal": "award_size",
+            "points": 10,
+            "max": 10,
+            "detail": "Estimate: $2,798,160 is a comfortable size for 12 people"
+          }
+        ],
+        "confidence": "high",
+        "eligibility": "needs_verification",
+        "whyMatched": [
+          "Historical award for purchase of DT-574 hydrophones in underwater sound equipment field, matching company hydrophone manufacturing.",
+          "Record is a purchase of hydrophones, which the company states it makes"
+        ],
+        "blockers": [],
+        "nextSteps": [
+          "Research buyer Department of the Navy purchase history for DT-574 25FT, 50FT, and 100FT hydrophones",
+          "Conduct market research on DT-574 technical specifications and production requirements",
+          "Identify buyer contacts for underwater sound equipment needs"
+        ],
+        "findings": [
+          {
+            "severity": "NOTE",
+            "issue": "Historical award, not an open opportunity",
+            "whyItMatters": "Useful for buyer discovery; the amount is a past obligation, not available budget.",
+            "evidenceSourceId": "CONT_AWD_N6660426FF918_9700_N6660419DF900_9700",
+            "evidenceExcerpt": null,
+            "correctiveAction": "Look for current notices from this buyer before planning a bid."
+          },
+          {
+            "severity": "NOTE",
+            "issue": "Historical award recipient is a different vendor, not AquaVector Systems",
+            "whyItMatters": "Prevents misreading a third-party award as company past performance or as an actionable solicitation; informs competitive / teaming assessment.",
+            "evidenceSourceId": "CONT_AWD_N6660426FF918_9700_N6660419DF900_9700",
+            "evidenceExcerpt": "MASSA PRODUCTS CORPORATION",
+            "correctiveAction": "Retain as market-intelligence only: note incumbent/awardee is MASSA PRODUCTS CORPORATION and do not present as company win or open opportunity."
+          },
+          {
+            "severity": "NOTE",
+            "issue": "Source description is brief and model-specific; fit to AquaVector DT-574-equivalent capability needs verification",
+            "whyItMatters": "Hydrophone match is generic; model-specific specs and production rate will determine whether future similar buys are pursuable.",
+            "evidenceSourceId": "CONT_AWD_N6660426FF918_9700_N6660419DF900_9700",
+            "evidenceExcerpt": "THE PURCHASE OF DT-574 25FT, 50FT, AND 100FT HYDROPHONES.",
+            "correctiveAction": "Add 'Needs verification: confirm DT-574 specifications, quantities, and whether AquaVector hydrophones meet form/fit/function before pursuing related requirements.'"
+          },
+          {
+            "severity": "NOTE",
+            "issue": "Specific DT-574 technical specifications and quantities",
+            "whyItMatters": "The analyst could not confirm this from the source record.",
+            "evidenceSourceId": null,
+            "evidenceExcerpt": null,
+            "correctiveAction": "Check the source record."
+          },
+          {
+            "severity": "NOTE",
+            "issue": "Whether 12-person capacity meets production rate",
+            "whyItMatters": "The analyst could not confirm this from the source record.",
+            "evidenceSourceId": null,
+            "evidenceExcerpt": null,
+            "correctiveAction": "Check the source record."
+          }
+        ],
+        "reviewStatus": "APPROVED"
+      },
+      {
+        "record": {
+          "id": "CONT_AWD_N6660424FF911_9700_N6660419DF900_9700",
+          "source": "usaspending",
+          "kind": "historical_award",
+          "title": "DT-574 HYDROPHONES, 25 FT. PIGTAIL",
+          "agency": "Department of Defense / Department of the Navy",
+          "description": "DT-574 HYDROPHONES, 25 FT. PIGTAIL",
+          "url": "https://www.usaspending.gov/award/CONT_AWD_N6660424FF911_9700_N6660419DF900_9700",
+          "retrievedAt": "2026-11-04T00:20:37.892Z",
+          "postedAt": "2024-06-24",
+          "deadlineAt": null,
+          "awardAmount": 2288135.27,
+          "setAside": null,
+          "naics": "334511",
+          "excerpts": [
+            {
+              "text": "DT-574 HYDROPHONES, 25 FT. PIGTAIL",
+              "field": "Description"
+            },
+            {
+              "text": "N6660424FF911",
+              "field": "Award ID"
+            },
+            {
+              "text": "MASSA PRODUCTS CORPORATION",
+              "field": "Recipient Name"
+            },
+            {
+              "text": "DELIVERY ORDER",
+              "field": "Contract Award Type"
+            },
+            {
+              "text": "SEARCH, DETECTION, NAVIGATION, GUIDANCE, AERONAUTICAL, AND NAUTICAL SYSTEM AND INSTRUMENT MANUFACTURING",
+              "field": "NAICS.description"
+            },
+            {
+              "text": "UNDERWATER SOUND EQUIPMENT",
+              "field": "PSC.description"
+            },
+            {
+              "text": "2024-07-10",
+              "field": "Start Date"
+            },
+            {
+              "text": "2028-05-03",
+              "field": "End Date"
+            }
+          ],
+          "recipient": "MASSA PRODUCTS CORPORATION"
+        },
+        "fitScore": 67,
+        "fitBreakdown": {
+          "technical": 39,
+          "category": 18,
+          "eligibility": null,
+          "execution": 10,
+          "timing": null
+        },
+        "fitMax": 70,
+        "fitSignals": [
+          {
+            "signal": "product_term",
+            "points": 8,
+            "max": 8,
+            "detail": "\"hydrophones\" in the title"
+          },
+          {
+            "signal": "target_agency",
+            "points": 7,
+            "max": 7,
+            "detail": "Matches target agency Department of the Navy"
+          },
+          {
+            "signal": "recency",
+            "points": 3,
+            "max": 5,
+            "detail": "Dated 2024-06-24"
+          },
+          {
+            "signal": "award_size",
+            "points": 10,
+            "max": 10,
+            "detail": "Estimate: $2,288,135 is a comfortable size for 12 people"
+          }
+        ],
+        "confidence": "medium",
+        "eligibility": "needs_verification",
+        "whyMatched": [
+          "Historical award for DT-574 hydrophones in underwater sound equipment field, matching company hydrophone manufacturing.",
+          "Record buys hydrophones, which the company makes",
+          "PSC is underwater sound equipment"
+        ],
+        "blockers": [],
+        "nextSteps": [
+          "Research buyer Department of the Navy purchase history for DT-574 hydrophones, 25 FT pigtail",
+          "Conduct market research on DT-574 specifications and delivery order patterns",
+          "Identify buyer contacts for underwater sound equipment needs"
+        ],
+        "findings": [
+          {
+            "severity": "WARNING",
+            "issue": "Exact DT-574 build-to-print specifications, qualification and testing requirements are not stated in the record",
+            "whyItMatters": "Hydrophone match is generic; Navy DT-574 may require incumbent tooling, approvals, or performance qualification that a 12-person maker may not meet.",
+            "evidenceSourceId": null,
+            "evidenceExcerpt": null,
+            "correctiveAction": "Treat fit as unverified: obtain DT-574 drawings/specs and qualification requirements and confirm AquaVector can meet them before any pursuit."
+          },
+          {
+            "severity": "NOTE",
+            "issue": "Historical award, not an open opportunity",
+            "whyItMatters": "Useful for buyer discovery; the amount is a past obligation, not available budget.",
+            "evidenceSourceId": "CONT_AWD_N6660424FF911_9700_N6660419DF900_9700",
+            "evidenceExcerpt": null,
+            "correctiveAction": "Look for current notices from this buyer before planning a bid."
+          },
+          {
+            "severity": "NOTE",
+            "issue": "Historical delivery order was awarded to a different vendor",
+            "whyItMatters": "Shows incumbent competition and that this record is not evidence of AquaVector eligibility or award.",
+            "evidenceSourceId": "CONT_AWD_N6660424FF911_9700_N6660419DF900_9700",
+            "evidenceExcerpt": "MASSA PRODUCTS CORPORATION",
+            "correctiveAction": "Retain only as market intelligence on buyer and incumbent; do not treat as AquaVector pipeline or win."
+          },
+          {
+            "severity": "NOTE",
+            "issue": "Record has no open solicitation deadline and shows a closed historical performance period",
+            "whyItMatters": "Prevents mistaking a 2024 award with Start Date 2024-07-10 and End Date 2028-05-03 for an actionable bid.",
+            "evidenceSourceId": "CONT_AWD_N6660424FF911_9700_N6660419DF900_9700",
+            "evidenceExcerpt": "2024-07-10",
+            "correctiveAction": "Do not calendar or pursue; use nextSteps only for historical buyer research for future opportunities."
+          },
+          {
+            "severity": "NOTE",
+            "issue": "Exact DT-574 specifications and qualification requirements could not be confirmed",
+            "whyItMatters": "The analyst could not confirm this from the source record.",
+            "evidenceSourceId": null,
+            "evidenceExcerpt": null,
+            "correctiveAction": "Check the source record."
+          },
+          {
+            "severity": "NOTE",
+            "issue": "Production capacity needed for delivery order could not be confirmed",
+            "whyItMatters": "The analyst could not confirm this from the source record.",
+            "evidenceSourceId": null,
+            "evidenceExcerpt": null,
+            "correctiveAction": "Check the source record."
+          }
+        ],
+        "reviewStatus": "REVIEW_REQUIRED"
+      },
+      {
+        "record": {
+          "id": "CONT_AWD_N6660421F0479_9700_N6660419DF900_9700",
+          "source": "usaspending",
+          "kind": "historical_award",
+          "title": "DT-574 HYDROPHONES, 25 FOOT PIGTAILS, 50 FOOT PIGTAILS, AND 100 FOOT PIGTAILS.",
+          "agency": "Department of Defense / Department of the Navy",
+          "description": "DT-574 HYDROPHONES, 25 FOOT PIGTAILS, 50 FOOT PIGTAILS, AND 100 FOOT PIGTAILS.",
+          "url": "https://www.usaspending.gov/award/CONT_AWD_N6660421F0479_9700_N6660419DF900_9700",
+          "retrievedAt": "2026-11-04T00:20:37.892Z",
+          "postedAt": "2021-05-26",
+          "deadlineAt": null,
+          "awardAmount": 2767507.12,
+          "setAside": null,
+          "naics": "334511",
+          "excerpts": [
+            {
+              "text": "DT-574 HYDROPHONES, 25 FOOT PIGTAILS, 50 FOOT PIGTAILS, AND 100 FOOT PIGTAILS.",
+              "field": "Description"
+            },
+            {
+              "text": "N6660421F0479",
+              "field": "Award ID"
+            },
+            {
+              "text": "MASSA PRODUCTS CORPORATION",
+              "field": "Recipient Name"
+            },
+            {
+              "text": "DELIVERY ORDER",
+              "field": "Contract Award Type"
+            },
+            {
+              "text": "SEARCH, DETECTION, NAVIGATION, GUIDANCE, AERONAUTICAL, AND NAUTICAL SYSTEM AND INSTRUMENT MANUFACTURING",
+              "field": "NAICS.description"
+            },
+            {
+              "text": "UNDERWATER SOUND EQUIPMENT",
+              "field": "PSC.description"
+            },
+            {
+              "text": "2021-05-26",
+              "field": "Start Date"
+            },
+            {
+              "text": "2024-02-24",
+              "field": "End Date"
+            }
+          ],
+          "recipient": "MASSA PRODUCTS CORPORATION"
+        },
+        "fitScore": 66,
+        "fitBreakdown": {
+          "technical": 40,
+          "category": 16,
+          "eligibility": null,
+          "execution": 10,
+          "timing": null
+        },
+        "fitMax": 70,
+        "fitSignals": [
+          {
+            "signal": "product_term",
+            "points": 8,
+            "max": 8,
+            "detail": "\"hydrophones\" in the title"
+          },
+          {
+            "signal": "target_agency",
+            "points": 7,
+            "max": 7,
+            "detail": "Matches target agency Department of the Navy"
+          },
+          {
+            "signal": "recency",
+            "points": 1,
+            "max": 5,
+            "detail": "Dated 2021-05-26"
+          },
+          {
+            "signal": "award_size",
+            "points": 10,
+            "max": 10,
+            "detail": "Estimate: $2,767,507 is a comfortable size for 12 people"
+          }
+        ],
+        "confidence": "high",
+        "eligibility": "needs_verification",
+        "whyMatched": [
+          "Historical award for DT-574 hydrophones in underwater sound equipment field, matching company hydrophone manufacturing.",
+          "Record buys hydrophones, which the company makes",
+          "PSC is underwater sound equipment"
+        ],
+        "blockers": [],
+        "nextSteps": [
+          "Research buyer Department of the Navy purchase history for DT-574 hydrophones with 25, 50, and 100 foot pigtails",
+          "Conduct market research on DT-574 specifications and delivery requirements",
+          "Identify buyer contacts for underwater sound equipment needs"
+        ],
+        "findings": [
+          {
+            "severity": "NOTE",
+            "issue": "Historical award, not an open opportunity",
+            "whyItMatters": "Useful for buyer discovery; the amount is a past obligation, not available budget.",
+            "evidenceSourceId": "CONT_AWD_N6660421F0479_9700_N6660419DF900_9700",
+            "evidenceExcerpt": null,
+            "correctiveAction": "Look for current notices from this buyer before planning a bid."
+          },
+          {
+            "severity": "NOTE",
+            "issue": "Historical award went to a different vendor, not AquaVector Systems",
+            "whyItMatters": "Past award to another vendor does not establish eligibility or advantage for AquaVector on any future buy",
+            "evidenceSourceId": "CONT_AWD_N6660421F0479_9700_N6660419DF900_9700",
+            "evidenceExcerpt": "MASSA PRODUCTS CORPORATION",
+            "correctiveAction": "Retain as historical reference only and require verification of any future open DT-574 requirement before pursuing"
+          },
+          {
+            "severity": "NOTE",
+            "issue": "Performance period ended 2024-02-24 with no open deadline; not an active solicitation",
+            "whyItMatters": "Historical end date and lack of deadline mean there is nothing to bid on now without a new notice",
+            "evidenceSourceId": "CONT_AWD_N6660421F0479_9700_N6660419DF900_9700",
+            "evidenceExcerpt": "2024-02-24",
+            "correctiveAction": "Do not treat as actionable opportunity; monitor for new solicitation as next steps propose"
+          },
+          {
+            "severity": "NOTE",
+            "issue": "Exact DT-574 specifications, drawings, and qualification requirements could not be confirmed",
+            "whyItMatters": "The analyst could not confirm this from the source record.",
+            "evidenceSourceId": null,
+            "evidenceExcerpt": null,
+            "correctiveAction": "Check the source record."
+          },
+          {
+            "severity": "NOTE",
+            "issue": "Production capacity and delivery schedule requirements could not be confirmed",
+            "whyItMatters": "The analyst could not confirm this from the source record.",
+            "evidenceSourceId": null,
+            "evidenceExcerpt": null,
+            "correctiveAction": "Check the source record."
+          }
+        ],
+        "reviewStatus": "APPROVED"
+      },
+      {
+        "record": {
+          "id": "5b9facacec414ae7a94ae96da5b7d68d",
+          "source": "sam",
+          "kind": "open_notice",
+          "title": "DT-511C and DT-592D Hydrophones and Spare Parts",
+          "agency": "DEPT OF DEFENSE.DEPT OF THE NAVY.NAVSEA.NAVSEA WARFARE CENTER.NUWC DIV NEWPORT",
+          "description": null,
+          "url": "https://sam.gov/workspace/contract/opp/5b9facacec414ae7a94ae96da5b7d68d/view",
+          "retrievedAt": "2026-11-04T00:20:35.802Z",
+          "postedAt": "2026-09-21",
+          "deadlineAt": "2026-10-30T14:00:00-04:00",
+          "awardAmount": null,
+          "setAside": "No Set aside used",
+          "naics": "334511",
+          "excerpts": [
+            {
+              "text": "DT-511C and DT-592D Hydrophones and Spare Parts",
+              "field": "title"
+            },
+            {
+              "text": "Solicitation",
+              "field": "type"
+            },
+            {
+              "text": "N6660426R0483",
+              "field": "solicitationNumber"
+            },
+            {
+              "text": "2026-10-30T14:00:00-04:00",
+              "field": "responseDeadLine"
+            },
+            {
+              "text": "No Set aside used",
+              "field": "typeOfSetAsideDescription"
+            },
+            {
+              "text": "NONE",
+              "field": "typeOfSetAside"
+            },
+            {
+              "text": "334511",
+              "field": "naicsCode"
+            },
+            {
+              "text": "5845",
+              "field": "classificationCode"
+            },
+            {
+              "text": "DEPT OF DEFENSE.DEPT OF THE NAVY.NAVSEA.NAVSEA WARFARE CENTER.NUWC DIV NEWPORT",
+              "field": "fullParentPathName"
+            }
+          ],
+          "solicitationNumber": "N6660426R0483"
+        },
+        "fitScore": 82,
+        "fitBreakdown": {
+          "technical": 39,
+          "category": 20,
+          "eligibility": 15,
+          "execution": 8,
+          "timing": 0
+        },
+        "fitMax": 100,
+        "fitSignals": [
+          {
+            "signal": "product_term",
+            "points": 8,
+            "max": 8,
+            "detail": "\"hydrophones\" in the title"
+          },
+          {
+            "signal": "target_agency",
+            "points": 7,
+            "max": 7,
+            "detail": "Matches target agency Department of the Navy"
+          },
+          {
+            "signal": "recency",
+            "points": 5,
+            "max": 5,
+            "detail": "Dated 2026-09-21"
+          }
+        ],
+        "confidence": "low",
+        "eligibility": "meets_known_requirements",
+        "whyMatched": [
+          "Open notice for hydrophones and spare parts from Department of the Navy NUWC Div Newport, matching company products and target agency.",
+          "The record buys hydrophones and spare parts, which is the exact product the company makes",
+          "The buyer is Department of the Navy NUWC Div Newport, matching the company's target agency"
+        ],
+        "blockers": [
+          "Response deadline has passed: 2026-10-30T14:00:00-04:00"
+        ],
+        "nextSteps": [
+          "Verify quantities, specifications, and delivery requirements for DT-511C and DT-592D Hydrophones and Spare Parts",
+          "Verify submission requirements for deadline 2026-10-30T14:00:00-04:00 with NUWC Div Newport",
+          "Prepare response materials aligned to hydrophones and spare parts scope"
+        ],
+        "findings": [
+          {
+            "severity": "BLOCKER",
+            "issue": "Response deadline has passed: 2026-10-30T14:00:00-04:00",
+            "whyItMatters": "The source can still report the notice as active after the response date.",
+            "evidenceSourceId": "5b9facacec414ae7a94ae96da5b7d68d",
+            "evidenceExcerpt": "2026-10-30T14:00:00-04:00",
+            "correctiveAction": "Do not pursue as presented; check the source for an extension or follow-on."
+          },
+          {
+            "severity": "WARNING",
+            "issue": "Response deadline has expired relative to review date",
+            "whyItMatters": "An expired deadline means the company cannot submit unless the notice was extended; pursuing as 'open' wastes effort and risks missed opportunity tracking",
+            "evidenceSourceId": "5b9facacec414ae7a94ae96da5b7d68d",
+            "evidenceExcerpt": "2026-10-30T14:00:00-04:00",
+            "correctiveAction": "Mark as expired/closed; verify in SAM whether N6660426R0483 was extended, amended, or awarded before taking action"
+          },
+          {
+            "severity": "WARNING",
+            "issue": "Exact model-specific requirement needs verification against company catalog",
+            "whyItMatters": "Exact part numbers may impose specific design, qualification, or OEM requirements; general hydrophone capability does not prove ability to supply these items",
+            "evidenceSourceId": "5b9facacec414ae7a94ae96da5b7d68d",
+            "evidenceExcerpt": "DT-511C and DT-592D Hydrophones and Spare Parts",
+            "correctiveAction": "Needs verification: confirm specifications, drawings, and whether DT-511C/DT-592D are brand-name, sole-source, or build-to-print and whether AquaVector can meet them"
+          },
+          {
+            "severity": "NOTE",
+            "issue": "SAM.gov description was not retrieved",
+            "whyItMatters": "This review used the notice's title and summary fields only, so requirements in its full text were not checked.",
+            "evidenceSourceId": "5b9facacec414ae7a94ae96da5b7d68d",
+            "evidenceExcerpt": null,
+            "correctiveAction": "Read the full notice on the source record."
+          },
+          {
+            "severity": "NOTE",
+            "issue": "Quantities, specifications, and delivery requirements could not be confirmed from the record text provided",
+            "whyItMatters": "The analyst could not confirm this from the source record.",
+            "evidenceSourceId": null,
+            "evidenceExcerpt": null,
+            "correctiveAction": "Check the source record."
+          }
+        ],
+        "reviewStatus": "HOLD",
+        "priorAwards": [
+          {
+            "id": "CONT_AWD_N6660426FF918_9700_N6660419DF900_9700",
+            "title": "THE PURCHASE OF DT-574 25FT, 50FT, AND 100FT HYDROPHONES.",
+            "recipient": "MASSA PRODUCTS CORPORATION",
+            "amount": 2798160.17,
+            "date": "2026-07-02",
+            "url": "https://www.usaspending.gov/award/CONT_AWD_N6660426FF918_9700_N6660419DF900_9700"
+          },
+          {
+            "id": "CONT_AWD_N6660426FD112_9700_N6660421DD100_9700",
+            "title": "DT-513 SERIES HYDROPHONES",
+            "recipient": "SYQWEST LLC",
+            "amount": 1250904,
+            "date": "2026-04-22",
+            "url": "https://www.usaspending.gov/award/CONT_AWD_N6660426FD112_9700_N6660421DD100_9700"
+          },
+          {
+            "id": "CONT_AWD_N6660426FF917_9700_N6660419DF900_9700",
+            "title": "THE PURCHASE OF DT-574 50FT AND 100FT HYDROPHONES.",
+            "recipient": "MASSA PRODUCTS CORPORATION",
+            "amount": 513067.05,
+            "date": "2026-01-20",
+            "url": "https://www.usaspending.gov/award/CONT_AWD_N6660426FF917_9700_N6660419DF900_9700"
+          },
+          {
+            "id": "CONT_AWD_N6660426FD111_9700_N6660421DD100_9700",
+            "title": "DT-513 SERIES HYDROPHONES",
+            "recipient": "SYQWEST LLC",
+            "amount": 349894,
+            "date": "2025-12-09",
+            "url": "https://www.usaspending.gov/award/CONT_AWD_N6660426FD111_9700_N6660421DD100_9700"
+          },
+          {
+            "id": "CONT_AWD_N6660425FF915_9700_N6660419DF900_9700",
+            "title": "THE PURCHASE OF DT-574 50FT AND 100FT HYDROPHONES.",
+            "recipient": "MASSA PRODUCTS CORPORATION",
+            "amount": 866858,
+            "date": "2025-08-14",
+            "url": "https://www.usaspending.gov/award/CONT_AWD_N6660425FF915_9700_N6660419DF900_9700"
+          }
+        ]
+      },
+      {
+        "record": {
+          "id": "CONT_AWD_N6660424FE906_9700_N6660419DE900_9700",
+          "source": "usaspending",
+          "kind": "historical_award",
+          "title": "DT-511C HYDROPHONE PRODUCTION",
+          "agency": "Department of Defense / Department of the Navy",
+          "description": "DT-511C HYDROPHONE PRODUCTION",
+          "url": "https://www.usaspending.gov/award/CONT_AWD_N6660424FE906_9700_N6660419DE900_9700",
+          "retrievedAt": "2026-11-04T00:20:37.892Z",
+          "postedAt": "2024-07-29",
+          "deadlineAt": null,
+          "awardAmount": 1724426,
+          "setAside": null,
+          "naics": "334511",
+          "excerpts": [
+            {
+              "text": "DT-511C HYDROPHONE PRODUCTION",
+              "field": "Description"
+            },
+            {
+              "text": "N6660424FE906",
+              "field": "Award ID"
+            },
+            {
+              "text": "UNDERSEA SENSOR SYSTEMS, INC.",
+              "field": "Recipient Name"
+            },
+            {
+              "text": "DELIVERY ORDER",
+              "field": "Contract Award Type"
+            },
+            {
+              "text": "SEARCH, DETECTION, NAVIGATION, GUIDANCE, AERONAUTICAL, AND NAUTICAL SYSTEM AND INSTRUMENT MANUFACTURING",
+              "field": "NAICS.description"
+            },
+            {
+              "text": "UNDERWATER SOUND EQUIPMENT",
+              "field": "PSC.description"
+            },
+            {
+              "text": "2024-07-29",
+              "field": "Start Date"
+            },
+            {
+              "text": "2025-07-29",
+              "field": "End Date"
+            }
+          ],
+          "recipient": "UNDERSEA SENSOR SYSTEMS, INC."
+        },
+        "fitScore": 66,
+        "fitBreakdown": {
+          "technical": 38,
+          "category": 18,
+          "eligibility": null,
+          "execution": 10,
+          "timing": null
+        },
+        "fitMax": 70,
+        "fitSignals": [
+          {
+            "signal": "product_term",
+            "points": 8,
+            "max": 8,
+            "detail": "\"hydrophones\" in the title"
+          },
+          {
+            "signal": "target_agency",
+            "points": 7,
+            "max": 7,
+            "detail": "Matches target agency Department of the Navy"
+          },
+          {
+            "signal": "recency",
+            "points": 3,
+            "max": 5,
+            "detail": "Dated 2024-07-29"
+          },
+          {
+            "signal": "award_size",
+            "points": 10,
+            "max": 10,
+            "detail": "Estimate: $1,724,426 is a comfortable size for 12 people"
+          }
+        ],
+        "confidence": "medium",
+        "eligibility": "needs_verification",
+        "whyMatched": [
+          "Record is hydrophone production, which the company makes",
+          "PSC is underwater sound equipment"
+        ],
+        "blockers": [],
+        "nextSteps": [
+          "Open the source record and verify scope."
+        ],
+        "findings": [
+          {
+            "severity": "WARNING",
+            "issue": "Outside the shortlist: not reviewed by the Devil's Advocate",
+            "whyItMatters": "Only the top five get an independent challenge in each run.",
+            "evidenceSourceId": null,
+            "evidenceExcerpt": null,
+            "correctiveAction": "Needs verification against the source record."
+          },
+          {
+            "severity": "NOTE",
+            "issue": "Historical award, not an open opportunity",
+            "whyItMatters": "Useful for buyer discovery; the amount is a past obligation, not available budget.",
+            "evidenceSourceId": "CONT_AWD_N6660424FE906_9700_N6660419DE900_9700",
+            "evidenceExcerpt": null,
+            "correctiveAction": "Look for current notices from this buyer before planning a bid."
+          },
+          {
+            "severity": "NOTE",
+            "issue": "Exact DT-511C specifications and qualification requirements could not be confirmed",
+            "whyItMatters": "The analyst could not confirm this from the source record.",
+            "evidenceSourceId": null,
+            "evidenceExcerpt": null,
+            "correctiveAction": "Check the source record."
+          },
+          {
+            "severity": "NOTE",
+            "issue": "Production volume and tooling requirements could not be confirmed",
+            "whyItMatters": "The analyst could not confirm this from the source record.",
+            "evidenceSourceId": null,
+            "evidenceExcerpt": null,
+            "correctiveAction": "Check the source record."
+          }
+        ],
+        "reviewStatus": "REVIEW_REQUIRED"
+      },
+      {
+        "record": {
+          "id": "CONT_AWD_N6660424FF910_9700_N6660419DF900_9700",
+          "source": "usaspending",
+          "kind": "historical_award",
+          "title": "DT-574 HYDROPHONE, 25 FT. BLOCK BUY",
+          "agency": "Department of Defense / Department of the Navy",
+          "description": "DT-574 HYDROPHONE, 25 FT. BLOCK BUY",
+          "url": "https://www.usaspending.gov/award/CONT_AWD_N6660424FF910_9700_N6660419DF900_9700",
+          "retrievedAt": "2026-11-04T00:20:44.561Z",
+          "postedAt": "2024-06-07",
+          "deadlineAt": null,
+          "awardAmount": 5614216.74,
+          "setAside": null,
+          "naics": "334511",
+          "excerpts": [
+            {
+              "text": "DT-574 HYDROPHONE, 25 FT. BLOCK BUY",
+              "field": "Description"
+            },
+            {
+              "text": "N6660424FF910",
+              "field": "Award ID"
+            },
+            {
+              "text": "MASSA PRODUCTS CORPORATION",
+              "field": "Recipient Name"
+            },
+            {
+              "text": "DELIVERY ORDER",
+              "field": "Contract Award Type"
+            },
+            {
+              "text": "SEARCH, DETECTION, NAVIGATION, GUIDANCE, AERONAUTICAL, AND NAUTICAL SYSTEM AND INSTRUMENT MANUFACTURING",
+              "field": "NAICS.description"
+            },
+            {
+              "text": "UNDERWATER SOUND EQUIPMENT",
+              "field": "PSC.description"
+            },
+            {
+              "text": "2024-05-31",
+              "field": "Start Date"
+            },
+            {
+              "text": "2026-03-01",
+              "field": "End Date"
+            }
+          ],
+          "recipient": "MASSA PRODUCTS CORPORATION"
+        },
+        "fitScore": 63,
+        "fitBreakdown": {
+          "technical": 38,
+          "category": 18,
+          "eligibility": null,
+          "execution": 7,
+          "timing": null
+        },
+        "fitMax": 70,
+        "fitSignals": [
+          {
+            "signal": "product_term",
+            "points": 8,
+            "max": 8,
+            "detail": "\"hydrophones\" in the title"
+          },
+          {
+            "signal": "target_agency",
+            "points": 7,
+            "max": 7,
+            "detail": "Matches target agency Department of the Navy"
+          },
+          {
+            "signal": "recency",
+            "points": 3,
+            "max": 5,
+            "detail": "Dated 2024-06-07"
+          },
+          {
+            "signal": "award_size",
+            "points": 7,
+            "max": 10,
+            "detail": "Estimate: $5,614,217 is a stretch for 12 people"
+          }
+        ],
+        "confidence": "medium",
+        "eligibility": "needs_verification",
+        "whyMatched": [
+          "The past award bought hydrophones, which is the exact product the company makes"
+        ],
+        "blockers": [],
+        "nextSteps": [
+          "Open the source record and verify scope."
+        ],
+        "findings": [
+          {
+            "severity": "WARNING",
+            "issue": "Outside the shortlist: not reviewed by the Devil's Advocate",
+            "whyItMatters": "Only the top five get an independent challenge in each run.",
+            "evidenceSourceId": null,
+            "evidenceExcerpt": null,
+            "correctiveAction": "Needs verification against the source record."
+          },
+          {
+            "severity": "NOTE",
+            "issue": "Historical award, not an open opportunity",
+            "whyItMatters": "Useful for buyer discovery; the amount is a past obligation, not available budget.",
+            "evidenceSourceId": "CONT_AWD_N6660424FF910_9700_N6660419DF900_9700",
+            "evidenceExcerpt": null,
+            "correctiveAction": "Look for current notices from this buyer before planning a bid."
+          },
+          {
+            "severity": "NOTE",
+            "issue": "Whether a 12-person firm could perform a block buy of this dollar value could not be confirmed",
+            "whyItMatters": "The analyst could not confirm this from the source record.",
+            "evidenceSourceId": null,
+            "evidenceExcerpt": null,
+            "correctiveAction": "Check the source record."
+          }
+        ],
+        "reviewStatus": "REVIEW_REQUIRED"
+      },
+      {
+        "record": {
+          "id": "CONT_AWD_N6660420F8096_9700_N6660419DF900_9700",
+          "source": "usaspending",
+          "kind": "historical_award",
+          "title": "DT-574 HYDROPHONE, 25 FT.",
+          "agency": "Department of Defense / Department of the Navy",
+          "description": "DT-574 HYDROPHONE, 25 FT.",
+          "url": "https://www.usaspending.gov/award/CONT_AWD_N6660420F8096_9700_N6660419DF900_9700",
+          "retrievedAt": "2026-11-04T00:20:44.561Z",
+          "postedAt": "2020-03-18",
+          "deadlineAt": null,
+          "awardAmount": 3507860.04,
+          "setAside": null,
+          "naics": "334511",
+          "excerpts": [
+            {
+              "text": "DT-574 HYDROPHONE, 25 FT.",
+              "field": "Description"
+            },
+            {
+              "text": "N6660420F8096",
+              "field": "Award ID"
+            },
+            {
+              "text": "MASSA PRODUCTS CORPORATION",
+              "field": "Recipient Name"
+            },
+            {
+              "text": "DELIVERY ORDER",
+              "field": "Contract Award Type"
+            },
+            {
+              "text": "SEARCH, DETECTION, NAVIGATION, GUIDANCE, AERONAUTICAL, AND NAUTICAL SYSTEM AND INSTRUMENT MANUFACTURING",
+              "field": "NAICS.description"
+            },
+            {
+              "text": "UNDERWATER SOUND EQUIPMENT",
+              "field": "PSC.description"
+            },
+            {
+              "text": "2020-03-20",
+              "field": "Start Date"
+            },
+            {
+              "text": "2023-03-12",
+              "field": "End Date"
+            }
+          ],
+          "recipient": "MASSA PRODUCTS CORPORATION"
+        },
+        "fitScore": 60,
+        "fitBreakdown": {
+          "technical": 38,
+          "category": 15,
+          "eligibility": null,
+          "execution": 7,
+          "timing": null
+        },
+        "fitMax": 70,
+        "fitSignals": [
+          {
+            "signal": "product_term",
+            "points": 8,
+            "max": 8,
+            "detail": "\"hydrophones\" in the title"
+          },
+          {
+            "signal": "target_agency",
+            "points": 7,
+            "max": 7,
+            "detail": "Matches target agency Department of the Navy"
+          },
+          {
+            "signal": "recency",
+            "points": 0,
+            "max": 5,
+            "detail": "Dated 2020-03-18"
+          },
+          {
+            "signal": "award_size",
+            "points": 7,
+            "max": 10,
+            "detail": "Estimate: $3,507,860 is a stretch for 12 people"
+          }
+        ],
+        "confidence": "medium",
+        "eligibility": "needs_verification",
+        "whyMatched": [
+          "Record buys hydrophones, which the company states it makes"
+        ],
+        "blockers": [],
+        "nextSteps": [
+          "Open the source record and verify scope."
+        ],
+        "findings": [
+          {
+            "severity": "WARNING",
+            "issue": "Outside the shortlist: not reviewed by the Devil's Advocate",
+            "whyItMatters": "Only the top five get an independent challenge in each run.",
+            "evidenceSourceId": null,
+            "evidenceExcerpt": null,
+            "correctiveAction": "Needs verification against the source record."
+          },
+          {
+            "severity": "NOTE",
+            "issue": "Historical award, not an open opportunity",
+            "whyItMatters": "Useful for buyer discovery; the amount is a past obligation, not available budget.",
+            "evidenceSourceId": "CONT_AWD_N6660420F8096_9700_N6660419DF900_9700",
+            "evidenceExcerpt": null,
+            "correctiveAction": "Look for current notices from this buyer before planning a bid."
+          },
+          {
+            "severity": "NOTE",
+            "issue": "Specific DT-574 technical specifications and quantities",
+            "whyItMatters": "The analyst could not confirm this from the source record.",
+            "evidenceSourceId": null,
+            "evidenceExcerpt": null,
+            "correctiveAction": "Check the source record."
+          },
+          {
+            "severity": "NOTE",
+            "issue": "Whether 12-person capacity meets production rate",
+            "whyItMatters": "The analyst could not confirm this from the source record.",
+            "evidenceSourceId": null,
+            "evidenceExcerpt": null,
+            "correctiveAction": "Check the source record."
+          }
+        ],
+        "reviewStatus": "REVIEW_REQUIRED"
+      },
+      {
+        "record": {
+          "id": "CONT_AWD_N6660419F2599_9700_N6660419DE900_9700",
+          "source": "usaspending",
+          "kind": "historical_award",
+          "title": "DT-511C AND DT-592D FIRST ARTICLE UNITS AND HYDROPHONE PRODUCT DRAWINGS",
+          "agency": "Department of Defense / Department of the Navy",
+          "description": "DT-511C AND DT-592D FIRST ARTICLE UNITS AND HYDROPHONE PRODUCT DRAWINGS",
+          "url": "https://www.usaspending.gov/award/CONT_AWD_N6660419F2599_9700_N6660419DE900_9700",
+          "retrievedAt": "2026-11-04T00:20:44.561Z",
+          "postedAt": "2019-07-31",
+          "deadlineAt": null,
+          "awardAmount": 3205793.17,
+          "setAside": null,
+          "naics": "334511",
+          "excerpts": [
+            {
+              "text": "DT-511C AND DT-592D FIRST ARTICLE UNITS AND HYDROPHONE PRODUCT DRAWINGS",
+              "field": "Description"
+            },
+            {
+              "text": "N6660419F2599",
+              "field": "Award ID"
+            },
+            {
+              "text": "UNDERSEA SENSOR SYSTEMS, INC.",
+              "field": "Recipient Name"
+            },
+            {
+              "text": "DELIVERY ORDER",
+              "field": "Contract Award Type"
+            },
+            {
+              "text": "SEARCH, DETECTION, NAVIGATION, GUIDANCE, AERONAUTICAL, AND NAUTICAL SYSTEM AND INSTRUMENT MANUFACTURING",
+              "field": "NAICS.description"
+            },
+            {
+              "text": "UNDERWATER SOUND EQUIPMENT",
+              "field": "PSC.description"
+            },
+            {
+              "text": "2019-07-30",
+              "field": "Start Date"
+            },
+            {
+              "text": "2021-01-30",
+              "field": "End Date"
+            }
+          ],
+          "recipient": "UNDERSEA SENSOR SYSTEMS, INC."
+        },
+        "fitScore": 58,
+        "fitBreakdown": {
+          "technical": 36,
+          "category": 15,
+          "eligibility": null,
+          "execution": 7,
+          "timing": null
+        },
+        "fitMax": 70,
+        "fitSignals": [
+          {
+            "signal": "product_term",
+            "points": 8,
+            "max": 8,
+            "detail": "\"hydrophones\" in the title"
+          },
+          {
+            "signal": "target_agency",
+            "points": 7,
+            "max": 7,
+            "detail": "Matches target agency Department of the Navy"
+          },
+          {
+            "signal": "recency",
+            "points": 0,
+            "max": 5,
+            "detail": "Dated 2019-07-31"
+          },
+          {
+            "signal": "award_size",
+            "points": 7,
+            "max": 10,
+            "detail": "Estimate: $3,205,793 is a stretch for 12 people"
+          }
+        ],
+        "confidence": "medium",
+        "eligibility": "needs_verification",
+        "whyMatched": [
+          "Record buys hydrophone first-article units, which the company states it makes"
+        ],
+        "blockers": [],
+        "nextSteps": [
+          "Open the source record and verify scope."
+        ],
+        "findings": [
+          {
+            "severity": "WARNING",
+            "issue": "Outside the shortlist: not reviewed by the Devil's Advocate",
+            "whyItMatters": "Only the top five get an independent challenge in each run.",
+            "evidenceSourceId": null,
+            "evidenceExcerpt": null,
+            "correctiveAction": "Needs verification against the source record."
+          },
+          {
+            "severity": "NOTE",
+            "issue": "Historical award, not an open opportunity",
+            "whyItMatters": "Useful for buyer discovery; the amount is a past obligation, not available budget.",
+            "evidenceSourceId": "CONT_AWD_N6660419F2599_9700_N6660419DE900_9700",
+            "evidenceExcerpt": null,
+            "correctiveAction": "Look for current notices from this buyer before planning a bid."
+          },
+          {
+            "severity": "NOTE",
+            "issue": "DT-511C and DT-592D specifications and first-article requirements",
+            "whyItMatters": "The analyst could not confirm this from the source record.",
+            "evidenceSourceId": null,
+            "evidenceExcerpt": null,
+            "correctiveAction": "Check the source record."
+          },
+          {
+            "severity": "NOTE",
+            "issue": "Whether 12-person capacity meets production and drawing requirements",
+            "whyItMatters": "The analyst could not confirm this from the source record.",
+            "evidenceSourceId": null,
+            "evidenceExcerpt": null,
+            "correctiveAction": "Check the source record."
+          }
+        ],
+        "reviewStatus": "REVIEW_REQUIRED"
+      },
+      {
+        "record": {
+          "id": "CONT_AWD_N6660423FF909_9700_N6660419DF900_9700",
+          "source": "usaspending",
+          "kind": "historical_award",
+          "title": "DT-574 HYDROPHONE, 25 FT.",
+          "agency": "Department of Defense / Defense Contract Management Agency",
+          "description": "DT-574 HYDROPHONE, 25 FT.",
+          "url": "https://www.usaspending.gov/award/CONT_AWD_N6660423FF909_9700_N6660419DF900_9700",
+          "retrievedAt": "2026-11-04T00:20:44.561Z",
+          "postedAt": "2023-05-22",
+          "deadlineAt": null,
+          "awardAmount": 3934551.88,
+          "setAside": null,
+          "naics": "334511",
+          "excerpts": [
+            {
+              "text": "DT-574 HYDROPHONE, 25 FT.",
+              "field": "Description"
+            },
+            {
+              "text": "N6660423FF909",
+              "field": "Award ID"
+            },
+            {
+              "text": "MASSA PRODUCTS CORPORATION",
+              "field": "Recipient Name"
+            },
+            {
+              "text": "DELIVERY ORDER",
+              "field": "Contract Award Type"
+            },
+            {
+              "text": "SEARCH, DETECTION, NAVIGATION, GUIDANCE, AERONAUTICAL, AND NAUTICAL SYSTEM AND INSTRUMENT MANUFACTURING",
+              "field": "NAICS.description"
+            },
+            {
+              "text": "UNDERWATER SOUND EQUIPMENT",
+              "field": "PSC.description"
+            },
+            {
+              "text": "2023-05-19",
+              "field": "Start Date"
+            },
+            {
+              "text": "2026-03-31",
+              "field": "End Date"
+            }
+          ],
+          "recipient": "MASSA PRODUCTS CORPORATION"
+        },
+        "fitScore": 54,
+        "fitBreakdown": {
+          "technical": 36,
+          "category": 11,
+          "eligibility": null,
+          "execution": 7,
+          "timing": null
+        },
+        "fitMax": 70,
+        "fitSignals": [
+          {
+            "signal": "product_term",
+            "points": 8,
+            "max": 8,
+            "detail": "\"hydrophones\" in the title"
+          },
+          {
+            "signal": "target_agency",
+            "points": 0,
+            "max": 7,
+            "detail": "Not one of the target agencies"
+          },
+          {
+            "signal": "recency",
+            "points": 3,
+            "max": 5,
+            "detail": "Dated 2023-05-22"
+          },
+          {
+            "signal": "award_size",
+            "points": 7,
+            "max": 10,
+            "detail": "Estimate: $3,934,552 is a stretch for 12 people"
+          }
+        ],
+        "confidence": "medium",
+        "eligibility": "needs_verification",
+        "whyMatched": [
+          "The past award bought hydrophones, which is the exact product the company makes"
+        ],
+        "blockers": [],
+        "nextSteps": [
+          "Open the source record and verify scope."
+        ],
+        "findings": [
+          {
+            "severity": "WARNING",
+            "issue": "Outside the shortlist: not reviewed by the Devil's Advocate",
+            "whyItMatters": "Only the top five get an independent challenge in each run.",
+            "evidenceSourceId": null,
+            "evidenceExcerpt": null,
+            "correctiveAction": "Needs verification against the source record."
+          },
+          {
+            "severity": "NOTE",
+            "issue": "Historical award, not an open opportunity",
+            "whyItMatters": "Useful for buyer discovery; the amount is a past obligation, not available budget.",
+            "evidenceSourceId": "CONT_AWD_N6660423FF909_9700_N6660419DF900_9700",
+            "evidenceExcerpt": null,
+            "correctiveAction": "Look for current notices from this buyer before planning a bid."
+          },
+          {
+            "severity": "NOTE",
+            "issue": "Whether a 12-person firm could perform an order of this dollar value could not be confirmed",
+            "whyItMatters": "The analyst could not confirm this from the source record.",
+            "evidenceSourceId": null,
+            "evidenceExcerpt": null,
+            "correctiveAction": "Check the source record."
+          }
+        ],
+        "reviewStatus": "REVIEW_REQUIRED"
+      }
+    ],
+    "agentEvents": [
+      {
+        "step": "planner",
+        "status": "started",
+        "timestamp": "2026-11-04T00:20:27.947Z",
+        "detail": "Extracting capabilities and search terms"
+      },
+      {
+        "step": "planner",
+        "status": "completed",
+        "timestamp": "2026-11-04T00:20:32.649Z",
+        "detail": "Search terms: hydrophones, underwater acoustic sensors, environmental monitoring instruments, ruggedized components, hydrophone, acoustic sensor, underwater sensor, monitoring instrument. Provisional categories: PSC 5845, NAICS 334511, NAICS 334513"
+      },
+      {
+        "step": "scout",
+        "status": "started",
+        "timestamp": "2026-11-04T00:20:32.649Z",
+        "detail": "Searching federal sources with model-directed tool calls"
+      },
+      {
+        "step": "scout",
+        "status": "completed",
+        "timestamp": "2026-11-04T00:20:44.562Z",
+        "detail": "2 tool round(s): search_sam_notices(hydrophones); search_sam_notices(PSC 5845); search_awards(hydrophones); search_awards(hydrophones, keyword backup). 28 unique records."
+      },
+      {
+        "step": "analyst",
+        "status": "started",
+        "timestamp": "2026-11-04T00:20:44.856Z",
+        "detail": "Assessing 12 records against the profile"
+      },
+      {
+        "step": "analyst",
+        "status": "completed",
+        "timestamp": "2026-11-04T00:21:05.637Z",
+        "detail": "Assessed 12 of 12 records, with verbatim evidence checks."
+      },
+      {
+        "step": "strategist",
+        "status": "started",
+        "timestamp": "2026-11-04T00:21:05.733Z",
+        "detail": "Choosing the shortlist and next steps"
+      },
+      {
+        "step": "strategist",
+        "status": "completed",
+        "timestamp": "2026-11-04T00:21:11.657Z",
+        "detail": "Shortlisted 5 records."
+      },
+      {
+        "step": "devils_advocate",
+        "status": "started",
+        "timestamp": "2026-11-04T00:21:11.894Z",
+        "detail": "Independently challenging 5 shortlisted records"
+      },
+      {
+        "step": "devils_advocate",
+        "status": "completed",
+        "timestamp": "2026-11-04T00:21:29.880Z",
+        "detail": "Read 0 SAM.gov description(s). Returned 5 verdicts with 10 findings."
+      }
+    ],
+    "runAt": "2026-11-04T00:20:27.947Z",
+    "warnings": []
+  }
+}

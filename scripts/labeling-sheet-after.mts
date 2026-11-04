@@ -54,6 +54,11 @@ const response = await runResearch(PROFILE, { signal: AbortSignal.timeout(180_00
 const seconds = ((Date.now() - startedAt) / 1000).toFixed(1);
 console.log(`SAM.gov calls: ${samCalls}. Run time: ${seconds} s. Data: ${response.dataMode}.`);
 
+// Saved first, so a failed write or a stop below can't lose a run that already spent its SAM.gov calls.
+const raw = `${out.replace(/\.csv$/, "")}.raw.json`;
+writeFileSync(raw, `${JSON.stringify({ samCalls, seconds: Number(seconds), response }, null, 2)}\n`);
+console.log(`Raw results: ${raw}`);
+
 // A sheet without live SAM.gov data can't be compared with the earlier runs, so it isn't written.
 const samProblem = response.warnings.find((warning) => warning.includes("SAM.gov"));
 if (response.dataMode !== "live" || samProblem) stop(`SAM.gov wasn't fully live: ${samProblem ?? response.dataMode}. Nothing written.`);
