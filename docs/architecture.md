@@ -2,7 +2,7 @@
 
 Rauros Systems helps a small defense supplier decide which federal opportunities are worth its time. A company profile goes in, and ranked federal records come out, each with evidence, an adversarial review and a status of `APPROVED`, `REVIEW_REQUIRED` or `HOLD`. The repo and internal comments still use the working name ContractRadar.
 
-**Status, 2026-11-03:** this describes `main`. Everything here is merged. SAM.gov search and descriptions have run live locally. Production hasn't been timed with live SAM.gov yet.
+**Status, 2026-11-03:** this describes `main`. Everything here is merged. SAM.gov search and descriptions have run live locally, and SAM.gov search has run live in production.
 
 ## How a request flows
 
@@ -70,7 +70,7 @@ Record text is passed to the model as data, and each prompt says not to treat it
 | Estimated cost | $0.50 |
 | Run time | 105 s in code, 120 s function limit |
 
-**Timing:** a full local run with live SAM.gov takes about 62 s: 62.0 s with descriptions off and 63.0 s with 2 descriptions. One earlier run took 75.3 s. The target is under 90 s.
+**Timing:** a full local run with live SAM.gov takes about 62 s: 62.0 s with descriptions off and 63.0 s with 2 descriptions. One earlier run took 75.3 s. In production, with descriptions off, two runs took 55.1 and 58.7 s. The target is under 90 s.
 
 ## Accuracy features
 
