@@ -104,3 +104,9 @@ export function fitLabel(r: RankedResult): string {
   if (!isHistorical(r)) return "Fit score";
   return isStrongHistorical(r) ? "Strong historical match" : "Hist. relevance";
 }
+
+/**
+ * Display-only: SAM.gov sometimes returns titles with long runs of U+FFFD (undecodable bytes, as received).
+ * Show a plain marker instead of a wall of replacement characters. The record itself stays verbatim.
+ */
+export const displayTitle = (title: string) => title.replace(/�{2,}/g, " [unreadable characters] ").replace(/\s{2,}/g, " ").trim();

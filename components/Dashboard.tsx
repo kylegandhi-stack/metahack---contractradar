@@ -9,7 +9,7 @@ import { HeroBackdrop, HeroCredit } from "./HeroBackdrop";
 import { OpportunityCard } from "./OpportunityCard";
 import { OpportunityDetail } from "./OpportunityDetail";
 import { ProfileForm } from "./ProfileForm";
-import { cn, fmtDateTime, isUnreviewed, KIND_LABEL } from "./format";
+import { cn, fmtDateTime, isExpired, isUnreviewed, KIND_LABEL } from "./format";
 
 const TIMEOUT_MS = 150_000;
 type Filter = "all" | SourceKind;
@@ -119,12 +119,20 @@ function ResultList({ results, all, onOpen }: { results: RankedResult[]; all: Ra
   );
 }
 
-function ResultGroup({ title, hint, results, empty, all, onOpen }: { title: string; hint: string; results: RankedResult[]; empty: string; all: RankedResult[]; onOpen: (r: RankedResult) => void }) {
+function ResultGroup({ title, hint, results, empty, all, onOpen, notices }: { title: string; hint: string; results: RankedResult[]; empty: string; all: RankedResult[]; onOpen: (r: RankedResult) => void; notices?: boolean }) {
+  // Split by record.kind (sections) plus deadline (counts), frontend only: expired notices stay here, flagged.
+  const expired = notices ? results.filter((r) => isExpired(r)).length : 0;
   return (
     <section aria-label={title}>
       <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-line pb-2">
         <h3 className="font-mono text-[12px] uppercase tracking-[0.14em] text-foreground">
           {title} <span className="text-dim">({results.length})</span>
+          {notices && results.length > 0 && (
+            <span className="ml-3 normal-case tracking-[0.06em]">
+              <span className="text-clear">{results.length - expired} biddable</span>
+              {expired > 0 && <span className="text-hold"> · {expired} expired</span>}
+            </span>
+          )}
         </h3>
         <p className="text-xs text-dim">{hint}</p>
       </div>
@@ -300,7 +308,8 @@ export function Dashboard({ sampleMode }: { sampleMode: boolean }) {
                   <div className="space-y-8">
                     <ResultGroup
                       title="Current notices"
-                      hint="Open solicitations and early-stage notices. Expired ones stay flagged Hold."
+                      notices
+                      hint="Open solicitations and early-stage notices. Expired ones stay here, flagged Hold."
                       results={visible.filter((r) => r.record.kind !== "historical_award")}
                       empty="No current SAM.gov notices matched this profile in this run. The past awards below show who buys this and who won."
                       all={data.results}
