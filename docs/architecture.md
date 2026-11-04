@@ -17,7 +17,7 @@ Company profile
   -> 3. Qualification Analyst scores each record against the profile
   -> 4. Pursuit Strategist    picks the top 5, with next steps
        Code: SAM descriptions (when turned on), source identity checks, buyer history for the top 5
-  -> 5. Devil's Advocate      one independent review per shortlisted record
+  -> 5. Devil's Advocate      one independent review per shortlisted record, plus up to 2 open notices
        Strategist revises once, only if a verified BLOCKER appears and time remains
        Code: deterministic gates, fit score, warning cap, final status
   -> Ranked results, up to 10
@@ -39,7 +39,7 @@ With the opt-in **wake word** toggle, the mic stays open, but a local voice-acti
 | Opportunity Scout | Chooses and calls real search tools, using tool calling | up to 3 rounds | minimal | 3,000 |
 | Qualification Analyst | Scores technical fit against a rubric, plus eligibility, execution and timing, citing evidence | 3 (batches of 4 records, in parallel) | low | 6,000 |
 | Pursuit Strategist | Picks the shortlist from the top 8 by score, with next steps; can revise once | 1-2 | minimal | 5,000 |
-| Devil's Advocate | Reviews each shortlisted record independently, returning a verdict and findings | up to 5, in parallel | low | 4,000 |
+| Devil's Advocate | Reviews each shortlisted record, plus up to 2 more open notices in the top results, independently, returning a verdict and findings | up to 7, in parallel | low | 4,000 |
 
 The Planner, Analyst, Strategist and Devil's Advocate return JSON checked against a schema. Invalid output gets exactly one retry, then fails instead of passing unvalidated data on. Measured runs use about 35,000-45,000 tokens in total, which is about $0.11 for one 44,000-token run at third-party listed rates that aren't confirmed against Meta's rate sheet.
 
@@ -53,7 +53,7 @@ Record text is passed to the model as data, and each prompt says not to treat it
 - **Evidence check:** a model BLOCKER only stands if it cites the right record and text that is really in that record. Otherwise it becomes a WARNING.
 - **Warning limit:** the critic's warnings beyond 2 per result become notes, so nothing is hidden. Warnings from code are never demoted, so three on one result can still exceed the limit.
 - **Fit score:** code computes `category` from the product term, target agency and recency, and `execution` from award size when the record has an amount and the profile states a company size. The Analyst supplies `technical` against a rubric and must cite an excerpt: code caps the score if the citation isn't in the record or the record names no search term. Weak technical matches can't be lifted by the other signals. A past award is scored out of the 70 points it can earn, never rescaled. It's relevance, not a chance of winning. The award-size bands are an estimate.
-- **Ranking:** the Strategist chooses from the top 8 by score. Shortlisted results come first by score, with `HOLD` results below them, then unreviewed results. Ties break by technical fit, category, newest date, then id.
+- **Ranking:** the Strategist chooses from the top 8 by score. Reviewed results come first by score, with `HOLD` results below them, then unreviewed results. Ties break by technical fit, category, newest date, then id.
 
 ## Limits on each run
 
@@ -62,7 +62,7 @@ Record text is passed to the model as data, and each prompt says not to treat it
 | Scout tool rounds | 3 |
 | Candidate records | 30 |
 | Records analyzed | 12 |
-| Critic reviews | 5 |
+| Critic reviews | 7 (5 shortlisted, up to 2 open notices) |
 | Strategist revisions | 1 |
 | SAM.gov searches | 2 |
 | SAM.gov descriptions | off by default; up to 5 with `SAM_DESCRIPTIONS=on` |
@@ -104,7 +104,7 @@ Please don't present these as general accuracy.
 
 ### Model
 - **Non-determinism:** the same profile can produce different shortlists and findings between runs.
-- **Limited review:** only the top 5 get a critic review. Other results stay `REVIEW_REQUIRED` for that reason.
+- **Limited review:** only the shortlist and up to 2 more open notices get a critic review. Other results stay `REVIEW_REQUIRED` for that reason. The extra reviews don't get SAM.gov descriptions or buyer history, so the critic sees less for those notices.
 - **Partial notice text:** with descriptions off and no saved text, the critic sees only a notice's title and summary fields, and each such notice carries a NOTE saying so. Otherwise it reads at most 8,000 characters and no attachments, so requirements elsewhere can be missed.
 
 ### What the output means

@@ -20,7 +20,7 @@ Each agent runs on **Meta's Muse Spark 1.3** (`muse-spark-1.3`), called through 
 | 2 | **Opportunity Scout** | Uses tool calling to choose and run real searches of USAspending and SAM.gov, for up to 3 rounds |
 | 3 | **Qualification Analyst** | Scores up to 12 records for technical fit against a rubric, plus eligibility, execution and timing, citing evidence, in parallel batches |
 | 4 | **Pursuit Strategist** | Picks the top 5 from the 8 best-scoring records, with next steps, and can revise once if a verified blocker appears |
-| 5 | **Devil's Advocate** | Reviews each shortlisted record in a separate, independent call and tries to find what's wrong with the recommendation |
+| 5 | **Devil's Advocate** | Reviews each shortlisted record, plus up to 2 more open notices in the top results, in separate, independent calls, and tries to find what's wrong |
 
 **The model writes findings, but code decides the status.** A persuasive answer can't approve a record that fails a check:
 
@@ -74,7 +74,7 @@ Both are off by default, because SAM.gov keys can have small daily quotas.
 - **Fit scores aren't win probabilities, and award amounts aren't available budget.** They show relevance and past obligations.
 - **`APPROVED` isn't approval to bid.** It means no known issue was found, and a historical award is never open.
 - **Fictional company profiles only.** Don't enter classified, controlled or sensitive information.
-- **Results vary between runs.** The model chooses different searches, and no search is complete. Only the top 5 get a critic review.
+- **Results vary between runs.** The model chooses different searches, and no search is complete. Only the shortlist and up to 2 more open notices get a critic review.
 - **Partial notice text.** Descriptions are off by default, so the critic may see only a notice's title and summary fields. Attachments are never read.
 - **Live SAM.gov quota.** A spent quota means no live notices until it resets. The AquaVector demo profile can fall back to labeled saved notices.
 - **Small accuracy sample.** 5 of 5 top results were relevant by scope on one labeled live run ([the labeled sheet](data/eval/labeling-sheet-after.csv)). That measures relevance, not winnability: 3 were past awards shown as market signals, and 1 was an expired notice the system correctly put on HOLD.

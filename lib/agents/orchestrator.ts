@@ -37,6 +37,8 @@ export const RUN_CAP_MS = 105_000;
 const MAX_ANALYSES = 12;
 const MAX_RESULTS = 10;
 const STRATEGIST_POOL = 8;
+// Open notices reviewed beyond the shortlist. Reviews run in parallel, so this bounds cost and rate-limit risk.
+const MAX_EXTRA_NOTICE_REVIEWS = 2;
 const REVISION_CUTOFF_MS = 50_000;
 const BID_LANGUAGE = /\b(apply|bid|submit|respond|response|proposal|quote)\b/i;
 const HISTORICAL_DEFAULT_STEP =
@@ -448,6 +450,24 @@ async function executeRun(
     (value) => `Shortlisted ${value.length} records.`,
   );
 
+  // A notice someone can still bid on shouldn't reach the top results unchallenged, so the best ones outside
+  // the shortlist that would make the final list get a critic review too.
+  const scoreOf = (record: SourceRecord) =>
+    scoreRecord({ record, profile, terms: plan.searchTerms, assessment: assessmentFor.get(record.id) ?? {}, now: deps.now() });
+  const shortlistIds = new Set(shortlist.map((pick) => pick.sourceId));
+  const openNoticePicks: Pick[] = assessed
+    .filter((record) => !shortlistIds.has(record.id))
+    .map((record) => ({ record, ...scoreOf(record) }))
+    .sort(compareByFit)
+    .slice(0, Math.max(0, MAX_RESULTS - shortlist.length))
+    .filter(({ record }) => record.kind === "open_notice" && (!record.deadlineAt || Date.parse(record.deadlineAt) > deps.now()))
+    .slice(0, MAX_EXTRA_NOTICE_REVIEWS)
+    .map(({ record }) => ({
+      sourceId: record.id,
+      rationale: "Open notice in the top results. The Strategist didn't shortlist it.", // for the critic only
+      nextSteps: ["Open the source record and verify scope."],
+    }));
+
   // The critic should judge the real scope, so shortlisted SAM notices get their text first.
   const shortlisted = shortlist.slice(0, SHORTLIST_SIZE);
   const shortlistedRecords = assessed.filter((record) => shortlisted.some((pick) => pick.sourceId === record.id));
@@ -458,8 +478,8 @@ async function executeRun(
   ]);
   const verdicts = await stage(
     "devils_advocate",
-    `Independently challenging ${shortlist.length} shortlisted records`,
-    () => deps.critique(profile, described.records, assessments, shortlist.slice(0, SHORTLIST_SIZE), budget),
+    `Independently challenging ${shortlisted.length + openNoticePicks.length} records`,
+    () => deps.critique(profile, described.records, assessments, [...shortlisted, ...openNoticePicks], budget),
     (value) => {
       const count = value.reduce((sum, verdict) => sum + verdict.findings.length, 0);
       return `Read ${described.count} SAM.gov description(s). Returned ${value.length} verdicts with ${count} findings.`;
@@ -468,7 +488,7 @@ async function executeRun(
 
   const recordById = new Map(described.records.map((record) => [record.id, record]));
   const findingsById: Record<string, AuditFinding[]> = {};
-  for (const pick of shortlist) {
+  for (const pick of [...shortlist, ...openNoticePicks]) {
     const record = recordById.get(pick.sourceId);
     if (!record) continue;
     findingsById[pick.sourceId] = criticFindings(
@@ -478,8 +498,8 @@ async function executeRun(
   }
 
   // One revision at most, and only when the critic's objection held up and time remains.
-  const challenged = Object.values(findingsById).some((list) =>
-    list.some((finding) => finding.severity === "BLOCKER"),
+  const challenged = shortlist.some((pick) =>
+    findingsById[pick.sourceId]?.some((finding) => finding.severity === "BLOCKER"),
   );
   if (challenged && deps.now() - startedAt < REVISION_CUTOFF_MS) {
     shortlist = await stage(
@@ -492,7 +512,8 @@ async function executeRun(
 
   const now = deps.now();
   const assessmentById = new Map(assessments.map((assessment) => [assessment.sourceId, assessment]));
-  const picked = shortlist
+  const revisedIds = new Set(shortlist.map((pick) => pick.sourceId));
+  const picked = [...shortlist, ...openNoticePicks.filter((pick) => !revisedIds.has(pick.sourceId))]
     .map((pick) => {
       const record = recordById.get(pick.sourceId);
       if (!record) return null;
@@ -503,7 +524,8 @@ async function executeRun(
         record,
         profile,
         assessment: assessmentById.get(pick.sourceId),
-        pick,
+        // An extra review isn't a recommendation, so "why it fits" stays the Analyst's own reasons.
+        pick: revisedIds.has(pick.sourceId) ? pick : undefined,
         extraFindings: reviewed ? [] : findings,
         critic: reviewed ? findings : [],
         priorAwards: buyerHistory.get(pick.sourceId),
@@ -532,7 +554,7 @@ async function executeRun(
           {
             severity: "WARNING",
             issue: "Outside the shortlist: not reviewed by the Devil's Advocate",
-            whyItMatters: "Only the top five get an independent challenge in each run.",
+            whyItMatters: "Only the shortlist and up to 2 more open notices get an independent challenge in each run.",
             evidenceSourceId: null,
             evidenceExcerpt: null,
             correctiveAction: "Needs verification against the source record.",

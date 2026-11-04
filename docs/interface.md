@@ -55,7 +55,7 @@ If live sources fail but saved real records are usable, the route returns 200 wi
   - `fitBreakdown.category` (0-20) is computed by code from the product term, target agency and recency. `execution` is computed from award size when the record has an amount and the profile states a company size, and otherwise comes from the model. `technical`, `eligibility` and notice `timing` come from the model, with code capping `technical` when it has no verbatim excerpt or the record names no search term.
   - `fitSignals` is optional and lists the deterministic inputs, each with `points`, `max` and a `detail` to show. Award-size details are estimates.
   - If `technical` is under 20, `category` and `execution` are each limited to a quarter of it, so a buyer, date or size match can't lift a weak match. `fitSignals` still shows the points before that limit.
-  - The Strategist chooses from the top 8 by score. Shortlisted results are listed first, followed by unreviewed results, so a score can be higher below the shortlist.
+  - The Strategist chooses from the top 8 by score. Reviewed results are listed first, followed by unreviewed results, so a score can be higher below them. Reviewed means the shortlist plus up to 2 open notices outside it: the highest-scoring ones with no passed deadline that make the final 10. Early-stage notices and past awards outside the shortlist aren't reviewed.
   - Equal scores are ordered by technical fit, category, newest date, then id, so the order is stable.
 - `reviewStatus` is set by deterministic code after the Devil's Advocate runs:
   - any verified `BLOCKER` gives `HOLD` (UI: "Hold / Do not pursue as presented")
@@ -70,7 +70,7 @@ If live sources fail but saved real records are usable, the route returns 200 wi
 
 ## Run budget (server enforced)
 
-Max 3 Scout tool turns, 30 candidate records, 12 deep analyses, 5 critic reviews, 1 strategist revision. Model for every stage: `muse-spark-1.3`.
+Max 3 Scout tool turns, 30 candidate records, 12 deep analyses, 7 critic reviews (5 shortlisted, up to 2 open notices), 1 strategist revision. Model for every stage: `muse-spark-1.3`.
 
 ## `POST /api/voice-profile[?mode=command|wake]` (optional voice input)
 
