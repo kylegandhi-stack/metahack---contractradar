@@ -106,7 +106,7 @@ export function fitLabel(r: RankedResult): string {
 }
 
 /**
- * Display-only: SAM.gov sometimes returns titles with long runs of U+FFFD (undecodable bytes, as received).
+ * Display-only: some SAM.gov titles arrive with long runs of U+FFFD (as received).
  * Show a plain marker instead of a wall of replacement characters. The record itself stays verbatim.
  */
 export const displayTitle = (title: string) => title.replace(/�{2,}/g, " [unreadable characters] ").replace(/\s{2,}/g, " ").trim();

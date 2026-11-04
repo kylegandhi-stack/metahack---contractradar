@@ -121,16 +121,28 @@ function ResultList({ results, all, onOpen }: { results: RankedResult[]; all: Ra
 
 function ResultGroup({ title, hint, results, empty, all, onOpen, notices }: { title: string; hint: string; results: RankedResult[]; empty: string; all: RankedResult[]; onOpen: (r: RankedResult) => void; notices?: boolean }) {
   // Split by record.kind (sections) plus deadline (counts), frontend only: expired notices stay here, flagged.
+  // Only open solicitations count as "open"; early-stage notices (sources sought, RFI) can't be bid on yet.
   const expired = notices ? results.filter((r) => isExpired(r)).length : 0;
+  const open = notices ? results.filter((r) => r.record.kind === "open_notice" && !isExpired(r)).length : 0;
+  const early = notices ? results.filter((r) => r.record.kind === "early_stage_notice" && !isExpired(r)).length : 0;
+  const parts = [
+    open > 0 && <span key="o" className="text-foreground">{open} open</span>,
+    early > 0 && <span key="e" className="text-sky-200">{early} early-stage</span>,
+    expired > 0 && <span key="x" className="text-hold">{expired} expired</span>,
+  ].filter(Boolean);
   return (
     <section aria-label={title}>
       <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-line pb-2">
         <h3 className="font-mono text-[12px] uppercase tracking-[0.14em] text-foreground">
           {title} <span className="text-dim">({results.length})</span>
-          {notices && results.length > 0 && (
+          {notices && parts.length > 0 && (
             <span className="ml-3 normal-case tracking-[0.06em]">
-              <span className="text-clear">{results.length - expired} biddable</span>
-              {expired > 0 && <span className="text-hold"> · {expired} expired</span>}
+              {parts.map((p, i) => (
+                <span key={i}>
+                  {i > 0 && <span className="text-dim"> · </span>}
+                  {p}
+                </span>
+              ))}
             </span>
           )}
         </h3>
@@ -317,7 +329,7 @@ export function Dashboard({ sampleMode }: { sampleMode: boolean }) {
                     />
                     <ResultGroup
                       title="Past awards · buyer intelligence"
-                      hint="Completed contracts: who bought this before, and who won. Nothing here is open to bid."
+                      hint="Past awards: who bought this before, and who won. Nothing here is open to bid."
                       results={visible.filter((r) => r.record.kind === "historical_award")}
                       empty="No past awards matched this profile in this run."
                       all={data.results}
