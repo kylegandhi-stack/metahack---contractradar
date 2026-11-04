@@ -100,7 +100,7 @@ function CachedBanner({ data }: { data: ResearchResponse }) {
   );
 }
 
-function ResultList({ results, all, onOpen }: { results: RankedResult[]; all: RankedResult[]; onOpen: (r: RankedResult) => void }) {
+function ResultList({ results, all, onOpen, localRank }: { results: RankedResult[]; all: RankedResult[]; onOpen: (r: RankedResult) => void; localRank?: boolean }) {
   return (
     <div className="space-y-3">
       {results.map((r, i) => (
@@ -112,7 +112,8 @@ function ResultList({ results, all, onOpen }: { results: RankedResult[]; all: Ra
               <span className="h-px flex-1 bg-line-strong" aria-hidden />
             </div>
           )}
-          <OpportunityCard result={r} rank={all.indexOf(r) + 1} onOpen={() => onOpen(r)} />
+          {/* In the split view, number within the section so #5 never sits above #1 on screen. */}
+          <OpportunityCard result={r} rank={localRank ? i + 1 : all.indexOf(r) + 1} onOpen={() => onOpen(r)} />
         </div>
       ))}
     </div>
@@ -148,7 +149,7 @@ function ResultGroup({ title, hint, results, empty, all, onOpen, notices }: { ti
         </h3>
         <p className="text-xs text-dim">{hint}</p>
       </div>
-      {results.length ? <ResultList results={results} all={all} onOpen={onOpen} /> : <p className="hud p-4 text-sm text-muted">{empty}</p>}
+      {results.length ? <ResultList results={results} all={all} onOpen={onOpen} localRank /> : <p className="hud p-4 text-sm text-muted">{empty}</p>}
     </section>
   );
 }
