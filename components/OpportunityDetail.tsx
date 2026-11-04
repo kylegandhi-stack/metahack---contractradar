@@ -6,7 +6,7 @@ import type { FitBreakdown, RankedResult } from "@/lib/types";
 import { ConfidencePill, EligibilityBadge, ExpiredBadge, ReviewStatusBadge, SourceKindBadge } from "./badges";
 import { FindingItem, sortFindings } from "./FindingsPanel";
 import { FitScore } from "./OpportunityCard";
-import { cn, fitMaxOf, fmtDate, fmtDateTime, fmtMoney, isExpired, isHistorical, isStrongHistorical, KIND_LABEL, orUnknown, sourceName } from "./format";
+import { cn, fitMaxOf, fmtDate, fmtDateTime, fmtMoney, isExpired, isHistorical, isStrongHistorical, KIND_LABEL, orUnknown, sourceName, displayTitle } from "./format";
 
 function Section({ n, title, children, tone }: { n: string; title: string; children: React.ReactNode; tone?: string }) {
   return (
@@ -125,7 +125,7 @@ export function OpportunityDetail({ result, onClose }: { result: RankedResult | 
                 </div>
                 <div className="mt-5 flex items-start justify-between gap-6">
                   <div className="min-w-0">
-                    <Dialog.Title className="text-2xl font-light leading-tight tracking-tight sm:text-3xl">{r.record.title}</Dialog.Title>
+                    <Dialog.Title className="text-2xl font-light leading-tight tracking-tight sm:text-3xl">{displayTitle(r.record.title)}</Dialog.Title>
                     <Dialog.Description className="label mt-2 normal-case tracking-[0.06em]">{orUnknown(r.record.agency)}</Dialog.Description>
                   </div>
                   <FitScore result={r} size="lg" />

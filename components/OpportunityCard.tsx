@@ -1,7 +1,7 @@
 import { ArrowUpRight } from "lucide-react";
 import type { RankedResult } from "@/lib/types";
 import { ConfidencePill, EligibilityBadge, ExpiredBadge, ReviewStatusBadge, SourceKindBadge } from "./badges";
-import { cn, fitLabel, fitMaxOf, fmtDate, fmtMoney, isExpired, isHistorical, KIND_LABEL, latestPriorWinner, orUnknown, sourceName } from "./format";
+import { cn, fitLabel, fitMaxOf, fmtDate, fmtMoney, isExpired, isHistorical, KIND_LABEL, latestPriorWinner, orUnknown, sourceName, displayTitle } from "./format";
 
 export function FitScore({ result, size = "md" }: { result: RankedResult; size?: "md" | "lg" }) {
   const max = fitMaxOf(result);
@@ -61,7 +61,7 @@ export function OpportunityCard({ result, rank, onOpen }: { result: RankedResult
                 <ReviewStatusBadge status={result.reviewStatus} kind={record.kind} short />
               </div>
               <h3 className="mt-3 text-base font-normal leading-snug tracking-tight sm:text-lg">
-                <button onClick={onOpen} className="text-left decoration-line-strong underline-offset-4 hover:underline">{record.title}</button>
+                <button onClick={onOpen} className="text-left decoration-line-strong underline-offset-4 hover:underline">{displayTitle(record.title)}</button>
               </h3>
               <p className="label mt-1.5 normal-case tracking-[0.06em]">{orUnknown(record.agency)}</p>
               {hist && record.recipient && (

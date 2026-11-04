@@ -9,7 +9,7 @@ import { HeroBackdrop, HeroCredit } from "./HeroBackdrop";
 import { OpportunityCard } from "./OpportunityCard";
 import { OpportunityDetail } from "./OpportunityDetail";
 import { ProfileForm } from "./ProfileForm";
-import { cn, fmtDateTime, isUnreviewed, KIND_LABEL } from "./format";
+import { cn, fmtDateTime, isExpired, isUnreviewed, KIND_LABEL } from "./format";
 
 const TIMEOUT_MS = 150_000;
 type Filter = "all" | SourceKind;
@@ -97,6 +97,60 @@ function CachedBanner({ data }: { data: ResearchResponse }) {
       The live {saved.length > 1 ? "searches" : "search"} failed or {saved.length > 1 ? "aren't" : "isn't"} configured, so saved copies of real public records are shown.
       {live.length > 0 && ` ${live.map((s) => SOURCE_NAME[s]).join(" and ")} are live.`}
     </Notice>
+  );
+}
+
+function ResultList({ results, all, onOpen, localRank }: { results: RankedResult[]; all: RankedResult[]; onOpen: (r: RankedResult) => void; localRank?: boolean }) {
+  return (
+    <div className="space-y-3">
+      {results.map((r, i) => (
+        <div key={`${r.record.source}:${r.record.id}`} className="space-y-3">
+          {isUnreviewed(r) && (i === 0 || !isUnreviewed(results[i - 1])) && (
+            <div className="flex items-center gap-3 pt-3" role="separator" aria-label="Not reviewed by the Devil's Advocate">
+              <span className="h-px flex-1 bg-line-strong" aria-hidden />
+              <span className="label text-dim">Below the shortlist · not reviewed by the Devil&apos;s Advocate</span>
+              <span className="h-px flex-1 bg-line-strong" aria-hidden />
+            </div>
+          )}
+          {/* In the split view, number within the section so #5 never sits above #1 on screen. */}
+          <OpportunityCard result={r} rank={localRank ? i + 1 : all.indexOf(r) + 1} onOpen={() => onOpen(r)} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ResultGroup({ title, hint, results, empty, all, onOpen, notices }: { title: string; hint: string; results: RankedResult[]; empty: string; all: RankedResult[]; onOpen: (r: RankedResult) => void; notices?: boolean }) {
+  // Split by record.kind (sections) plus deadline (counts), frontend only: expired notices stay here, flagged.
+  // Only open solicitations count as "open"; early-stage notices (sources sought, RFI) can't be bid on yet.
+  const expired = notices ? results.filter((r) => isExpired(r)).length : 0;
+  const open = notices ? results.filter((r) => r.record.kind === "open_notice" && !isExpired(r)).length : 0;
+  const early = notices ? results.filter((r) => r.record.kind === "early_stage_notice" && !isExpired(r)).length : 0;
+  const parts = [
+    open > 0 && <span key="o" className="text-foreground">{open} open</span>,
+    early > 0 && <span key="e" className="text-sky-200">{early} early-stage</span>,
+    expired > 0 && <span key="x" className="text-hold">{expired} expired</span>,
+  ].filter(Boolean);
+  return (
+    <section aria-label={title}>
+      <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-line pb-2">
+        <h3 className="font-mono text-[12px] uppercase tracking-[0.14em] text-foreground">
+          {title} <span className="text-dim">({results.length})</span>
+          {notices && parts.length > 0 && (
+            <span className="ml-3 normal-case tracking-[0.06em]">
+              {parts.map((p, i) => (
+                <span key={i}>
+                  {i > 0 && <span className="text-dim"> · </span>}
+                  {p}
+                </span>
+              ))}
+            </span>
+          )}
+        </h3>
+        <p className="text-xs text-dim">{hint}</p>
+      </div>
+      {results.length ? <ResultList results={results} all={all} onOpen={onOpen} localRank /> : <p className="hud p-4 text-sm text-muted">{empty}</p>}
+    </section>
   );
 }
 
@@ -262,21 +316,29 @@ export function Dashboard({ sampleMode }: { sampleMode: boolean }) {
                 </div>
                 {visible.length === 0 ? (
                   <div className="hud p-6 text-sm text-muted">No matching records were found for this profile. Try broader capability wording or remove target agencies.</div>
-                ) : (
-                  <div className="space-y-3">
-                    {visible.map((r, i) => (
-                      <div key={`${r.record.source}:${r.record.id}`} className="space-y-3">
-                        {isUnreviewed(r) && (i === 0 || !isUnreviewed(visible[i - 1])) && (
-                          <div className="flex items-center gap-3 pt-3" role="separator" aria-label="Not reviewed by the Devil's Advocate">
-                            <span className="h-px flex-1 bg-line-strong" aria-hidden />
-                            <span className="label text-dim">Below the shortlist · not reviewed by the Devil&apos;s Advocate</span>
-                            <span className="h-px flex-1 bg-line-strong" aria-hidden />
-                          </div>
-                        )}
-                        <OpportunityCard result={r} rank={data.results.indexOf(r) + 1} onOpen={() => setOpen(r)} />
-                      </div>
-                    ))}
+                ) : filter === "all" ? (
+                  // Current notices first, so what can be bid on isn't buried under past awards. Ranks stay the backend's.
+                  <div className="space-y-8">
+                    <ResultGroup
+                      title="Current notices"
+                      notices
+                      hint="Open solicitations and early-stage notices. Expired ones stay here, flagged Hold."
+                      results={visible.filter((r) => r.record.kind !== "historical_award")}
+                      empty="No current SAM.gov notices matched this profile in this run. The past awards below show who buys this and who won."
+                      all={data.results}
+                      onOpen={setOpen}
+                    />
+                    <ResultGroup
+                      title="Past awards · buyer intelligence"
+                      hint="Past awards: who bought this before, and who won. Nothing here is open to bid."
+                      results={visible.filter((r) => r.record.kind === "historical_award")}
+                      empty="No past awards matched this profile in this run."
+                      all={data.results}
+                      onOpen={setOpen}
+                    />
                   </div>
+                ) : (
+                  <ResultList results={visible} all={data.results} onOpen={setOpen} />
                 )}
               </section>
               <aside className="space-y-6">

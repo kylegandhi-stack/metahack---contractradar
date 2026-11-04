@@ -1,6 +1,6 @@
 import type { AuditFinding, RankedResult } from "@/lib/types";
 import { ReviewStatusBadge, SeverityBadge } from "./badges";
-import { isUnreviewed } from "./format";
+import { isUnreviewed, displayTitle } from "./format";
 
 const ORDER = { BLOCKER: 0, WARNING: 1, NOTE: 2 } as const;
 export const sortFindings = (f: AuditFinding[]) => [...f].sort((a, b) => ORDER[a.severity] - ORDER[b.severity]);
@@ -69,7 +69,7 @@ export function FindingsPanel({ results, onOpen }: { results: RankedResult[]; on
               <li key={r.record.id}>
                 <button onClick={() => onOpen(r)} className="w-full border border-line bg-panel-2 p-3 text-left transition hover:border-line-strong">
                   <ReviewStatusBadge status={r.reviewStatus} kind={r.record.kind} short />
-                  <p className="mt-2 line-clamp-2 text-sm">{r.record.title}</p>
+                  <p className="mt-2 line-clamp-2 text-sm">{displayTitle(r.record.title)}</p>
                   {top && <p className="mt-1 text-xs text-muted"><span className="font-mono text-[10.5px] tracking-[0.1em]">{top.severity} ·</span> {top.issue}</p>}
                 </button>
               </li>
