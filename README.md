@@ -78,7 +78,7 @@ Both are off by default, because SAM.gov keys can have small daily quotas.
 - **Partial notice text.** Descriptions are off by default, so the critic may see only a notice's title and summary fields. Attachments are never read.
 - **Live SAM.gov quota.** A spent quota means no live notices until it resets. The AquaVector demo profile can fall back to labeled saved notices.
 - **Small accuracy sample.** 5 of 5 top results were relevant by scope on one labeled live run ([the labeled sheet](data/eval/labeling-sheet-after.csv)). That measures relevance, not winnability: 3 were past awards shown as market signals, and 1 was an expired notice the system correctly put on HOLD.
-- **Run time:** a full local run with live SAM.gov takes about 62 s. Production hasn't been timed with live SAM.gov yet.
+- **Run time:** in production with live SAM.gov, two runs took 55.1 and 58.7 s. A full local run takes about 62 s.
 
 ## Built during the hackathon, Oct 26 to Nov 4
 
