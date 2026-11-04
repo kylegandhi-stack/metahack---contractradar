@@ -50,11 +50,9 @@ About 290 spoken words, with room for clicks, plus about 5 s for the optional St
 
 ## Accuracy, with its caveat
 
-**If asked, or if you show it:** "On two hand-labeled production runs from before our accuracy changes, precision at five was 60% for AquaVector and 80% for a second test profile."
+**If asked, or if you show it:** "5 of 5 top results were relevant by scope on one labeled live run. That measures relevance, not winnability: 3 were past awards shown as market signals, and 1 was an expired notice the system correctly put on HOLD."
 
-- That's 3 of 5 and 4 of 5, labeled by one team member (`data/eval/labeling-sheet.csv`).
-- Those runs predate the deduping, search-by-code and source-check work, so **they don't measure the current search**. Please don't describe it as general accuracy.
-- An "after" number may follow after Tue 4 PM PT, using `scripts/labeling-sheet-after.mts` (#38). It would be one run with one labeler, so call it directional and use the exact caveat that comes with it.
+- That's one run, with ranks 1-5 labeled by one team member (`data/eval/labeling-sheet-after.csv`). Please don't describe it as general accuracy.
 - The seeded test caught 4 of 4 synthetic flaws. That shows the critic can catch them, not how often it does on real data.
 
 ## Judge Q&A

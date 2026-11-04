@@ -2,7 +2,7 @@
 // Production uses this file only on a 429 or a missing key, labeled as cached. Never edit its facts by
 // hand: rerun this script instead. Spends up to 6 SAM.gov calls and one full model run per profile.
 // Usage: npx tsx --env-file=.env.local scripts/fetch-sam-snapshot.mts
-// Saved descriptions have emails and phone numbers removed. To apply that to the existing file with no
+// Saved descriptions have emails, phone numbers and the sentences holding them removed. To apply that to the existing file with no
 // network calls: npx tsx scripts/fetch-sam-snapshot.mts --scrub-only
 import { readFileSync, writeFileSync } from "node:fs";
 import { describeNotices } from "../lib/data/sam";

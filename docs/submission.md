@@ -41,6 +41,4 @@ Official records remain authoritative. This project isn't affiliated with or end
 
 ## Accuracy
 
-Hand-labeled precision@5 on the current search: **100% (5 of 5)**.
-
-This number comes from one labeled run.
+5 of 5 top results were relevant by scope on one labeled live run. That measures relevance, not winnability: 3 were past awards shown as market signals, and 1 was an expired notice the system correctly put on HOLD.
