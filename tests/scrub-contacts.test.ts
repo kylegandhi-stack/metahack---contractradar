@@ -18,15 +18,29 @@ test("procurement numbers are left alone", () => {
   assert.equal(scrubContacts(kept), kept);
 });
 
-test("scrubbing is safe to repeat and keeps every record id", () => {
-  const once = scrubDescriptions({ a: "Write to x@y.mil", b: "No contact here" });
-  assert.deepEqual(once, { a: `Write to ${R}`, b: "No contact here" });
+const one = (text: string) => scrubDescriptions({ id: text }).id;
+
+test("a sentence holding a contact goes entirely, including the name", () => {
+  assert.equal(one("Scope is hydrophones. Please contact Jane Doe at jd@example.gov and Sam Roe at 555-010-4477 with questions. See Section L."), "Scope is hydrophones. See Section L.");
+  assert.equal(one("Scope is hydrophones. Contact Mr. John Doe at jd@example.gov."), "Scope is hydrophones.");
+});
+
+test("in a table, only the field holding the contact goes", () => {
+  assert.equal(one("CONTACT INFORMATION|4|N744.17|555-010-4477|jd@example.gov| ITEM IDENTIFICATION (JAN 2023)|19|See Section C.| INSPECTION (AUG 1996)|2"), "CONTACT INFORMATION|4|N744.17||| ITEM IDENTIFICATION (JAN 2023)|19|See Section C.| INSPECTION (AUG 1996)|2");
+});
+
+test("scrubbing is safe to repeat, leaves other text alone and keeps every record id", () => {
+  const once = scrubDescriptions({ a: "Write to x@y.mil", b: "No contact here.  Spacing stays." });
+  assert.deepEqual(once, { a: "", b: "No contact here.  Spacing stays." });
   assert.deepEqual(scrubDescriptions(once), once);
 });
 
-test("the saved snapshot has no emails or phone numbers in its descriptions", () => {
+test("the saved snapshot has no contact details in its descriptions", () => {
   const file = JSON.parse(readFileSync(new URL("../data/sam-snapshot.json", import.meta.url), "utf8"));
   for (const profile of Object.values<{ descriptions: Record<string, string> }>(file.profiles)) {
-    for (const text of Object.values(profile.descriptions)) assert.equal(scrubContacts(text), text);
+    for (const text of Object.values(profile.descriptions)) {
+      assert.equal(scrubContacts(text), text);
+      assert.equal(text.includes(CONTACT_REMOVED), false);
+    }
   }
 });
