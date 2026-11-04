@@ -13,7 +13,7 @@ export function scrubContacts(text: string): string {
 // Drops each sentence holding a removed contact, so "Please contact <name> at ..." goes entirely. Some notices
 // are pipe-separated tables with no sentence punctuation, so each field is handled alone: otherwise one contact
 // would take thousands of characters of clauses and part numbers with it.
-const SENTENCE_END = /(?<!\b(?:Mr|Mrs|Ms|Dr))(?<=[.!?])\s+/;
+const SENTENCE_END = /(?<!\b(?:Mr|Mrs|Ms|Dr)\.)(?<=[.!?])\s+/;
 function dropContactSentences(text: string): string {
   return text
     .split("|")
