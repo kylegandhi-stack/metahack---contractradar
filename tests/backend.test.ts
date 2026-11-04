@@ -1755,7 +1755,7 @@ test("buyer history: shortlisted notices get priorAwards, others have no field a
   const response = await runResearch(PROFILE, {
     deps: fakeDeps([notice({ id: "PICKED" }), notice({ id: "OTHER" })], {
       strategize: async () => [{ sourceId: "PICKED", rationale: "Fits", nextSteps: ["Verify"] }],
-      history: async () => new Map([["PICKED", [prior]], ["OTHER", [prior]]]),
+      history: async (records) => new Map(records.map((record) => [record.id, [prior]])),
     }),
   });
   const picked = response.results.find((result) => result.record.id === "PICKED");
@@ -1763,6 +1763,92 @@ test("buyer history: shortlisted notices get priorAwards, others have no field a
   assert.deepEqual(picked?.priorAwards, [prior]);
   assert.equal(picked?.reviewStatus, "APPROVED");
   assert.ok(!(other && "priorAwards" in other));
+});
+
+const isUnreviewedResult = (result: RankedResult) => result.findings.some((finding) => finding.issue.startsWith("Outside the shortlist"));
+
+test("critic review: open notices that make the top 10 are reviewed, even outside the shortlist", async () => {
+  const reviewed: string[][] = [];
+  const records = [
+    notice({ id: "PICKED" }),
+    notice({ id: "OPEN" }),
+    notice({ id: "EXPIRED", deadlineAt: "2026-10-30T14:00:00-04:00" }),
+    notice({ id: "EARLY", kind: "early_stage_notice" }),
+    award({ id: "PAST" }),
+  ];
+  const response = await runResearch(PROFILE, {
+    deps: fakeDeps(records, {
+      strategize: async () => [{ sourceId: "PICKED", rationale: "Fits", nextSteps: ["Verify"] }],
+      critique: async (_profile, _records, _assessments, picks) => {
+        reviewed.push(picks.map((pick) => pick.sourceId));
+        return picks.map((pick) => ({ sourceId: pick.sourceId, verdict: "Checked", noneFound: true, findings: [] }));
+      },
+    }),
+  });
+  assert.deepEqual(reviewed, [["PICKED", "OPEN"]]);
+  const open = response.results.find((result) => result.record.id === "OPEN");
+  assert.deepEqual(open?.whyMatched, ["Scope names hydrophones"]); // the Analyst's reasons, not a recommendation
+  const unreviewed = (id: string) => response.results.find((result) => result.record.id === id)?.findings.some((f) => f.issue.startsWith("Outside the shortlist"));
+  assert.equal(unreviewed("OPEN"), false);
+  assert.equal(unreviewed("EXPIRED"), true);
+  assert.equal(unreviewed("EARLY"), true);
+  assert.equal(unreviewed("PAST"), true);
+});
+
+test("critic review: a blocker on an extra review doesn't trigger a Strategist revision", async () => {
+  let revisions = 0;
+  const excerpt = "[TEST] Closed to new offers";
+  await runResearch(PROFILE, {
+    deps: fakeDeps([notice({ id: "PICKED" }), notice({ id: "OPEN", excerpts: [{ text: excerpt, field: "title" }] })], {
+      strategize: async () => [{ sourceId: "PICKED", rationale: "Fits", nextSteps: ["Verify"] }],
+      revise: async (_profile, shortlist) => {
+        revisions += 1;
+        return shortlist;
+      },
+      critique: async (_profile, _records, _assessments, picks) =>
+        picks.map((pick) => ({
+          sourceId: pick.sourceId,
+          verdict: "Checked",
+          noneFound: pick.sourceId !== "OPEN",
+          findings: pick.sourceId === "OPEN" ? [{ severity: "BLOCKER" as const, issue: "Closed", why_it_matters: "Can't bid", evidence_source_id: "OPEN", exact_supporting_excerpt: excerpt, proposed_correction: "Skip" }] : [],
+        })),
+    }),
+  });
+  assert.equal(revisions, 0);
+});
+
+const recordReviews = (reviewed: string[]): Partial<PipelineDeps> => ({
+  critique: async (_profile, _records, _assessments, picks) => {
+    reviewed.push(...picks.map((pick) => pick.sourceId));
+    return picks.map((pick) => ({ sourceId: pick.sourceId, verdict: "Checked", noneFound: true, findings: [] }));
+  },
+});
+
+test("critic review: at most 2 extra open notices, highest score first", async () => {
+  const reviewed: string[] = [];
+  const records = Array.from({ length: 10 }, (_, i) => notice({ id: `N${i}`, title: `[TEST] Hydrophone part ${i}` }));
+  const response = await runResearch(PROFILE, {
+    deps: fakeDeps(records, {
+      ...recordReviews(reviewed),
+      analyze: async (_profile, list) => list.map((record) => assessment(record.id, { technical: 39 - Number(record.id.slice(1)) })),
+    }),
+  });
+  assert.deepEqual(reviewed, ["N0", "N1", "N2", "N3", "N4", "N5", "N6"]);
+  assert.equal(response.results.filter((result) => isUnreviewedResult(result)).length, 3);
+});
+
+test("critic review: an open notice that misses the top 10 isn't reviewed", async () => {
+  const reviewed: string[] = [];
+  const shortlisted = Array.from({ length: 5 }, (_, i) => notice({ id: `N${i}`, title: `[TEST] Hydrophone part ${i}` }));
+  const awards = Array.from({ length: 5 }, (_, i) => award({ id: `CONT_AWD_${i}`, title: `[TEST] Hydrophone order ${i}` }));
+  await runResearch(PROFILE, {
+    deps: fakeDeps([...shortlisted, ...awards, notice({ id: "LOW", title: "[TEST] Hydrophone other" })], {
+      ...recordReviews(reviewed),
+      strategize: async () => shortlisted.map((record) => ({ sourceId: record.id, rationale: "Fits", nextSteps: ["Verify"] })),
+      analyze: async (_profile, list) => list.map((record) => assessment(record.id, record.id === "LOW" ? { technical: 0, eligibility: 0, execution: 0, timing: 0 } : {})),
+    }),
+  });
+  assert.deepEqual(reviewed, ["N0", "N1", "N2", "N3", "N4"]);
 });
 
 test("awards record who won", () => {

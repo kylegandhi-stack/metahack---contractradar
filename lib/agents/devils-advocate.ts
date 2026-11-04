@@ -44,7 +44,7 @@ export type CriticVerdict = {
   findings: RawCriticFinding[];
 };
 
-// One fresh, independent call per pick (the run budget allows 5 critic reviews). A failed call leaves
+// One fresh, independent call per pick (up to 7 per run: the shortlist and up to 2 more open notices). A failed call leaves
 // that record without a verdict, which the orchestrator shows as a WARNING.
 export async function runDevilsAdvocate(
   profile: CompanyProfile,

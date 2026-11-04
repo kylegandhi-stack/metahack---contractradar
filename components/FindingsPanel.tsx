@@ -48,7 +48,7 @@ export function FindingsPanel({ results, onOpen }: { results: RankedResult[]; on
       <div className="flex items-baseline justify-between gap-2">
         <h2 id="da-heading" className="label text-foreground"><span className="text-dim">[03]</span> Red team — Devil&apos;s Advocate</h2>
       </div>
-      <p className="mt-1 text-xs text-dim">An independent critic tried to disprove every shortlisted recommendation.</p>
+      <p className="mt-1 text-xs text-dim">An independent critic tried to disprove every shortlisted recommendation and up to 2 more open notices.</p>
 
       <dl className="mt-4 grid grid-cols-3 border border-line">
         {([["Blockers", counts.BLOCKER, "text-hold"], ["Warnings", counts.WARNING, "text-warn"], ["Notes", counts.NOTE, "text-muted"]] as const).map(([k, v, c], i) => (
